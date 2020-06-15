@@ -1,9 +1,9 @@
 #!/bin/bash
 DOSBOX=/usr/local/bin/dosbox
 DOSBOX_USER=$(who | grep tty1 | cut -d\  -f 1)
-BT="GEOS4Dosbian installer (c) by Thomas Haß"
+BT="Pi/GEOS installer (c) 2020 by Thomas Haß"
 LOG_FILE=/tmp/geos4disbian.log
-PKG_LIST="iptables ppp socat usbmount timidity-daemon"
+PKG_LIST="iptables ppp socat usbmount timidity-daemon imagemagick"
 URL_DIALING_SOUND="https://upload.wikimedia.org/wikipedia/commons/3/33/Dial_up_modem_noises.ogg"
 URL_PCGEOS=""
 
@@ -24,15 +24,15 @@ calc_wt_size() {
 }
 
 say_hello() {
-  if (whiptail --backtitle "$BT" --title "Install GEOS4Dosbian" --yesno "\
+  if (whiptail --backtitle "$BT" --title "Install Pi/GEOS" --yesno "\
 This script will install PC/GEOS Ensemble Demo on your\
-Dosbian installation. It will add some systems services\
+Raspbian installation. It will add some systems services\
 to enable GEOS to dial into the internet.\
 Choose Yes to continue or No to abort." $WT_HEIGHT $WT_WIDTH)
   then
     return 0
   else
-    whiptail --backtitle "$BT" --title "Install GEOS4Dosbian" --msgbox "\
+    whiptail --backtitle "$BT" --title "Install Pi/GEOS" --msgbox "\
 Installation abotrted by the user."
     return 1
   fi
@@ -46,6 +46,34 @@ download_file() {
 
 install_pkg() {
   sudo apt-get -y install $*
+}
+
+install_splash_screen() {
+  # This custom splash screen simluates a PC BIOS
+  # screen and provides some information about the
+  # current Pi/GEOS configuration.
+  # Will be upd. by pigeos-config
+  echo -n "Creating splash screen service "
+  sudo tee /etc/systemd/system/splash_screen.service >/dev/null <<SPLASH_SCR
+[Unit]
+Description=Pi/GEOS splash screen service
+DefaultDependencies=no
+
+[Service]
+ExecStart=/usr/bin/fbi -noverbose  /usr/local/lib/pigeos/splash.png
+
+StandardInput=tty
+StandardOutput=tty
+
+
+[Install]
+WantedBy=multi-user.target
+SPLASH_SCR
+  # enable service
+  sudo systemctl daemon-reload
+  sudo systemctl enable splash_screen
+  sudo systemctl start splash_screen
+  return 0
 }
 
 install_dosbox_modem() {
