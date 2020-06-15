@@ -1,0 +1,174 @@
+#!/bin/bash
+DOSBOX=/usr/local/bin/dosbox
+DOSBOX_USER=$(who | grep tty1 | cut -d\  -f 1)
+BT="GEOS4Dosbian installer (c) by Thomas Haß"
+LOG_FILE=/tmp/geos4disbian.log
+PKG_LIST="iptables ppp socat usbmount timidity-daemon"
+URL_DIALING_SOUND="https://upload.wikimedia.org/wikipedia/commons/3/33/Dial_up_modem_noises.ogg"
+URL_PCGEOS=""
+
+calc_wt_size() {
+  # NOTE: it's tempting to redirect stderr to /dev/null, so supress error
+  # output from tput. However in this case, tput detects neither stdout or
+  # stderr is a tty and so only gives default 80, 24 values
+  WT_HEIGHT=18
+  WT_WIDTH=$(tput cols)
+
+  if [ -z "$WT_WIDTH" ] || [ "$WT_WIDTH" -lt 60 ]; then
+    WT_WIDTH=80
+  fi
+  if [ "$WT_WIDTH" -gt 178 ]; then
+    WT_WIDTH=120
+  fi
+  WT_MENU_HEIGHT=$(($WT_HEIGHT-7))
+}
+
+say_hello() {
+  if (whiptail --backtitle "$BT" --title "Install GEOS4Dosbian" --yesno "\
+This script will install PC/GEOS Ensemble Demo on your\
+Dosbian installation. It will add some systems services\
+to enable GEOS to dial into the internet.\
+Choose Yes to continue or No to abort." $WT_HEIGHT $WT_WIDTH)
+  then
+    return 0
+  else
+    whiptail --backtitle "$BT" --title "Install GEOS4Dosbian" --msgbox "\
+Installation abotrted by the user."
+    return 1
+  fi
+}
+
+download_file() {
+  wget --progress=dot $1 -O $2 2>&1 \
+  | sed -un 's/.* \([0-9]\+\)% .*/\1/p' \
+  | whiptail --gauge "Download" 7 50 0
+}
+
+install_pkg() {
+  sudo apt-get -y install $*
+}
+
+install_dosbox_modem() {
+  # DOSBox will foreward it's virtuel modem connection
+  # to a local telnet port that will be redirects to
+  # a virtuel TTy where a PPPD can bind to
+  echo -n "Creating modem service "
+  sudo tee /etc/systemd/system/modem@.service >/dev/null <<MODEM_SRV
+[Unit]
+Description=Start DOSBox virtual modem on given TTY
+After=network.target
+StartLimitIntervalSec=0
+StartLimitBurst=3000
+
+[Service]
+Restart=always
+RestartSec=3
+Type=simple
+PIDFile=/run/modem-%i.pid
+ExecStart=/usr/bin/socat -L/run/modem-%i.pid -d -d -s -lf /var/log/modem-%i.log TCP4-LISTEN:23,bind=127.0.0.1 PTY,link=/dev/%i,raw,echo=0,b57600 
+
+[Install]
+WantedBy=multi-user.target
+MODEM_SRV
+  echo done.
+
+  # as the virtual TTy is only created by socat when DOSBox
+  # establishes a modem connection PPPD service can only
+  # be started after the TTY has been created.
+  sudo tee /etc/systemd/system/pppd@.path >/dev/null <<PPP_MON
+[Unit]
+Description=Start PPP, if the given (SoCAT) TTY is present
+
+[Path]
+PathExists=/dev/%i
+
+[Install]
+WantedBy=multi-user.target
+PPP_MON
+
+  # before PPPD will be started a nice modem dialing sound will
+  # be played :) At this point NAT will be activated for all
+  # interfaces and connection tracking roles to allow active
+  # FTP (req. by the GEOS FTP client) are aplied.
+  # 
+  sudo tee /etc/systemd/system/pppd@.service >/dev/null <<PPP_SRV
+[Unit]
+Description=Start PPPD for the given TTY
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/default/pppd-%i.conf
+PIDFile=/run/pppd%i.pid
+ExecStartPre=-/usr/bin/play /usr/local/share/sound/dialing.ogg
+ExecStartPre=/sbin/iptables -t nat -A POSTROUTING -s \$PPPD_NETWORK -j MASQUERADE
+ExecStartPre=/sbin/iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+ExecStartPre=/sbin/iptables -A PREROUTING -t raw -p tcp --dport 21 -j CT --helper ftp
+ExecStart=/usr/sbin/pppd /dev/%i \$PPPD_CONNECTION \$PPPD_DEFAULTS
+PPP_SRV
+
+  # PPPD configuration is different for any serial line and
+  # the IP ranges need to be modified. 
+  sudo tee /etc/default/pppd-ttyN0.conf >/dev/null <<PPP_CFG
+PPPD_DEFAULTS=nodetach local noauth
+PPPD_NETWORK=192.168.6.0/30
+PPPD_CONNECTION=57600 192.168.6.1:192.168.6.2
+PPP_CFG
+
+  # load kernel modules to allow active FTP
+  grep -e 'nf_conntrack_ftp|nf_nat_ftp' /etc/modules-load.d/modules.conf \
+  || sudo tee -a /etc/modules-load.d/modules.conf >/dev/null <<FTP_MOD
+nf_conntrack_ftp
+nf_nat_ftp
+FTP_MOD
+
+  # enable routing
+  sudo tee /etc/sysctl.d/98-ppd.conf >/dev/null <<PPP_SYSCTL
+net.ipv4.ip_forward=1
+PPP_SYSCTL
+
+  # reload system configuration and enable/start services
+  sudo sysctl -p /etc/sysctl.conf
+  sudo modprobe nf_nat_ftp
+  sudo systemctl daemon-reload
+  sudo systemctl enable modem@ttyN0
+  sudo systemctl start modem@ttyN0
+  sudo systemctl enable pppd@ttyN0.path
+  sudo systemctl start pppd@ttyN0.path
+
+  # Configuring DOSBox with modem on COM1
+  sed -i 's/serial1 =.*/serial1 = modem listenport:23/' $(dosbox -printconf)
+  return 0
+}
+
+config_login()
+{
+  :  
+}
+
+config_usbmount()
+{
+  # add the pi user to the disk group
+  sudo usermod -aG disk $DOSBOX_USER  
+  # set mount option to allow write acces
+  sudo sed -i 's/^FS_MOUNTOPTIONS=.*/FS_MOUNTOPTIONS="-fstype=vfat,gid=disk,dmask=0007,fmask=0117"/' \
+	  /etc/usbmount/usbmount.conf
+  # mybe not required, see: https://github.com/rbrito/usbmount/issues/25
+  #sudo sed -i 's/MountFlags=slave/MountFlags=shared/g' \
+  #	  /lib/systemd/system/systemd-udevd.service 
+}
+
+install_midi()
+{
+  # route midi output to timidity
+  sed -i 's/midiconfig\s*=.*/midiconfig=128:0/' $($DOSBOX -printconf)
+}
+
+### Main ###
+touch=$LOG_FILE
+calc_wt_size
+say_hello || exit 1
+install_pkg $PKG_LIST >>$LOG_FILE 2>&1 || exit 2
+install_dosbox_modem  >>$LOG_FILE 2>&1 || exit 3
+whiptail --backtitle "$BT" --title "Install GEOS4Dosbian" --msgbox \
+  "Installation finished. Please reboot the system!"
+rm $LOG_FILE

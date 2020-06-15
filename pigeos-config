@@ -1,0 +1,82 @@
+#!/bin/bash
+# This script allows to maintain Pi/GEOS in a easy manner
+
+DIAL=$(which whiptail)
+BTITLE="Pi/GEOS SETUP PROGRAM, (C) 2020 GeoMegatrends"
+
+info_msg() 	{ $DIAL --backtitle "$BTITLE" --title "INFO" --msgbox  "$1" 8 50; }
+err_msg()  	{ $DIAL --backtitle "$BTITLE" --title "ERROR" --msgbox "$1" 8 50; }
+yesno_dlg() 	{ $DIAL --backtitle "$BTITLE" --title "CONFIRMATION" --yesno  "$1" 8 50; }
+
+menu_dlg() {
+  local title=$1; shift
+  local text=$1; shift
+  local items=("$@")
+  local sel=$($DIAL --backtitle "$BTITLE" --title "${title}" \
+	  --menu "${text}" 20 76 $((${#items[@]}/2)) "${items[@]}" \
+          3>&1 1>&2 2>&3)
+  [[ $? -eq 0 ]] && echo $sel || return 1
+}
+
+### Main Menue #############################################################
+main_title="Main Menue"
+main_text="Pi/GEOS Setup Utilities & Raspberry Pi Software Cconfiguration Tool"
+main_options=(\
+  "Basic"	"Basic DOS configuration" \
+  "Advanced"	"Advanced emulator setting" \
+  "System"	"Advanced system setting (raspi-config)" \
+  "Default"	"Reset to the default configuration" \
+  "Hard Disk"	"Hard disk/image management" \
+  "Reboot"	"Reboot the system and activate changes" \
+  "Exit"	"Exit setup and switch over to DOS")
+   
+main_menu()
+{
+  local selection
+  while :; do
+    selection=$(menu_dlg "${main_title}" "${main_text}" "${main_options[@]}")
+    case $selection in
+      Basic)	basic_menu ;;
+      Advanced)	true ;;
+      System)	sudo raspi-config ;;
+      Default)	true ;;
+      Hard*)	info_msg "Function not yet implemented :(" ;;
+      Reboot)	sudo shutdown -r now ;;
+      Exit)	sudo chvt 1 ;;
+      *)	err_msg "Upps. Got an unexpected selection."
+    esac
+  done
+}
+
+
+### Basic Menue #############################################################
+basic_title="Basic Menue"
+basic_text="Change DOS Enviroment settings"
+basic_options=(\
+  "Date/Time"		"$(date)" \
+  "Hard Disk C: Image"	"ENSDEMO" \
+  "Hard Disk D: Image"	"USB0" \
+  "Floppy Drive A:"	"not installed" \
+  "Floppy Drive B:"	"not installed" \
+  "Keyboard"		"German" )
+
+basic_menu()
+{
+  local selection
+  while :; do
+    selection=$(menu_dlg "${basic_title}" "${basic_text}" "${basic_options[@]}")
+    case $selection in
+      Date*)		true ;;
+      Hard*C*)		true ;;
+      Hard*D*)	 	true ;;
+      Floppy*A*)	true ;;
+      Floppy*B*)	info_msg "Function not yet implemented :(" ;;
+      Keyboard)		info_msg "Not implemented yes" ;;
+      *)		break
+    esac
+  done
+}
+
+### Main ###
+	
+main_menu
