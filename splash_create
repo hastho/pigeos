@@ -1,0 +1,35 @@
+#!/bin/bash
+
+splash_gen()
+{
+  local speed="$1"
+  local mimg="$2"
+  local simg="${3:-None}"
+  local msg="\
+PIGEOS ALPHA Rev 0.1 $(date '+%D')\n\
+\n\
+80486DX2, CPU at ${speed}MHz\n\
+Memory Test : 16384K OK\n\
+\n\
+Raspberry Pi Plug and Play GEOS emulator extension\n\
+Copyright \(C\) 2020, Thomas Hass\n\
+http://www.thobipix.de\n\
+\n\
+Initialize Plug and Play Options ...\n\
+Opt-01: Raspbian Linux $(cat /etc/debian_version)\n\
+Opt-02: DOSBox 0.74 SVN\n\
+PnP init Completed\n\
+  Detected HDD Primary Master ... ${mimg}\n\
+  Detected HDD Primary Slave  ... ${simg}\n\
+\n\
+\n\
+\n\
+\n\
+Press Ctrl+Alt+F2 to enter SETUP\n\
+Please wait, Raspbian is being booted ..."
+
+  convert /usr/local/share/pigeos/splash_tpl.png -font Px437-PhoenixEGA-8x16 -pointsize 28 -fill '#e7e7e7' -annotate +33+170 "$msg" splash.png
+}
+
+### MAIN ###
+splash_gen 50 ENSDEMO402
