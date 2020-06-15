@@ -1,8 +1,8 @@
 #!/bin/bash
-# This script allows to maintain Pi/GEOS in a easy manner
+# This script allows the user to maintain Pi/GEOS in an easy manner
 
-DIAL=$(which whiptail)
-BTITLE="Pi/GEOS SETUP PROGRAM, (C) 2020 GeoMegatrends"
+DIAL=$(which whiptail || which dialog)
+BTITLE="Pi/GEOS SETUP configuration tool v0.1"
 
 info_msg() 	{ $DIAL --backtitle "$BTITLE" --title "INFO" --msgbox  "$1" 8 50; }
 err_msg()  	{ $DIAL --backtitle "$BTITLE" --title "ERROR" --msgbox "$1" 8 50; }
