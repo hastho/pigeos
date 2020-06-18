@@ -1,12 +1,16 @@
 #!/bin/bash
 DOSBOX=/usr/local/bin/dosbox
 DOSBOX_USER=$(who | grep tty1 | cut -d\  -f 1)
-BT="Pi/GEOS installer (c) 2020 by Thomas Haß"
+BT="Pi/GEOS installer v0.1"
 LOG_FILE=/tmp/$(basename $0).log
-PKG_LIST="iptables ppp socat usbmount timidity-daemon fbi imagemagick"
+PKG_LIST="iptables ppp socat usbmount timidity-daemon fbi imagemagick jed"
+# list of external files used by this script
+URL_DOSBOX=""
 URL_DIALING_SOUND="https://upload.wikimedia.org/wikipedia/commons/3/33/Dial_up_modem_noises.ogg"
-URL_PCGEOS=""
+URL_ENSDEMO=""
 URL_FONTS="https://int10h.org/oldschool-pc-fonts/download/ultimate_oldschool_pc_font_pack_v1.01.zip"
+URL_SPLASH="https://raw.githubusercontent.com/hastho/pigeos/master/gfx/splash_tpl.png"
+URL_CONFIG_SCRIPT=""
 
 
 calc_wt_size() {
@@ -113,10 +117,10 @@ install_splash_screen() {
   # screen and provides some information about the
   # current Pi/GEOS configuration.
   sudo mkdir -p /usr/local/lib/pigeos 2>&1
-  download_file https://raw.githubusercontent.com/hastho/pigeos/master/gfx/splash_tpl.png \
+  download_file $URL_SPLASH \
     /tmp/splash_tpl.png 2>&1
   sudo mv /tmp/splash_tpl.png  /usr/local/share/pigeos/splash_tpl.png 2>&1
-  download_file https://int10h.org/oldschool-pc-fonts/download/ultimate_oldschool_pc_font_pack_v1.01.zip \
+  download_file $URL_FONTS \
     /tmp/ultimate_oldschool_pc_font_pack_v1.01.zip 2>&1
   unzip -jod /tmp /tmp/ultimate_oldschool_pc_font_pack_v1.01.zip '*/Px437_PhoenixEGA_8x16.ttf' 2>&1
   sudo mkdir -p /usr/share/fonts/truetype/oldschool_pc_font 2>&1
@@ -252,7 +256,10 @@ config_usbmount()
 	  /etc/usbmount/usbmount.conf
   # mybe not required, see: https://github.com/rbrito/usbmount/issues/25
   #sudo sed -i 's/MountFlags=slave/MountFlags=shared/g' \
-  #	  /lib/systemd/system/systemd-udevd.service 
+  # 	  /lib/systemd/system/systemd-udevd.service
+  # usbmount failed without this setting
+  sudo sed -i 's/^PrivateMounts=.*/PrivateMounts=no/' \
+          /lib/systemd/system/systemd-udevd.service  
 }
 
 config_midi()
@@ -278,10 +285,11 @@ calc_wt_size
 #say_hello 				|| exit 1
 #enable_ssh				|| exit 2
 #install_pkg $PKG_LIST >>$LOG_FILE 2>&1 	|| exit 3
-install_splash_screen
+#install_splash_screen
 #install_dosbox_modem                    || exit 4
-#config_usbmount				|| exit 5
+config_usbmount				|| exit 5
 #config_keyb				|| exit 6
 #config_midi				|| exit 7
 
 rm $LOG_FILE
+
