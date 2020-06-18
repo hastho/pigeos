@@ -2,10 +2,12 @@
 DOSBOX=/usr/local/bin/dosbox
 DOSBOX_USER=$(who | grep tty1 | cut -d\  -f 1)
 BT="Pi/GEOS installer (c) 2020 by Thomas Haß"
-LOG_FILE=/tmp/$0.log
-PKG_LIST="iptables ppp socat usbmount timidity-daemon imagemagick"
+LOG_FILE=/tmp/$(basename $0).log
+PKG_LIST="iptables ppp socat usbmount timidity-daemon fbi imagemagick"
 URL_DIALING_SOUND="https://upload.wikimedia.org/wikipedia/commons/3/33/Dial_up_modem_noises.ogg"
 URL_PCGEOS=""
+URL_FONTS="https://int10h.org/oldschool-pc-fonts/download/ultimate_oldschool_pc_font_pack_v1.01.zip"
+
 
 calc_wt_size() {
   # NOTE: it's tempting to redirect stderr to /dev/null, so supress error
@@ -15,10 +17,11 @@ calc_wt_size() {
   WT_WIDTH=$(tput cols)
 
   if [ -z "$WT_WIDTH" ] || [ "$WT_WIDTH" -lt 60 ]; then
-    WT_WIDTH=80
-  fi
-  if [ "$WT_WIDTH" -gt 178 ]; then
+    WT_WIDTH=78
+  elif [ "$WT_WIDTH" -gt 178 ]; then
     WT_WIDTH=120
+  else
+    WT_WIDTH=$(($WT_WIDTH-2))
   fi
   WT_MENU_HEIGHT=$(($WT_HEIGHT-7))
 }
@@ -41,23 +44,86 @@ Installation abotrted by the user."
 download_file() {
   wget --progress=dot $1 -O $2 2>&1 \
   | sed -un 's/.* \([0-9]\+\)% .*/\1/p' \
-  | whiptail --gauge "Download" 7 50 0
+  | whiptail --gauge "Downloading: $1" 7 $WT_WIDTH 0
 }
 
 install_pkg() {
   sudo apt-get -y install $*
 }
 
+splash_gen()
+{
+  whiptail --infobox "Creating splash screen image" $WT_HEIGHT $WT_WIDTH
+  # determinate emulation speed based on the used RasPi
+  # Pi 1
+  if grep -q "^Revision\s*:\s*00[0-9a-fA-F][0-9a-fA-F]$" /proc/cpuinfo; then
+    cpu="80486DX"; speed="20"
+  elif grep -q "^Revision\s*:\s*[ 123][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]0[0-36][0-9a-fA-F]$" /proc/cpuinfo ; then
+    cpu="80486DX"; speed="20"
+  # Pi 2
+  elif grep -q "^Revision\s*:\s*[ 123][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]04[0-9a-fA-F]$" /proc/cpuinfo ; then
+    cpu="80486DX"; speed="33"
+  # Pi Zero
+  elif grep -q "^Revision\s*:\s*[ 123][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]0[9cC][0-9a-fA-F]$" /proc/cpuinfo ; then
+    cpu="80486DX"; speed="20"
+  # Pi 3
+  elif grep -q "^Revision\s*:\s*[ 123][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]08[0-9a-fA-F]$" /proc/cpuinfo ; then
+    cpu="80486DX2"; speed="50"
+  # Pi 3+
+  elif grep -q "^Revision\s*:\s*[ 123][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]08[0-9a-fA-F]$" /proc/cpuinfo ; then
+    cpu="80486DX2"; speed="66"
+  # Pi 4
+  elif grep -q "^Revision\s*:\s*[ 123][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]11[0-9a-fA-F]$" /proc/cpuinfo ; then
+    cpu="80486DX4"; speed="100"
+  else
+    cpu="UNKNOWN"; speed="??"
+  fi
+  local mimg="${1:-None}"
+  local simg="${2:-None}"
+  local msg="\
+PIGEOS ALPHA Rev 0.1 $(date '+%D')\n\
+\n\
+${cpu}, CPU at ${speed}MHz\n\
+Memory Test : 16384K OK\n\
+\n\
+Raspberry Pi Plug and Play PC/GEOS extension\n\
+Copyright \(C\) 2020, Thomas Hass\n\
+http://www.thobipix.de\n\
+\n\
+Initialize Plug and Play Options ...\n\
+Opt-01: Raspbian Linux $(cat /etc/debian_version)\n\
+Opt-02: DOSBox 0.74 SVN\n\
+PnP init Completed\n\
+  Detected HDD Primary Master ... ${mimg}\n\
+  Detected HDD Primary Slave  ... ${simg}\n\
+\n\
+\n\
+\n\
+\n\
+Press Ctrl+Alt+F2 to enter SETUP-config\n\
+Please wait, Raspbian is being booted ..."
+
+  sudo convert /usr/local/share/pigeos/splash_tpl.png \
+   -font Px437-PhoenixEGA-8x16 -pointsize 28 -fill '#e7e7e7' -annotate +33+170 "$msg" \
+   /usr/local/lib/pigeos/splash.png
+}
+
 install_splash_screen() {
   # This custom splash screen simluates a PC BIOS
   # screen and provides some information about the
   # current Pi/GEOS configuration.
-  # Will be upd. by pigeos-config
-  echo -n "Creating splash screen service "
-  sudo mkdir /usr/local/lib/pigeos 2>/dev/null
+  sudo mkdir -p /usr/local/lib/pigeos 2>&1
   download_file https://raw.githubusercontent.com/hastho/pigeos/master/gfx/splash_tpl.png \
-    /tmp/splash_tpl.png
-  sudo mv /tmp/splash_tpl.png  /usr/local/share/pigeos/splash_tpl.png
+    /tmp/splash_tpl.png 2>&1
+  sudo mv /tmp/splash_tpl.png  /usr/local/share/pigeos/splash_tpl.png 2>&1
+  download_file https://int10h.org/oldschool-pc-fonts/download/ultimate_oldschool_pc_font_pack_v1.01.zip \
+    /tmp/ultimate_oldschool_pc_font_pack_v1.01.zip 2>&1
+  unzip -jod /tmp /tmp/ultimate_oldschool_pc_font_pack_v1.01.zip '*/Px437_PhoenixEGA_8x16.ttf' 2>&1
+  sudo mkdir -p /usr/share/fonts/truetype/oldschool_pc_font 2>&1
+  sudo mv /tmp/Px437_PhoenixEGA_8x16.ttf /usr/share/fonts/truetype/oldschool_pc_font 2>&1
+  sudo fc-cache -f 2>&1
+  splash_gen 2>&1
+  whiptail --infobox "Creating splash screen service" $WT_HEIGHT $WT_WIDTH
   sudo tee /etc/systemd/system/splash_screen.service >/dev/null <<SPLASH_SCR
 [Unit]
 Description=Pi/GEOS splash screen service
@@ -74,9 +140,9 @@ StandardOutput=tty
 WantedBy=multi-user.target
 SPLASH_SCR
   # enable service
-  sudo systemctl daemon-reload
-  sudo systemctl enable splash_screen
-  sudo systemctl start splash_screen
+  sudo systemctl daemon-reload 2>&1
+  sudo systemctl enable splash_screen 2>&1
+  sudo systemctl start splash_screen 2>&1
   return 0
 }
 
@@ -207,14 +273,15 @@ config_keyb()
 }
 
 ### Main ###
-touch=$LOG_FILE
+>$LOG_FILE
 calc_wt_size
 #say_hello 				|| exit 1
 #enable_ssh				|| exit 2
 #install_pkg $PKG_LIST >>$LOG_FILE 2>&1 	|| exit 3
-install_dosbox_modem                    || exit 4
-config_usbmount				|| exit 5
-config_keyb				|| exit 6
-config_midi				|| exit 7
+install_splash_screen
+#install_dosbox_modem                    || exit 4
+#config_usbmount				|| exit 5
+#config_keyb				|| exit 6
+#config_midi				|| exit 7
 
 rm $LOG_FILE
