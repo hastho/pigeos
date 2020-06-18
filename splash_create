@@ -2,8 +2,8 @@
 
 splash_gen()
 {
-  local speed="$1"
-  local mimg="$2"
+  local speed="${1:-66}"
+  local mimg="${2:-None}"
   local simg="${3:-None}"
   local msg="\
 PIGEOS ALPHA Rev 0.1 $(date '+%D')\n\
@@ -28,7 +28,9 @@ PnP init Completed\n\
 Press Ctrl+Alt+F2 to enter SETUP\n\
 Please wait, Raspbian is being booted ..."
 
-  convert /usr/local/share/pigeos/splash_tpl.png -font Px437-PhoenixEGA-8x16 -pointsize 28 -fill '#e7e7e7' -annotate +33+170 "$msg" splash.png
+  sudo convert /usr/local/share/pigeos/splash_tpl.png \
+   -font Px437-PhoenixEGA-8x16 -pointsize 28 -fill '#e7e7e7' -annotate +33+170 "$msg" \
+   /usr/local/lib/pigeos/splash.png
 }
 
 ### MAIN ###
