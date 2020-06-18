@@ -2,7 +2,7 @@
 DOSBOX=/usr/local/bin/dosbox
 DOSBOX_USER=$(who | grep tty1 | cut -d\  -f 1)
 BT="Pi/GEOS installer (c) 2020 by Thomas Haß"
-LOG_FILE=/tmp/geos4disbian.log
+LOG_FILE=/tmp/$0.log
 PKG_LIST="iptables ppp socat usbmount timidity-daemon imagemagick"
 URL_DIALING_SOUND="https://upload.wikimedia.org/wikipedia/commons/3/33/Dial_up_modem_noises.ogg"
 URL_PCGEOS=""
@@ -54,6 +54,10 @@ install_splash_screen() {
   # current Pi/GEOS configuration.
   # Will be upd. by pigeos-config
   echo -n "Creating splash screen service "
+  sudo mkdir /usr/local/lib/pigeos 2>/dev/null
+  download_file https://raw.githubusercontent.com/hastho/pigeos/master/gfx/splash_tpl.png \
+    /tmp/splash_tpl.png
+  sudo mv /tmp/splash_tpl.png  /usr/local/share/pigeos/splash_tpl.png
   sudo tee /etc/systemd/system/splash_screen.service >/dev/null <<SPLASH_SCR
 [Unit]
 Description=Pi/GEOS splash screen service
@@ -185,18 +189,32 @@ config_usbmount()
   #	  /lib/systemd/system/systemd-udevd.service 
 }
 
-install_midi()
+config_midi()
 {
   # route midi output to timidity
   sed -i 's/midiconfig\s*=.*/midiconfig=128:0/' $($DOSBOX -printconf)
 }
 
+enable_ssh()
+{
+   sudo /usr/bin/raspi-config nonint do_ssh 0
+}
+
+config_keyb()
+{
+  local lang=${1:-de}
+  sudo /usr/bin/raspi-config nonint do_configure_keyboard $lang
+}
+
 ### Main ###
 touch=$LOG_FILE
 calc_wt_size
-say_hello || exit 1
-install_pkg $PKG_LIST >>$LOG_FILE 2>&1 || exit 2
-install_dosbox_modem  >>$LOG_FILE 2>&1 || exit 3
-whiptail --backtitle "$BT" --title "Install GEOS4Dosbian" --msgbox \
-  "Installation finished. Please reboot the system!"
+#say_hello 				|| exit 1
+#enable_ssh				|| exit 2
+#install_pkg $PKG_LIST >>$LOG_FILE 2>&1 	|| exit 3
+install_dosbox_modem                    || exit 4
+config_usbmount				|| exit 5
+config_keyb				|| exit 6
+config_midi				|| exit 7
+
 rm $LOG_FILE
