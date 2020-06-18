@@ -1,0 +1,39 @@
+#!/bin/bash
+# manage HDD images used by Pi/GEOS
+
+# creates an image of the given size in the current users HDD image folder
+create()
+{
+  local isize="$2"
+  local iname="$1"
+  shift; shift
+  local idescr="$*"
+  local ipath=$HOME/hdd_images
+  if [ ! -f ${ipath}/${iname}.img -a -d $ipath ] ; then
+    # calculate number of cylinders
+    cyl=$(($isize*128/64))
+    # create a sparse file to save disk space
+    dd if=/dev/zero bs=512 count=1 seek=$((63*16*$cyl-1)) of=${ipath}/${iname}.img
+    # add meta data
+    echo "$idescr" > ${ipath}/${iname}.inf
+    # prepare the image to be used with mtools
+    echo -e "drive c: file=\"${ipath}/${iname}.img\" partition=1\n" >$HOME/.mtoolsrc
+    # create a DOS partition and file systems in the image
+    mpartition -I   -s 63 -t $cyl -h 16 c:
+    mpartition -cvp -s 63 -t $cyl -h 16 c:
+    mformat c:
+  else
+    return 1
+  fi
+}
+
+copy()
+{
+  local iname="$1";  shift
+  local ipath=$HOME/hdd_images
+  echo -e "dribe c: file=\"${ipath}/${iname}.img\" partition=1\n" >$HOME/.mtoolsrc
+  mcopy -bsm "$*" c:
+}
+
+### MAIN #######################
+"$@"
