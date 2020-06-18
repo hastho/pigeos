@@ -1,0 +1,15 @@
+#!/bin/bash
+set -x
+
+. $HOME/.pigeos
+
+if [ -x ${DOSBOX_BIN} -a -w $HOME/hdd_images/${PIMAGE}.img ] ; then
+  c_args="imgmount c $HOME/hdd_images/${PIMAGE}.img -t hdd"
+  if [ -w ${SIMAGE}.img ] ; then
+    d_args="imgmount d $HOME/hdd_images/${SIMAGE}.img -t hdd"
+  else
+    d_args="echo"
+  fi
+  $DOSBOX_BIN -c "$c_args" -c "$d_args" -c "C:" -c "AUTOEXEC"
+fi
+  
