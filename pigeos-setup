@@ -244,7 +244,11 @@ PPP_SYSCTL
 
 config_login()
 {
-  :  
+  sudo tee /etc/systemd/system/getty@tty1.service.d/autologin.conf >/dev/null <<AUTO_LOGIN
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty --skip-login --noclear --noissue --login-options "-f pi" %I \$TERM
+AUTO_LOGIN  
 }
 
 config_usbmount()
