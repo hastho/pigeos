@@ -1,15 +1,45 @@
 #!/bin/bash
-set -x
-
-. $HOME/.pigeos
-
-if [ -x ${DOSBOX_BIN} -a -w $HOME/hdd_images/${PIMAGE}.img ] ; then
-  c_args="imgmount c $HOME/hdd_images/${PIMAGE}.img -t hdd"
-  if [ -w ${SIMAGE}.img ] ; then
-    d_args="imgmount d $HOME/hdd_images/${SIMAGE}.img -t hdd"
-  else
-    d_args="echo"
+# set -x
+# when exec this script from the profile no keyboard is available
+# therefore DOSBox & pigeos-config are running in an endless loop
+# until pigeos-config returns a non zero exit code (e.g. DEBUG=1)
+while :; do
+  source $HOME/.pigeos
+  # check for min configuration
+  if [ -x ${DOSBOX_BIN} -a -w ${HDC_IMAGE} ] ; then
+      c_args="imgmount c ${HDC_IMAGE} -t hdd"
+    # mount other drives when an image present 
+    if [ -w ${FDA_IMAGE} ] ; then
+      a_args="imgmount a ${HDD_IMAGE} -t floppy"
+    else
+      a_args="echo off"
+    fi
+    if [ -w ${FDB_IMAGE} ] ; then
+      b_args="imgmount b ${HDD_IMAGE} -t floppy"
+    else
+      b_args="echo off"
+    fi
+	if [ -w ${HDD_IMAGE} ] ; then
+      d_args="imgmount d ${HDD_IMAGE} -t hdd"
+    else
+      d_args="echo off"
+    fi
+	if [ "$MOUNT_USB" -eq 1 ] ; then
+      y_args="mount y /media/usb"
+	else
+	  y_args="echo off"
+	fi
+	$DOSBOX_BIN \
+	  -c "$a_args" \
+	  -c "$b_args" \
+  	  -c "$c_args" \
+	  -c "$d_args" \
+	  -c "$y_args" \
+	  -c "C:" -c "AUTOEXEC" \
+	1>/tmp/loader.log 2>&1
   fi
-  $DOSBOX_BIN -c "$c_args" -c "$d_args" -c "C:" -c "AUTOEXEC"
-fi
+  # run SETUP-config if something went wrong
+  pigeos-config
+  [ $? -ne 0 ] && break
+done
   

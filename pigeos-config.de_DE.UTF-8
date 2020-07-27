@@ -1,0 +1,29 @@
+#!/bin/bash
+### Main Menue #####################################################################
+main_title="Haupt Menü"
+main_text="Pi/GEOS Konfigurationsoption  wählen oder Raspberry Pi Konfigurations-Tool starten."
+main_options=(\
+  "Basic"		"Basiskonfiguration" \
+  "Advanced"	"Erweiterte Emulatoreinstellungen" \
+  "System"		"Raspbian Systemeinstellungen (raspi-config)" \
+  "Default"		"Sytem auf Standardkonfiguration zurücksetzen" \
+  "Hard Disk "	"Festplattenimages verwalten" \
+  "Write"		"Änderungen sichern und System neu starten" \
+  "Abort"		"Änderungen verwerfen und System neu starten")
+main_abort_msg="Änderungen verwerfen und SETUP beenden?"
+
+### Basic Menue ####################################################################
+basic_title="Baiskonfigurations Menü"
+basic_text="Anpassung grundlegender DOS- und Ugebungseinstellungen. Drücke ESC um zum Hauptmenü zurückzukehren."
+basic_options=(\
+  "Date/Time"			"$(date '+%F %R')" \
+  "Hard Disk C: Image "	"$(basename ${HDC_IMAGE^^} .IMG)" \
+  "Hard Disk D: Image "	"$(basename ${HDD_IMAGE^^} .IMG)" \
+  "Floppy Drive A:"		"$(basename ${FDA_IMAGE^^} .IMG)" \
+  "Floppy Drive B:"		"$(basename ${FDB_IMAGE^^} .IMG)" \
+  "Keyboard mapping"	"${LANG%_*}" )
+
+### ImageSelection Menue ###########################################################
+imgsel_title="FDD/HHD Abbild Menü"
+imgsel_text="Bitte wähle ein Disketten-bzw. Festplattenabbild. Drück ENTER für detailierte Inforamtionen und um das Abbild auszuwählen. Drücke ESC um zum Hauptmenü zurückzukehren."
+imgsel_conf="Auswahl bestätigen oder abbrechen?"

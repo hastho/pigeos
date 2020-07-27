@@ -1,0 +1,13 @@
+#!/bin/bash
+### Main Menue #############################################################
+main_title="Main Menue"
+main_text="Select Pi/GEOS configuration option or launch the Raspberry Pi Software Cconfiguration Tool."
+main_options=(\
+  "Basic"		"Basic DOS configuration" \
+  "Advanced"	"Advanced emulator setting" \
+  "System"		"Advanced system setting (raspi-config)" \
+  "Default"		"Reset to the default configuration" \
+  "Hard Disk"	"Hard disk/image management" \
+  "Write"		"Write changes and reboot the system" \
+  "Abort"		"Revert changes and reboot the system")
+   
