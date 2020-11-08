@@ -2,8 +2,7 @@
 # manage HDD images used by Pi/GEOS
 
 # creates an image of the given size in the current users HDD image folder
-create()
-{
+create() {
   local isize="$2"
   local iname="$1"
   shift; shift
@@ -27,11 +26,10 @@ create()
   fi
 }
 
-copy()
-{
+copy() {
   local iname="$1";  shift
   local ipath=$HOME/hdd_images
-  echo -e "dribe c: file=\"${ipath}/${iname}.img\" partition=1\n" >$HOME/.mtoolsrc
+  echo -e "drive c: file=\"${ipath}/${iname}.img\" partition=1\n" >$HOME/.mtoolsrc
   mcopy -bsm "$*" c:
 }
 
