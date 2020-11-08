@@ -1,5 +1,5 @@
 #!/bin/bash
-CONFIG=$HOME/.pigeos
+[ -z ${CONFIG+x}] && CONFIG=$HOME/.pigeos
 
 update()
 {
@@ -63,5 +63,5 @@ Please wait, Raspbian is being booted ..."
    /usr/local/lib/pigeos/splash.png
 }
 ### MAIN ###########################################################################
-[ -r $CONFIG ] && source $CONFIG
+[ -r ${CONFIG ] && source $CONFIG
 $@
