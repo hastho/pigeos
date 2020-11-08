@@ -10,7 +10,7 @@ DOSBOX_USER=$(who | grep tty1 | cut -d\  -f 1)
 PIGEOS_LOADER=/usr/local/bin/pigeos-loader
 PIGEOS_CONFIG=/usr/local/bin/pigeos-config
 # packages Pi/GEOS depends on:
-PKG_LIST="iptables ppp socat usbmount timidity-daemon fbi imagemagick jed"
+PKG_LIST="iptables ppp socat usbmount timidity-daemon fbi imagemagick jed pv"
 # list of external files used by this script
 URL_DOSBOX=""
 URL_DIALING_SOUND="https://upload.wikimedia.org/wikipedia/commons/3/33/Dial_up_modem_noises.ogg"
