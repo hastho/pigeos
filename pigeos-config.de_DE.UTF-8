@@ -27,3 +27,20 @@ basic_options=(\
 imgsel_title="FDD/HHD Abbild Menü"
 imgsel_text="Bitte wähle ein Disketten-bzw. Festplattenabbild. Drück ENTER für detailierte Inforamtionen und um das Abbild auszuwählen. Drücke ESC um zum Hauptmenü zurückzukehren."
 imgsel_conf="Auswahl bestätigen oder abbrechen?"
+
+### ImageMgmt Menue ################################################################
+imgmgmt_title="FDD/HDD Abbild Verwaltungs Menü"
+imgmgmt_text="Hinzufügen, Erstellen oder Löschen von Festplattenabbildern. Wähle eine Aktion oder drücke ESC um zum Hauptmenü zurückzukehren."
+imgmgmt_options=(\
+  "Create image "     "Neues Abbild erstellen" \
+  "Delete image "     "Abbild löschen" \
+  "Download image "   "Abbild aus dem Netz laden" \
+  "Export image "     "Abbild auf ein USB-Lw sichern" )
+imgmgmt_del_confirm="Gewähltes Abbild wirklich löschen? Alle Daten gehen verlogen!"
+imgmgmt_download="Bitte gib eine URL zum zu installierenden Abbild ein (http(s):// oder file://)"
+imgmgmt_invalid_url="Die angegebene URL ist ungültig."
+imgmgmt_unpack_err="Beim Entpacken des Abbildes ist ein Fehler aufgetreten."
+imgmgmt_unpack_suc="Abbild erfolgreich geladen. Bitte in Basiskonfigurations Menü um Abbild zu aktivieren."
+imgmgmt_exp_err="Das Abbild konnte nicht exportiert werden. Bitte sicherstellen, dass ein vFAT formatiertes USB-Lw angeschlossen wurde."
+imgmgmt_usb_not_present="Es wurde keine USB-Datenträger gefunden. Operation nicht möglich."
+imgmgmt_image_size="Bitte die Größe des zu erstellenden Abbildes im MiB an."
