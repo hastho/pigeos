@@ -6,60 +6,89 @@ BTITLE="Pi/GEOS SETUP and configuration tool v0.1"
 CONFIG=$HOME/.pigeos
 FONT=/usr/share/consolefonts/Uni2-TerminusBold24x12.psf.gz
 
-read_conf() { source ${CONFIG}.new; source $MENU_TEXT; }
+## Configuration functions ################################
+conf_get()   { echo  ${CONFIG}.new; }
+conf_new()   { cp -p ${CONFIG} ${CONFIG}.new; }
+conf_save()  { mv    ${CONFIG}.new ${CONFIG}; pigeos-splash update; }
+conf_abort() { rm    ${CONFIG}.new; }
+conf_reset() { dial_info "Sorry, this function hasn't been implemented yet."; }
 
-info_msg() 	{ $DIAL --backtitle "$BTITLE" --title "Information"  --msgbox  "$1" 8 50; }
-err_msg()  	{ $DIAL --backtitle "$BTITLE" --title "Error"        --msgbox "$1" 8 50; }
-yesno_dlg() 	{ $DIAL --backtitle "$BTITLE" --title "Confirmation" --yesno  "$1" 8 50; }
+## UI functions ###########################################
+dial_info()  { $DIAL --backtitle "$BTITLE" --title "Information"  --msgbox   "$1" 8 50; }
+dial_err()   { $DIAL --backtitle "$BTITLE" --title "Error"        --msgbox   "$1" 8 50; }
+dial_yesno() { $DIAL --backtitle "$BTITLE" --title "Confirmation" --yesno    "$1" 8 50; }
 
-menu_dlg() {
+dial_input() { 
+  local sel=$($DIAL --backtitle "$BTTILE" --title "${1}" \
+       --inputbox "$2" 8 76 "$3" \
+       3>&1 1>&2 2>&3)
+   [[ $? -eq 0 ]] && echo $sel || return 1
+}
+
+dial_menu()  {
   local title=$1; shift
   local text=$1; shift
   local items=("$@")
   local sel=$($DIAL --backtitle "$BTITLE" --title "${title}" \
-	  --menu "${text}" 20 76 $((${#items[@]}/2)) "${items[@]}" \
-	  3>&1 1>&2 2>&3)
+	   --menu "${text}" 20 76 $((${#items[@]}/2)) "${items[@]}" \
+	   3>&1 1>&2 2>&3)
   [[ $? -eq 0 ]] && echo $sel || return 1
 }
 
-main_menu()
-{
+## Helper functions #############################################
+file_download() {
+  wget --progress=dot "$1" -O "$2" 2>&1 \
+  | sed -un 's/.* \([0-9]\+\)% .*/\1/p' \
+  | $DIAL --backtitle "$BTITLE" --gauge "Downloading: $1" 8 76 0
+}
+
+file_archive() { 
+  local arc="$1"; shift 
+  local src="$@"
+  # compute number of allocated blocks to handle sparse files
+  local size=$(stat -c%b ${src} \
+    | awk 'BEGIN{sum=0}{sum=sum+$1*512}END{print sum}')
+  (tar cSf - ${src} | pv -n -s${size} | gzip >${arc}) 2>&1 \
+    | $DIAL --backtitle "$BTITLE" --gauge "Archiving: ${arc}" 8 76 0
+}
+
+## Main menu #####################################################
+main_menu() {
   local selection
   while :; do
-    read_conf
-    selection=$(menu_dlg "${main_title}" "${main_text}" "${main_options[@]}")
+    source $(conf_get); source $MENU_TEXT
+    selection=$(dial_menu "${main_title}" "${main_text}" "${main_options[@]}")
     case $selection in
       Basic)	basic_menu ;;
-      Advanced)	: ;;
-      System)	sudo raspi-config ;;
-      Default)	: ;;
-      Hard*)	info_msg "Function not yet implemented :(" ;;
+      Advanced)	advanced_menu ;;
+      System)	system_menu ;;
+      Default)	conf_reset ;;
+      Hard*)	imgmgmt_menu ;;
       Write)	return 0 ;;
-      *)		yesno_dlg "$main_abort_msg" && return 1 ;;
+      *)		dial_yesno "$main_abort_msg" && return 1 ;;
     esac
   done
 }
 
-basic_menu()
-{
+## Basic Menu #####################################################
+basic_menu() {
   local selection
   while :; do
-    read_conf
-	selection=$(menu_dlg "${basic_title}" "${basic_text}" "${basic_options[@]}")
+    source $(conf_get); source $MENU_TEXT
+	selection=$(dial_menu "${basic_title}" "${basic_text}" "${basic_options[@]}")
     case $selection in
       Date*)		true ;;
-      Hard*C*)		imgsel_menue hdc ;;
-      Hard*D*)	 	imgsel_menue hdd ;;
-      Floppy*A*)	imgsel_menue fda ;;
-      Floppy*B*)	imgsel_menue fdb ;;
-      Keyboard)		info_msg "Not implemented yes" ;;
+      Hard*C*)		imgsel_menu hdc ;;
+      Hard*D*)	 	imgsel_menu hdd ;;
+      Floppy*A*)	imgsel_menu fda ;;
+      Floppy*B*)	imgsel_menu fdb ;;
+      Keyboard)		keybrd_menu ;;
       *)		break
     esac
   done
 }
 
-imgsel_menue()
-{
+imgsel_menu() {
   local selection
   local imgsel_drv=${1}
   local imgsel_list=("NONE" "no image selected")
@@ -68,11 +97,11 @@ imgsel_menue()
   for f in ${imgsel_dir}/*.inf 
     do imgsel_list+=("$(basename $f .inf)" "$(head -1 $f)"); done
   # ask the user to choose one image
-  selection=$(menu_dlg "${imgsel_title}" "${imgsel_text}" "${imgsel_list[@]}")
+  selection=$(dial_menu "${imgsel_title}" "${imgsel_text}" "${imgsel_list[@]}")
   if [ "$selection" == "NONE" ]; then
-    sed -i "s#${imgsel_drv^^}_IMAGE=.*#${imgsel_drv^^}_IMAGE=NONE#" ${CONFIG}.new
+    sed -i "s#${imgsel_drv^^}_IMAGE=.*#${imgsel_drv^^}_IMAGE=NONE#" $(conf_get)
   elif [ ! -z "$selection" ]; then
-    # load multi line image desc into a single vaariable
+    # load multi line image desc into a single variable
 	local imgsel_inf=""
 	while read line 
 	  do imgsel_inf="${imgsel_inf}${line}\n"; done \
@@ -81,8 +110,84 @@ imgsel_menue()
 	  --yesno "${imgsel_inf}\n\n${imgsel_conf}" \
 	  $(($(echo -e "$imgsel_inf" | wc -l)+10)) 78
     if [ $? -eq 0 ]; then
-      sed -i "s#${imgsel_drv^^}_IMAGE=.*#${imgsel_drv^^}_IMAGE=${imgsel_dir}${selection}.img#" ${CONFIG}.new
+      sed -i "s#${imgsel_drv^^}_IMAGE=.*#${imgsel_drv^^}_IMAGE=${imgsel_dir}${selection}.img#" $(conf_get)
     fi
+  fi
+}
+
+keybrd_menu() { dial_info "Sorry, this function hasn't been implemented yet."; }
+
+## Advanced Menu ################################
+advanced_menu () { dial_info "Sorry, this function hasn't been implemented yet."; }
+
+## System menu ##################################
+system_menu () { sudo raspi-config; }
+
+## ImageMgmt Menu ###############################
+imgmgmt_menu() {
+  local selection
+  while :; do
+	selection=$(dial_menu "${imgmgmt_title}" "${imgmgmt_text}" "${imgmgmt_options[@]}")
+	case $selection in
+      Create*)		imgmgmt_create ;;
+      Delete*)		imgmgmt_delete ;;
+      Download*)	imgmgmt_download ;;
+      Export*)	    imgmgmt_export ;;
+      *)		    break
+    esac
+  done
+}
+
+imgmgmt_create() { 
+  local isize
+  local iname
+  local idesc
+  while :; do
+    isize=$(dial_input "Image size" "$imgmgmt_image_size" 512 || break)
+	iname=$(dial_input "Image name" "" "" || break)
+	idesc=$(dial_input "Image description" "" "" || break)
+  done
+}
+
+imgmgmt_delete() { dial_info "Sorry, this function hasn't been implemented yet."; }
+
+imgmgmt_download() {
+  local url
+  local regex='^(https?|ftp)://[-A-Za-z0-9\+&@#/%?=~_|!:,.;]*[-A-Za-z0-9\+&@#/%=~_|]$'
+  url=$(dial_input "Dounwload" \
+                  "$imgmgmt_download" \
+				  "https://dl.dropbox.com/s/4v6gm5z0ynyft4k/ensdemo402.tgz")
+  if [[ $url =~ $regex ]]; then
+    file_download "$url" /tmp/imgmgmt_new_image.tgz
+	tar xzSf /tmp/imgmgmt_new_image.tgz -C ~/hdd_images
+	if [ $? -eq 0 ]; then
+	  dial_info "$imgmgmt_unpack_suc"
+	  rm /tmp/imgmgmt_new_image.tgz
+	else
+	  dial_err "$imgmgmt_unpack_err"
+	fi
+  else
+    dial_err "$imgmgmt_invalid_url"
+  fi
+}
+
+imgmgmt_export() { 
+  local selection
+  local imgsel_list=()
+  local imgsel_dir=$HOME/hdd_images/
+  # check for a mount usb disk
+  mount | grep -q '/media/usb0'
+  if [ $? -ne 0 ]; then
+    dial_err "$imgmgmt_usb_not_present"
+	return 1
+  fi
+  # build the list of available disk images
+  for f in ${imgsel_dir}/*.inf 
+    do imgsel_list+=("$(basename $f .inf)" "$(head -1 $f)"); done
+  # ask the user to choose one image
+  selection=$(dial_menu "${imgsel_title}" "${imgsel_text}" "${imgsel_list[@]}")
+  if [ ! -z "$selection" ]; then
+    file_archive /media/usb/${selection}.tgz ${imgsel_dir}/${selection}.i??
   fi
 }
 
@@ -90,27 +195,26 @@ imgsel_menue()
 # switch console font to get a aprox. 25x80 char resolution
 setfont $FONT
 # load menue language
-if 	 [ -r /usr/local/share/pigeos/pigeos-config.$LANG ]; then
-  MENU_TEXT=/usr/local/share/pigeos/pigeos-config.$LANG
-elif [ -r ./pigeos-config.$LANG ]; then
+if   [ -r ./pigeos-config.$LANG ]; then
   MENU_TEXT=./pigeos-config.$LANG
+elif [ -r /usr/local/share/pigeos/pigeos-config.$LANG ]; then
+  MENU_TEXT=/usr/local/share/pigeos/pigeos-config.$LANG
 else
-  err_msg "Unable to load language file!"
+  dial_err "Unable to load language file!"
   exit 254
 fi
 # changes made by the config tool are applied to a new file
-cp -p 	${CONFIG} 		${CONFIG}.new
+config_new
 # launch menue
 main_menu
 if [ $? -eq 0 ]; then
   # save changes and reboot
-  mv ${CONFIG}.new ${CONFIG}
-  pigeos-splash update 
+  conf_save
   sudo reboot
 else
-  # remove interim config file
+  # remove interim config file and return to DOSBox
   if [ $DEBUG -eq 0 ]; then
-    rm ${CONFIG}.new
+   conf_abort
   else
     exit 255 # to break the pigeos-loader loop
   fi
