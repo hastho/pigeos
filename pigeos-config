@@ -118,15 +118,30 @@ imgsel_menu() {
 keybrd_menu() { dial_info "Sorry, this function hasn't been implemented yet."; }
 
 ## Advanced Menu ################################
-advanced_menu () { dial_info "Sorry, this function hasn't been implemented yet."; }
+advanced_menu() { 
+  local selection
+  while :; do
+    source $(conf_get); source $MENU_TEXT
+	selection=$(dial_menu "${advanced_title}" "${advanced_text}" "${advanced_options[@]}")
+    case $selection in
+      SSH*)		    dial_info "Sorry, this function hasn't been implemented yet." ;;
+      CUPS*)		dial_info "Sorry, this function hasn't been implemented yet." ;;
+      Remote*)	 	dial_info "Sorry, this function hasn't been implemented yet." ;;
+      Share*print*)	dial_info "Sorry, this function hasn't been implemented yet." ;;
+      MIDI*)	    dial_info "Sorry, this function hasn't been implemented yet." ;;
+      *)		    break
+    esac
+  done
+}
 
 ## System menu ##################################
-system_menu () { sudo raspi-config; }
+system_menu() { sudo raspi-config; }
 
 ## ImageMgmt Menu ###############################
 imgmgmt_menu() {
   local selection
   while :; do
+    source $(conf_get); source $MENU_TEXT
 	selection=$(dial_menu "${imgmgmt_title}" "${imgmgmt_text}" "${imgmgmt_options[@]}")
 	case $selection in
       Create*)		imgmgmt_create ;;
@@ -152,11 +167,27 @@ imgmgmt_create() {
 imgmgmt_delete() { dial_info "Sorry, this function hasn't been implemented yet."; }
 
 imgmgmt_download() {
+  local selection
   local url
   local regex='^(https?|ftp)://[-A-Za-z0-9\+&@#/%?=~_|!:,.;]*[-A-Za-z0-9\+&@#/%=~_|]$'
-  url=$(dial_input "Dounwload" \
+  local ilist=()
+  local imidx=$((${#IMAGE_URL[@]}/2 -1)) 
+  [[ $imidx -le 0 ]] && set && exit 255
+  for i in $(seq 0 $imidx); do
+    j=$((i*2))
+    ilist+=("$i" "${IMAGE_URL[$j]}")
+  done
+  ilist+=("$((++i))" "Custom")
+  selection=$(dial_menu "Image Download" "Select an image to download" "${ilist[@]}")
+  if [ $selection == $i ]; then
+    # last option selected -> ask for a custom URL
+    url=$(dial_input "Dounwload" \
                   "$imgmgmt_download" \
 				  "https://dl.dropbox.com/s/4v6gm5z0ynyft4k/ensdemo402.tgz")
+  elif [ "x$selection" <> "x" ]; then
+    j=$((selection*2+1))
+	url="${IMAGE_URL[$j]}"
+  fi
   if [[ $url =~ $regex ]]; then
     file_download "$url" /tmp/imgmgmt_new_image.tgz
 	tar xzSf /tmp/imgmgmt_new_image.tgz -C ~/hdd_images
@@ -204,7 +235,7 @@ else
   exit 254
 fi
 # changes made by the config tool are applied to a new file
-config_new
+conf_new
 # launch menue
 main_menu
 if [ $? -eq 0 ]; then
@@ -220,6 +251,5 @@ else
   fi
 fi
 exit 0
-
 
 
