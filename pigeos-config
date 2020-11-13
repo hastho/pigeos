@@ -52,6 +52,14 @@ file_archive() {
     | $DIAL --backtitle "$BTITLE" --gauge "Archiving: ${arc}" 8 76 0
 }
 
+file_extract() {
+  local arc="$1"
+  local dst="$2"
+  if [ -f $arc -a -d $dst ]; then
+    tar xzSf $arc -C $dst 2>/dev/null 1>&2
+  fi
+}
+
 ## Main menu #####################################################
 main_menu() {
   local selection
@@ -148,6 +156,7 @@ imgmgmt_menu() {
       Delete*)		imgmgmt_delete ;;
       Download*)	imgmgmt_download ;;
       Export*)	    imgmgmt_export ;;
+      Import*)      imgmgmt_import ;;
       *)		    break
     esac
   done
@@ -157,10 +166,26 @@ imgmgmt_create() {
   local isize
   local iname
   local idesc
+  # ask for image name, size and a short description
   while :; do
-    isize=$(dial_input "Image size" "$imgmgmt_image_size" 512 || break)
-	iname=$(dial_input "Image name" "" "" || break)
-	idesc=$(dial_input "Image description" "" "" || break)
+    isize=$(dial_input "Image size" "$imgmgmt_image_size" 512)
+	iname=$(dial_input "Image name" "$imgmgmt_image_filename" "$iname")
+	idesc=$(dial_input "Image description" "$imgmgmt_image_descrition" "")
+    # check none zero values and characters not allowed in file names
+    if [ "x$isize" == "x" -o "x$iname" == "x" ]; then
+	  dial_yesno "$imgmgmt_not_null" && continue || break
+	elif [ "$isize" != "$(echo $isize | tr -cd '[:digit:]')" ]; then
+	  dial_yesno "Invalid value: $isize Retry?" && continue || break
+	elif [ "$iname" != "$(echo $iname | tr -cd '[:alnum:]_-')" ]; then
+	  dial_yesno "Invalid value: $iname Retry?" && continue || break
+	fi
+	# call external image utility to create sparse file image
+	pigeos-image create "$iname" "$isize" "$idesc" 2>/dev/null 1>&1
+	if [ $? -eq 0 ]; then
+	  dial_info "$imgmgmt_create_ok $HOME/hdd_images/$iname"; break
+	else
+	  dial_yesno  "$imgmgmt_create_fail $HOME/hdd_images/$iname" && continue || break
+	fi
   done
 }
 
@@ -184,7 +209,7 @@ imgmgmt_download() {
     url=$(dial_input "Dounwload" \
                   "$imgmgmt_download" \
 				  "https://dl.dropbox.com/s/4v6gm5z0ynyft4k/ensdemo402.tgz")
-  elif [ "x$selection" <> "x" ]; then
+  elif [ "x$selection" != "x" ]; then
     j=$((selection*2+1))
 	url="${IMAGE_URL[$j]}"
   fi
@@ -219,6 +244,28 @@ imgmgmt_export() {
   selection=$(dial_menu "${imgsel_title}" "${imgsel_text}" "${imgsel_list[@]}")
   if [ ! -z "$selection" ]; then
     file_archive /media/usb/${selection}.tgz ${imgsel_dir}/${selection}.i??
+  fi
+}
+
+imgmgmt_import() {
+  local selection
+  local imgsel_list=()
+  local imgsel_dir=$HOME/hdd_images/
+  # check for a mount usb disk
+  mount | grep -q '/media/usb0'
+  if [ $? -ne 0 ]; then
+    dial_err "$imgmgmt_usb_not_present"
+	return 1
+  fi
+  # build the list of available disk images
+  for f in /media/usb/*.tgz ; do 
+    imgsel_list+=("$(basename $f .tgz)" "$(tar xzfO $f --wildcards '*.inf' | head -1)")
+  done
+  # ask the user to choose one image
+  selection=$(dial_menu "${imgsel_title}" "${imgsel_text}" "${imgsel_list[@]}")
+  if [ ! -z "$selection" ]; then
+    file_extract /media/usb/${selection}.tgz $imgsel_dir
+    dial_info "$imgmgmt_unpack_suc"
   fi
 }
 
