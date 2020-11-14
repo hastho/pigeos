@@ -11,7 +11,7 @@ PIGEOS_PREFIX=/usr/local
 DOSBOX_BIN=$PIGEOS_PREFIX/bin/dosbox
 DOSBOX_USER=$(who | grep tty1 | cut -d\  -f 1)
 # packages Pi/GEOS and dosbox-pigeos depend on:
-PKG_LIST="iptables ppp socat usbmount timidity-daemon fbi imagemagick jed pv"
+PKG_LIST="iptables ppp socat usbmount libsdl-sound1.2 libsdl-net1.2 timidity-daemon fbi imagemagick jed pv"
 # list of external files need to be installed by this script
 # a customized version of DOSBox
 URL_DOSBOX_PKG="https://dl.dropbox.com/s/8s7ge2co2qmw1q6/dosbox_0.74%2Bpigeos_armhf.deb"
@@ -33,7 +33,7 @@ URL_CONFIG_LANG=(\
 LOG_FILE=/tmp/$(basename $0).log
 
 download_file() {
-  wget -q i"$1" -O "$2" 
+  wget -q "$1" -O "$2" 
 }
 
 install_dep_pkg() {
