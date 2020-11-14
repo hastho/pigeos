@@ -1,66 +1,64 @@
 #!/bin/bash
-BT="Pi/GEOS installer v0.1"
+# Pi/GEOS installer v0.1"
+set -e
+set -x
 # essential raspi configuration files
 BOOT_CONFIG=/boot/config.txt
 BOOT_CMDLINE=/boot/cmdline.txt
+# base for Pi/GEOS system files and binaries
+PIGEOS_PREFIX=/usr/local
 # which dosbox binary should be launched?
-DOSBOX_BIN=/usr/local/bin/dosbox
+DOSBOX_BIN=$PIGEOS_PREFIX/bin/dosbox
 DOSBOX_USER=$(who | grep tty1 | cut -d\  -f 1)
-# where are to Pi/GEOS tools are located
-PIGEOS_LOADER=/usr/local/bin/pigeos-loader
-PIGEOS_CONFIG=/usr/local/bin/pigeos-config
-# packages Pi/GEOS depends on:
+# packages Pi/GEOS and dosbox-pigeos depend on:
 PKG_LIST="iptables ppp socat usbmount timidity-daemon fbi imagemagick jed pv"
-# list of external files used by this script
-URL_DOSBOX=""
+# list of external files need to be installed by this script
+# a customized version of DOSBox
+URL_DOSBOX_PKG="https://dl.dropbox.com/s/8s7ge2co2qmw1q6/dosbox_0.74%2Bpigeos_armhf.deb"
+# a classic modem style dialing sound
 URL_DIALING_SOUND="https://upload.wikimedia.org/wikipedia/commons/3/33/Dial_up_modem_noises.ogg"
-URL_ENSDEMO=""
+# a font to be used in the BIOS splash screen and splash screen template
 URL_FONTS="https://int10h.org/oldschool-pc-fonts/download/ultimate_oldschool_pc_font_pack_v1.01.zip"
 URL_SPLASH="https://raw.githubusercontent.com/hastho/pigeos/master/gfx/splash_tpl.png"
+# the DOSBox launcher
+URL_LOADER="https://raw.githubusercontent.com/hastho/pigeos/master/pigeos-loader"
+# Pi/GEOS configuration script, fixed values configuration file and language files
 URL_CONFIG_SCRIPT="https://raw.githubusercontent.com/hastho/pigeos/master/pigeos-config"
+URL_CONFIG_SYSCFG="https://raw.githubusercontent.com/hastho/pigeos/master/defaults/pigeos.conf"
+URL_CONFIG_LANG=(\
+  "https://raw.githubusercontent.com/hastho/pigeos/master/pigeos-config.de_DE.UTF-8" \
+  "https://raw.githubusercontent.com/hastho/pigeos/master/pigeos-config.en_US.UTF-8" \
+)
 
 LOG_FILE=/tmp/$(basename $0).log
 
-calc_wt_size() {
-  # NOTE: it's tempting to redirect stderr to /dev/null, so supress error
-  # output from tput. However in this case, tput detects neither stdout or
-  # stderr is a tty and so only gives default 80, 24 values
-  WT_HEIGHT=18
-  WT_WIDTH=$(tput cols)
-
-  if [ -z "$WT_WIDTH" ] || [ "$WT_WIDTH" -lt 60 ]; then
-    WT_WIDTH=78
-  elif [ "$WT_WIDTH" -gt 178 ]; then
-    WT_WIDTH=120
-  else
-    WT_WIDTH=$(($WT_WIDTH-2))
-  fi
-  WT_MENU_HEIGHT=$(($WT_HEIGHT-7))
-}
-
-say_hello() {
-  if (whiptail --backtitle "$BT" --title "Install Pi/GEOS" --yesno "\
-This script will install PC/GEOS Ensemble Demo on your\
-Raspbian installation. It will add some systems services\
-to enable GEOS to dial into the internet.\
-Choose Yes to continue or No to abort." $WT_HEIGHT $WT_WIDTH)
-  then
-    return 0
-  else
-    whiptail --backtitle "$BT" --title "Install Pi/GEOS" --msgbox "\
-Installation abotrted by the user."
-    return 1
-  fi
-}
-
 download_file() {
-  wget --progress=dot $1 -O $2 2>&1 \
-  | sed -un 's/.* \([0-9]\+\)% .*/\1/p' \
-  | whiptail --gauge "Downloading: $1" 7 $WT_WIDTH 0
+  wget -q i"$1" -O "$2" 
 }
 
-install_pkg() {
+install_dep_pkg() {
   sudo apt-get -y install $*
+}
+
+install_dosbox_pkg() {
+  download_file "$URL_DOSBOX_PKG" /tmp/dosbox.deb
+  sudo dpkg -i /tmp/dosbox.deb
+}
+
+install_pigeos_loader() {
+  download_file "$URL_LOADER" /tmp/$(basename "$URL_LOADER")
+  sudo install /tmp/$(basename "$URL_LOADER") $PIGEOS_PREFIX/bin
+}
+
+install_pigeos_config() {
+  download_file "$URL_CONFIG_SCRIPT" /tmp/$(basename "$URL_CONFIG_SCRIPT")
+  sudo install /tmp/$(basename "$URL_CONFIG_SCRIPT") $PIGEOS_PREFIX/bin
+  download_file "$URL_CONFIG_SYSCFG" /tmp/$(basename "$URL_CONFIG_SYSCFG")
+  sudo install /tmp/$(basename "$URL_CONFIG_SYSCFG") $PIGEOS_PREFIX/etc
+  for lang in ${URL_CONFIG_LANG[@]}; do
+    download_file "$lang" /tmp/$(basename "$lang")
+	sudo install /tmp/$(basename "$lang") $PIGEOS_PREFIX/share/pigeos
+  done
 }
 
 install_splash_screen() {
@@ -70,7 +68,7 @@ install_splash_screen() {
   download_file $URL_SPLASH \
     /tmp/splash_tpl.png 2>&1
   sudo install /tmp/splash_tpl.png  \
-    /usr/local/share/pigeos 2>&1
+    $PIGEOS_REFIX/share/pigeos 2>&1
   download_file $URL_FONTS \
     /tmp/ultimate_oldschool_pc_font_pack.zip 2>&1
   unzip -jod /tmp /tmp/ultimate_oldschool_pc_font_pack.zip \
@@ -83,7 +81,7 @@ install_splash_screen() {
     grep "${param}=.*" $HOME/.pigeos || echo "${param}=NONE" >> $HOME/.pigeos
   done
   pigeos-splash update 2>&1
-  whiptail --infobox "Creating splash screen service" $WT_HEIGHT $WT_WIDTH
+  echo "Creating splash screen service" 
   sudo tee /etc/systemd/system/splash_screen.service >/dev/null <<SPLASH_SCR
 [Unit]
 Description=Pi/GEOS splash screen service
@@ -260,19 +258,36 @@ config_boot()
   # TODO remove DBUS sub-system?
 }
 
+config_jed() {
+  cat >/HOME/$DOSBOX_USER/.jedrc <<JEDRC
+() = evalfile ("cua");
+set_color_scheme ("blue3");
+TAB_DEFAULT = 4;
+JEDRC
+}
+
 ### Main ###
 >$LOG_FILE
-calc_wt_size
-#say_hello 		|| exit 1
-#install_pkg $PKG_LIST 	|| exit 3
-install_splash_screen   || exit 9
-install_dosbox_modem    || exit 4
-#config_login           || exit 8
-#config_usbmount	|| exit 5
-#config_keyb		|| exit 6
-#config_midi		|| exit 7
-#enable_ssh		|| exit 2
+install_dep_pkg $PKG_LIST 	|| exit 1
+install_dosbox_pkg      || exit 2
+install_pigeos_loader   || exit 3
+install_pigeos_config   || exit 4
+install_splash_screen   || exit 5
+install_dosbox_modem    || exit 6
+
+config_login            || exit 7
+# TODO use pigeos-config advanced menu
+config_usbmount     	|| exit 8
+# TODO use pigeos-config basic menu
+config_keyb	        	|| exit 9
+# TODO use pigeos-config advanced menu
+config_midi		        || exit 10
+config_jed              || exit 11
+# TODO use pigeos-config advanced menu
+enable_ssh		        || exit 12
 #
+cat $LOG_FILE
+echo "Press Enter to finish"; read
 rm $LOG_FILE
 
 
