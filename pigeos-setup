@@ -11,7 +11,7 @@ PIGEOS_PREFIX=/usr/local
 DOSBOX_BIN=$PIGEOS_PREFIX/bin/dosbox
 DOSBOX_USER=$(who | grep tty1 | cut -d\  -f 1)
 # packages Pi/GEOS and dosbox-pigeos depend on:
-PKG_LIST="iptables ppp socat usbmount libsdl-sound1.2 libsdl-net1.2 timidity-daemon fbi imagemagick jed pv"
+PKG_LIST="iptables ppp socat usbmount libsdl-sound1.2 libsdl-net1.2 timidity-daemon fbi imagemagick jed pvi vorbis-tools"
 # list of external files need to be installed by this script
 # a customized version of DOSBox
 URL_DOSBOX_PKG="https://dl.dropbox.com/s/8s7ge2co2qmw1q6/dosbox_0.74%2Bpigeos_armhf.deb"
@@ -155,7 +155,7 @@ Description=Start PPPD for the given TTY
 Type=simple
 EnvironmentFile=/etc/default/pppd-%i.conf
 PIDFile=/run/pppd%i.pid
-ExecStartPre=-/usr/bin/play /usr/local/share/sound/dialing.ogg
+ExecStartPre=-/usr/bin/og123 /usr/local/share/sound/dialing.ogg
 ExecStartPre=/sbin/iptables -t nat -A POSTROUTING -s \$PPPD_NETWORK -j MASQUERADE
 ExecStartPre=/sbin/iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
 ExecStartPre=/sbin/iptables -A PREROUTING -t raw -p tcp --dport 21 -j CT --helper ftp
@@ -194,6 +194,31 @@ PPP_SYSCTL
   # Configuring DOSBox with modem on COM1
   sed -i 's/serial1=.*/serial1=modem listenport:23/' $(dosbox -printconf)
   return 0
+}
+
+install_dosbox_telnetd() {
+  # install a simple telnet service on localhost that can be accessed from
+  # GEOS via DOSBox COM2 nullmodem link
+  sudo tee /etc/systemd/system/telnetd.service >/dev/null <<TELNET_SRV
+[Unit]
+Description=Start DOSBox null-modem host link
+After=network.target
+StartLimitIntervalSec=0
+StartLimitBurst=3000
+
+[Service]
+Restart=always
+RestartSec=3
+Type=simple
+PIDFile=/run/telnetd.pid
+ExecStart=/usr/bin/socat -L /run/telnetd.pid -d -d -s -lf /var/log/telnetd.log  TCP4-LISTEN:2023,bind=127.0.0.1 exec:"/sbin/agetty --autologin pi --noclear - -- vt100",pty,raw,echo=0,b57600
+
+[Install]
+WantedBy=multi-user.target
+TELNET_SRV
+  sudo systemctl daemon-reload
+  sudo systemctl enable telnetd
+  sudo systemctl start telnetd
 }
 
 config_login()
@@ -240,9 +265,13 @@ config_midi()
   sed -i 's/midiconfig\s*=.*/midiconfig=128:0/' $($DOSBOX_BIN -printconf)
 }
 
-enable_ssh()
+config_ssh()
 {
-   sudo /usr/bin/raspi-config nonint do_ssh 0
+  sudo /usr/bin/raspi-config nonint do_ssh 0
+  # SSH private key is req. for RSYNC/UNISON
+  if [ ! -f $HOME/.ssh/id_rsa ]; then
+    ssh-keygen -t rsa -f ~/.ssh/id_rsa -q -P ''
+  fi
 }
 
 config_keyb()
@@ -255,11 +284,40 @@ config_boot()
 {
   # don't wait for the network
   sudo /usr/bin/raspi-config nonint do_boot_wait 1
-  # TODO remove DBUS sub-system?
+  # set the default framebuff resolution to 1024x768 as this gives
+  # a 4:3 image ration as it was commen in the old days...
+  # furthermore most modern displays can handle this using HW scaling
+  for option in 'framebuffer_width=1024' 'framebuffer_height=768'\
+                'dtparam=audio=on' 'disable_splash=1' 'boot_delay=0'\
+				'hdmi_enable_4kp60=1'
+  do
+    grep "${option%=*}" $BOOT_CONFIG
+	if [ $? -eq 0 ]; then
+	  # option present -> alter the key=value pair
+	  sudo sed -i "s/.*${option%=*}.*/${option}/" $BOOT_CONFIG
+	else
+	  # append this missing option
+	  sudo tee -a $BOOT_CONFIG >/dev/null <<<"${option}"
+	fi
+  done
+  # hide kernel boot messages
+  # route all audio to one sink (req. for Pi4)
+  for option in  'quiet' 'logo.nologo'\
+                 'snd_bcm2835.enable_hdmi=1'\
+				 'snd_bcm2835.enable_headphones=1'\
+                 'snd_bcm2835.enable_compat_alsa=1'
+  do
+    grep "${option%=*}" $BOOT_CMDLINE 
+	if [ $? -ne 0 ]; then
+	  printf "%s" "$option" >> $BOOT_CMDLINE
+	  # TODO: update an existing key=value pair
+	fi
+  done
 }
 
 config_jed() {
-  cat >/HOME/$DOSBOX_USER/.jedrc <<JEDRC
+  # make the jed editor look & feel like on DOS
+  cat >$HOME/.jedrc <<JEDRC
 () = evalfile ("cua");
 set_color_scheme ("blue3");
 TAB_DEFAULT = 4;
@@ -268,24 +326,29 @@ JEDRC
 
 ### Main ###
 >$LOG_FILE
-install_dep_pkg $PKG_LIST 	|| exit 1
-install_dosbox_pkg      || exit 2
-install_pigeos_loader   || exit 3
-install_pigeos_config   || exit 4
-install_splash_screen   || exit 5
-install_dosbox_modem    || exit 6
+if [ $# -ne 0 ]; then
+  # exec the given module
+  $@
+else
+  # execute all modules in the default order
+  install_dep_pkg $PKG_LIST 	|| exit 1
+  install_dosbox_pkg      || exit 2
+  install_pigeos_loader   || exit 3
+  install_pigeos_config   || exit 4
+  install_splash_screen   || exit 5
+  install_dosbox_modem    || exit 6
 
-config_login            || exit 7
-# TODO use pigeos-config advanced menu
-config_usbmount     	|| exit 8
-# TODO use pigeos-config basic menu
-config_keyb	        	|| exit 9
-# TODO use pigeos-config advanced menu
-config_midi		        || exit 10
-config_jed              || exit 11
-# TODO use pigeos-config advanced menu
-enable_ssh		        || exit 12
-#
+  config_login            || exit 7
+  # TODO use pigeos-config advanced menu
+  config_usbmount     	  || exit 8
+  # TODO use pigeos-config basic menu
+  config_keyb	          || exit 9 
+  # TODO use pigeos-config advanced menu
+  config_midi		      || exit 10
+  config_jed              || exit 11
+  # TODO use pigeos-config advanced menu
+  config_ssh		      || exit 12
+fi
 cat $LOG_FILE
 echo "Press Enter to finish"; read
 rm $LOG_FILE
