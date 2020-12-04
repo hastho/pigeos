@@ -15,6 +15,10 @@ PKG_LIST="iptables ppp socat usbmount libsdl-sound1.2 libsdl-net1.2 libpcap0.8 t
 # list of external files need to be installed by this script
 # a customized version of DOSBox
 URL_DOSBOX_PKG="https://dl.dropbox.com/s/8s7ge2co2qmw1q6/dosbox_0.74%2Bpigeos_armhf.deb"
+URL_DOSBOX_LANG=\(
+  "https://raw.githubusercontent.com/hastho/pigeos/master/defaults/mapper-0.74.map.de_DE.UTF-8" \
+  "https://raw.githubusercontent.com/hastho/pigeos/master/defaults/mapper-0.74.map.en_US.UTF-8"
+)
 # a classic modem style dialing sound
 URL_DIALING_SOUND="https://upload.wikimedia.org/wikipedia/commons/3/33/Dial_up_modem_noises.ogg"
 # a font to be used in the BIOS splash screen and splash screen template
@@ -45,6 +49,18 @@ install_dep_pkg() {
 install_dosbox_pkg() {
   download_file "$URL_DOSBOX_PKG" /tmp/dosbox.deb
   sudo dpkg -i /tmp/dosbox.deb
+  # blacklist dosbox package so it will not replaces
+  # with the system default dosboy during upgrades
+  echo "dosbox hold" | sudo dpkg --set-selections
+  # download locallolized key maps
+  for lang in ${URL_DOSBOX_LANG[@]}; do
+    download_file "$lang"    /tmp/$(basename "$lang")
+	sudo install -D          /tmp/$(basename "$lang")\
+	  $PIGEOS_PREFIX/share/pigeos/$(basename "$lang")
+  done
+  # create folder to store the disk images
+  test -d $HOME/hdd_images || mkdir $HOME/hdd_images
+  test -d $HOME/fdd_images || mkdir $HOME/fdd_images
 }
 
 install_pigeos_scripts() {
@@ -253,6 +269,8 @@ if [ "\$(tty)" = "/dev/tty1" ]; then
   $PIGEOS_PREFIX/bin/pigeos-loader
 fi
 LOGIN_PROF
+  # disable license msg at login
+  touch $HOME/.hushlogin
 }
 
 config_usbmount()
@@ -287,11 +305,14 @@ config_ssh()
   fi
 }
 
-config_keyb()
+config_locale()
 {
-  local lang=${1:-de}
-  sudo /usr/bin/raspi-config nonint do_configure_keyboard $lang
-  # TODO add DOSBox mapper file for the given language
+  local lang=${1:-de_DE.UTF-8}
+  sudo /usr/bin/raspi-config nonint do_change_locale $lang
+  sudo /usr/bin/raspi-config nonint do_configure_keyboard ${lang#_*}
+  # link DOSBox mapper file for the given language
+  ln -sf $PIGEOS_PREFIX/share/pigeos/mapper-0.74.map.$lang \
+         $HOME/.dosbox/mapper-0.74.map
 }
 
 config_boot()
@@ -357,12 +378,12 @@ else
   # TODO use pigeos-config advanced menu
   config_usbmount     	  || exit 8
   # TODO use pigeos-config basic menu
-  config_keyb	          || exit 9 
+  config_locale	          || exit 9 
   # TODO use pigeos-config advanced menu
   config_midi		      || exit 10
   config_jed              || exit 11
   # TODO use pigeos-config advanced menu
-  config_ssh		      || exit 12
+  #config_ssh		      || exit 12
 fi
 cat $LOG_FILE
 echo "Press Enter to finish"; read
