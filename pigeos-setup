@@ -1,6 +1,6 @@
 #!/bin/bash
 # Pi/GEOS installer v0.1"
-set -e
+#set -e
 set -x
 # essential raspi configuration files
 BOOT_CONFIG=/boot/config.txt
@@ -11,17 +11,19 @@ PIGEOS_PREFIX=/usr/local
 DOSBOX_BIN=$PIGEOS_PREFIX/bin/dosbox
 DOSBOX_USER=$(who | grep tty1 | cut -d\  -f 1)
 # packages Pi/GEOS and dosbox-pigeos depend on:
-PKG_LIST="iptables ppp socat usbmount libsdl-sound1.2 libsdl-net1.2 timidity-daemon fbi imagemagick jed pvi vorbis-tools"
+PKG_LIST="iptables ppp socat usbmount libsdl-sound1.2 libsdl-net1.2 libpcap0.8 timidity-daemon fbi imagemagick jed pv vorbis-tools"
 # list of external files need to be installed by this script
 # a customized version of DOSBox
 URL_DOSBOX_PKG="https://dl.dropbox.com/s/8s7ge2co2qmw1q6/dosbox_0.74%2Bpigeos_armhf.deb"
 # a classic modem style dialing sound
 URL_DIALING_SOUND="https://upload.wikimedia.org/wikipedia/commons/3/33/Dial_up_modem_noises.ogg"
 # a font to be used in the BIOS splash screen and splash screen template
-URL_FONTS="https://int10h.org/oldschool-pc-fonts/download/ultimate_oldschool_pc_font_pack_v1.01.zip"
+URL_FONTS="https://int10h.org/oldschool-pc-fonts/download/oldschool_pc_font_pack_v1.01.zip"
 URL_SPLASH="https://raw.githubusercontent.com/hastho/pigeos/master/gfx/splash_tpl.png"
-# the DOSBox launcher
-URL_LOADER="https://raw.githubusercontent.com/hastho/pigeos/master/pigeos-loader"
+# pigeos configuration and helper scripts
+URL_IMAGE_SCRIPT="https://raw.githubusercontent.com/hastho/pigeos/master/pigeos-image"
+URL_LOADER_SCRIPT="https://raw.githubusercontent.com/hastho/pigeos/master/pigeos-loader"
+URL_SPLASH_SCRIPT="https://raw.githubusercontent.com/hastho/pigeos/master/pigeos-splash"
 # Pi/GEOS configuration script, fixed values configuration file and language files
 URL_CONFIG_SCRIPT="https://raw.githubusercontent.com/hastho/pigeos/master/pigeos-config"
 URL_CONFIG_SYSCFG="https://raw.githubusercontent.com/hastho/pigeos/master/defaults/pigeos.conf"
@@ -45,19 +47,27 @@ install_dosbox_pkg() {
   sudo dpkg -i /tmp/dosbox.deb
 }
 
-install_pigeos_loader() {
-  download_file "$URL_LOADER" /tmp/$(basename "$URL_LOADER")
-  sudo install /tmp/$(basename "$URL_LOADER") $PIGEOS_PREFIX/bin
+install_pigeos_scripts() {
+  for file_url in "$URL_IMAGE_SCRIPT" "$URL_LOADER_SCRIPT" "$URL_SPLASH_SCRIPT" "$URL_CONFIG_SCRIPT"
+  do
+    download_file "$file_url" /tmp/$(basename "$file_url")
+    sudo install -D /tmp/$(basename "$file_url") \
+	  $PIGEOS_PREFIX/bin/$(basename "$file_url")
+  done
 }
 
 install_pigeos_config() {
-  download_file "$URL_CONFIG_SCRIPT" /tmp/$(basename "$URL_CONFIG_SCRIPT")
-  sudo install /tmp/$(basename "$URL_CONFIG_SCRIPT") $PIGEOS_PREFIX/bin
   download_file "$URL_CONFIG_SYSCFG" /tmp/$(basename "$URL_CONFIG_SYSCFG")
-  sudo install /tmp/$(basename "$URL_CONFIG_SYSCFG") $PIGEOS_PREFIX/etc
+  sudo install -D  /tmp/$(basename "$URL_CONFIG_SYSCFG")\
+     $PIGEOS_PREFIX/etc/$(basename "$URL_CONFIG_SYSCFG")
+  # include system config in user config, if not allready present
+  grep $(basename "$URL_CONFIG_SYSCFG") $HOME/.pigeos || \
+    echo ". $PIGEOS_PREFIX/etc/$(basename $URL_CONFIG_SYSCFG)"\
+    >$HOME/.pigeos
   for lang in ${URL_CONFIG_LANG[@]}; do
     download_file "$lang" /tmp/$(basename "$lang")
-	sudo install /tmp/$(basename "$lang") $PIGEOS_PREFIX/share/pigeos
+	sudo install -D          /tmp/$(basename "$lang")\
+	  $PIGEOS_PREFIX/share/pigeos/$(basename "$lang")
   done
 }
 
@@ -67,14 +77,15 @@ install_splash_screen() {
   # current Pi/GEOS configuration.
   download_file $URL_SPLASH \
     /tmp/splash_tpl.png 2>&1
-  sudo install /tmp/splash_tpl.png  \
-    $PIGEOS_REFIX/share/pigeos 2>&1
+  sudo install -D /tmp/splash_tpl.png  \
+    $PIGEOS_PREFIX/share/pigeos/splash_tpl.png 2>&1
+  sudo mkdir -p $PIGEOS_PREFIX/lib/pigeos 2>&1
   download_file $URL_FONTS \
     /tmp/ultimate_oldschool_pc_font_pack.zip 2>&1
   unzip -jod /tmp /tmp/ultimate_oldschool_pc_font_pack.zip \
     '*/Px437_PhoenixEGA_8x16.ttf' 2>&1 
-  sudo install /tmp/Px437_PhoenixEGA_8x16.ttf \
-    /usr/share/fonts/truetype/oldschool_pc_font 2>&1
+  sudo install -D /tmp/Px437_PhoenixEGA_8x16.ttf \
+    /usr/share/fonts/truetype/oldschool_pc_font/Px437_PhoenixEGA_8x16.ttf 2>&1
   sudo fc-cache -f 2>&1
   # create image config params req. by pigeos-splash, if not present
   for param in FDA_IMAGE FDB_IMAGE HDC_IMAGE HDD_IMAGE; do
@@ -239,7 +250,7 @@ LOGIN_AUTO
   # create a login profile setting to exec the Pi/GEOS loader after login
   sudo tee /etc/profile.d/10-pigeos.sh >/dev/null <<LOGIN_PROF
 if [ "\$(tty)" = "/dev/tty1" ]; then
-  $PIGEOS_LOADER
+  $PIGEOS_PREFIX/bin/pigeos-loader
 fi
 LOGIN_PROF
 }
@@ -257,6 +268,8 @@ config_usbmount()
 [Service]
 PrivateMounts=no
 PRIV_MNT
+  # add configuration option to the user config, if not present
+  grep MOUNT_USB $HOME/.pigeos || echo "MOUNT_USB=1" >>$HOME/.pigeos
 }
 
 config_midi()
@@ -278,6 +291,7 @@ config_keyb()
 {
   local lang=${1:-de}
   sudo /usr/bin/raspi-config nonint do_configure_keyboard $lang
+  # TODO add DOSBox mapper file for the given language
 }
 
 config_boot()
@@ -287,17 +301,18 @@ config_boot()
   # set the default framebuff resolution to 1024x768 as this gives
   # a 4:3 image ration as it was commen in the old days...
   # furthermore most modern displays can handle this using HW scaling
-  for option in 'framebuffer_width=1024' 'framebuffer_height=768'\
+  for option in 'disable_overscan=1' 'dtparam=i2c_arm=on' \
+                'framebuffer_width=1024' 'framebuffer_height=768'\
                 'dtparam=audio=on' 'disable_splash=1' 'boot_delay=0'\
-				'hdmi_enable_4kp60=1'
+				'gpu_mem=64' 'enable_uart=1' 'hdmi_enable_4kp60=1'
   do
     grep "${option%=*}" $BOOT_CONFIG
 	if [ $? -eq 0 ]; then
 	  # option present -> alter the key=value pair
 	  sudo sed -i "s/.*${option%=*}.*/${option}/" $BOOT_CONFIG
 	else
-	  # append this missing option
-	  sudo tee -a $BOOT_CONFIG >/dev/null <<<"${option}"
+	  echo append this missing option
+	  sudo tee -a $BOOT_CONFIG <<<"${option}"
 	fi
   done
   # hide kernel boot messages
@@ -309,7 +324,7 @@ config_boot()
   do
     grep "${option%=*}" $BOOT_CMDLINE 
 	if [ $? -ne 0 ]; then
-	  printf "%s" "$option" >> $BOOT_CMDLINE
+	 sudo sed -i "s/$/ $option/" $BOOT_CMDLINE
 	  # TODO: update an existing key=value pair
 	fi
   done
@@ -333,11 +348,11 @@ else
   # execute all modules in the default order
   install_dep_pkg $PKG_LIST 	|| exit 1
   install_dosbox_pkg      || exit 2
-  install_pigeos_loader   || exit 3
+  install_pigeos_scripts  || exit 3
   install_pigeos_config   || exit 4
   install_splash_screen   || exit 5
   install_dosbox_modem    || exit 6
-
+  install_dosbox_telnetd  || exit 14
   config_login            || exit 7
   # TODO use pigeos-config advanced menu
   config_usbmount     	  || exit 8
@@ -352,6 +367,3 @@ fi
 cat $LOG_FILE
 echo "Press Enter to finish"; read
 rm $LOG_FILE
-
-
-
