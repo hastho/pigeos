@@ -307,11 +307,14 @@ config_ssh()
 
 config_locale()
 {
-  local lang=${1:-de_DE.UTF-8}
-  sudo /usr/bin/raspi-config nonint do_change_locale $lang
-  sudo /usr/bin/raspi-config nonint do_configure_keyboard ${lang#_*}
+  LANG=${1:-de_DE.UTF-8}
+  sudo /usr/bin/raspi-config nonint do_change_locale $LANG
+  local keyb_lang=$(echo $LANG \
+    | tr '[:upper:]' '[:lower:]' \
+	| sed 's/.._\(..\).*/\1/')
+  sudo /usr/bin/raspi-config nonint do_configure_keyboard ${keyb_lang}
   # link DOSBox mapper file for the given language
-  ln -sf $PIGEOS_PREFIX/share/pigeos/mapper-0.74.map.$lang \
+  ln -sf $PIGEOS_PREFIX/share/pigeos/mapper-0.74.map.$LANG \
          $HOME/.dosbox/mapper-0.74.map
 }
 
