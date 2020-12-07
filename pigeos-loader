@@ -1,5 +1,6 @@
 #!/bin/bash
-# set -x
+#set -x
+#set -e
 # when exec this script from the profile no keyboard is available
 # therefore DOSBox & pigeos-config are running in an endless loop
 # until pigeos-config returns a non zero exit code (e.g. DEBUG=1)
@@ -24,18 +25,25 @@ while :; do
     else
       d_args="echo off"
     fi
-	if [ "$MOUNT_USB" -eq 1 ] ; then
+	if [ "$MOUNT_DOC" -eq 1 -a -d $HOME/documents ] ; then
+      x_args="mount x $HOME/documents"
+	else
+	  x_args="echo off"
+	fi
+    if [ "$MOUNT_USB" -eq 1 ] ; then
       y_args="mount y /media/usb"
 	else
-	  y_args="echo off"
+	  y_args="echo."
 	fi
 	$DOSBOX_BIN \
 	  -c "$a_args" \
 	  -c "$b_args" \
   	  -c "$c_args" \
 	  -c "$d_args" \
+	  -c "$x_args" \
 	  -c "$y_args" \
-	  -c "C:" -c "AUTOEXEC" \
+	  -c "keyb ${KEYB:-us} 850" \
+	  -c "call c:\autoexec.bat" \
 	1>/tmp/loader.log 2>&1
   fi
   # run SETUP-config if something went wrong

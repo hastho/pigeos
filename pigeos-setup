@@ -11,20 +11,22 @@ PIGEOS_PREFIX=/usr/local
 DOSBOX_BIN=$PIGEOS_PREFIX/bin/dosbox
 DOSBOX_USER=$(who | grep tty1 | cut -d\  -f 1)
 # packages Pi/GEOS and dosbox-pigeos depend on:
-PKG_LIST="iptables ppp socat usbmount libsdl-sound1.2 libsdl-net1.2 libpcap0.8 timidity-daemon fbi imagemagick jed pv vorbis-tools"
+PKG_LIST="iptables ppp socat usbmount libsdl-sound1.2 libsdl-net1.2 libpcap0.8 timidity-daemon fbi imagemagick jed pv vorbis-tools gldriver-test libgl1-mesa-dri"
 # list of external files need to be installed by this script
 # a customized version of DOSBox
 URL_DOSBOX_PKG="https://dl.dropbox.com/s/8s7ge2co2qmw1q6/dosbox_0.74%2Bpigeos_armhf.deb"
-URL_DOSBOX_LANG=\(
+URL_DOSBOX_LANG=(\
   "https://raw.githubusercontent.com/hastho/pigeos/master/defaults/mapper-0.74.map.de_DE.UTF-8" \
-  "https://raw.githubusercontent.com/hastho/pigeos/master/defaults/mapper-0.74.map.en_US.UTF-8"
+  "https://raw.githubusercontent.com/hastho/pigeos/master/defaults/mapper-0.74.map.en_US.UTF-8" \
 )
+URL_DOSBOX_CONFIG="https://raw.githubusercontent.com/hastho/pigeos/master/defaults/dosbox-0.74.conf"
 # a classic modem style dialing sound
 URL_DIALING_SOUND="https://upload.wikimedia.org/wikipedia/commons/3/33/Dial_up_modem_noises.ogg"
 # a font to be used in the BIOS splash screen and splash screen template
 URL_FONTS="https://int10h.org/oldschool-pc-fonts/download/oldschool_pc_font_pack_v1.01.zip"
 URL_SPLASH="https://raw.githubusercontent.com/hastho/pigeos/master/gfx/splash_tpl.png"
 # pigeos configuration and helper scripts
+URL_SETUP_SCRIPT="https://raw.githubusercontent.com/hastho/pigeos/master/pigeos-setup"
 URL_IMAGE_SCRIPT="https://raw.githubusercontent.com/hastho/pigeos/master/pigeos-image"
 URL_LOADER_SCRIPT="https://raw.githubusercontent.com/hastho/pigeos/master/pigeos-loader"
 URL_SPLASH_SCRIPT="https://raw.githubusercontent.com/hastho/pigeos/master/pigeos-splash"
@@ -48,10 +50,16 @@ install_dep_pkg() {
 
 install_dosbox_pkg() {
   download_file "$URL_DOSBOX_PKG" /tmp/dosbox.deb
+  # remove package from blacklist
+  echo "dosbox install" | sudo dpkg --set-selections
   sudo dpkg -i /tmp/dosbox.deb
-  # blacklist dosbox package so it will not replaces
-  # with the system default dosboy during upgrades
+  # blacklist dosbox package so it will not ibe replaced
+  # with the system default dosbox during any upgrades
   echo "dosbox hold" | sudo dpkg --set-selections
+  # install a custom DOSBox configuration
+  download_file "$URL_DOSBOX_CONFIG" /tmp/$(basename "$URL_DOSBOX_CONFIG")
+  install -D /tmp/$(basename "$URL_DOSBOX_CONFIG")\
+    $HOME/.dosbox/$(basename "$URL_DOSBOX_CONFIG") 
   # download locallolized key maps
   for lang in ${URL_DOSBOX_LANG[@]}; do
     download_file "$lang"    /tmp/$(basename "$lang")
@@ -64,7 +72,7 @@ install_dosbox_pkg() {
 }
 
 install_pigeos_scripts() {
-  for file_url in "$URL_IMAGE_SCRIPT" "$URL_LOADER_SCRIPT" "$URL_SPLASH_SCRIPT" "$URL_CONFIG_SCRIPT"
+  for file_url in "$URL_SETUP_SCRIPT" "$URL_IMAGE_SCRIPT" "$URL_LOADER_SCRIPT" "$URL_SPLASH_SCRIPT" "$URL_CONFIG_SCRIPT"
   do
     download_file "$file_url" /tmp/$(basename "$file_url")
     sudo install -D /tmp/$(basename "$file_url") \
@@ -363,6 +371,11 @@ TAB_DEFAULT = 4;
 JEDRC
 }
 
+config_imgprep() {
+  # prepare the config for the imaging process
+  sudo sed -i "s/$/ init=/usr/lib/raspi-config/init_resize\.sh/" $BOOT_CMDLINE
+  sudo sed -i "s/$/ sdhci\.debug_quirks2=4/" $BOOT_CMDLINE
+}
 ### Main ###
 >$LOG_FILE
 if [ $# -ne 0 ]; then

@@ -123,7 +123,17 @@ imgsel_menu() {
   fi
 }
 
-keybrd_menu() { dial_info "Sorry, this function hasn't been implemented yet."; }
+keybrd_menu() {
+  local selection
+  source $(conf_get); source $MENU_TEXT
+  selection=$(dial_menu "${keybsel_title}" "${keybsel_text}" "${keybsel_options[@]}")
+  if [ "x$selection" != "x" ]; then
+    # language settings where not present in early versions
+    grep KEYB $(conf_get) || echo "KEYB=us" >>$(conf_get)
+	# set selected lang.
+    sed -i "s#KEYB=.*#KEYB=$selection#" $(conf_get)
+  fi
+}
 
 ## Advanced Menu ################################
 advanced_menu() { 
