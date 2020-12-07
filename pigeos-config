@@ -133,7 +133,7 @@ keybrd_menu() {
   selection=$(dial_menu "${keybsel_title}" "${keybsel_text}" "${keybsel_options[@]}")
   if [ "x$selection" != "x" ]; then
     # language settings where not present in early versions
-    grep KEYB $(conf_get) || echo "KEYB=us" >>$(conf_get)
+    grep -q KEYB $(conf_get) || echo "KEYB=us" >>$(conf_get)
 	# set selected lang.
     sed -i "s#KEYB=.*#KEYB=$selection#" $(conf_get)
   fi

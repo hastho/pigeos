@@ -54,7 +54,7 @@ keybsel_options=(\
   "sg" "Schweiz (deutsch)" \
   "uk" "Vereinigtes Königreich" \
   "us" "Vereinigte Staaten" \
-  "yu" "Jugoslawien")
+  "yu" "Serbien/Kroatien")
   
 ### Advanced Menue #################################################################
 advanced_title="Erweiterte Konfiguration"

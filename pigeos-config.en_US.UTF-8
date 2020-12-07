@@ -10,4 +10,81 @@ main_options=(\
   "Hard Disk"	"Hard disk/image management" \
   "Write"		"Write changes and reboot the system" \
   "Abort"		"Revert changes and reboot the system")
-   
+main_abort_msg="Discard changes and exit SETUP?"
+
+### Basic Menue ####################################################################
+basic_title="Base configuration"
+basic_text="Modify basic DOS and environment settings. \nPress ESC to return to the main menue."
+basic_options=(\
+  "Date/Time"			"$(date '+%F %R')" \
+  "Hard Disk C: Image "	"$(basename ${HDC_IMAGE^^} .IMG)" \
+  "Hard Disk D: Image "	"$(basename ${HDD_IMAGE^^} .IMG)" \
+  "Floppy Drive A:"		"$(basename ${FDA_IMAGE^^} .IMG)" \
+  "Floppy Drive B:"		"$(basename ${FDB_IMAGE^^} .IMG)" \
+  "Keyboard mapping"	"${KEYB^^}" )
+
+### ImageSelection Menue ###########################################################
+imgsel_title="FDD/HHD image mangement"
+imgsel_text="Please select an floppy or disk image to be mapped as DOS drives. \nPress ENTER for detailed information. \nPress ESC to return to the main menue."
+imgsel_conf="Confirm selection or abbort?"
+
+### KeyboardSelection Menu #########################################################
+keybsel_title="Keyboard configuration"
+keybsel_text="Please select the DOS keyboard map you want to use. \nPress ESC to return to the main menue."
+keybsel_options=(\
+  "be" "Belgium" \
+  "br" "Brazil" \
+  "cf" "Canadian-French" \
+  "cz" "Czech" \
+  "sl" "Slovak" \
+  "dk" "Denmark" \
+  "su" "Finland" \
+  "fr" "France" \
+  "gr" "Germany" \
+  "hu" "Hungary" \
+  "it" "Italy" \
+  "la" "Latin America" \
+  "nl" "Netherlands" \
+  "no" "Norway" \
+  "pl" "Poland" \
+  "po" "Portugal" \
+  "sp" "Spain" \
+  "sv" "Sweden" \
+  "sf" "Switzerland (French)" \
+  "sg" "Switzerland (German)" \
+  "uk" "United Kingdom" \
+  "us" "United States" \
+  "yu" "Serbo-Croatian")
+
+### Advanced Menue #################################################################
+advanced_title="Advanced configuration"
+advanced_text="Enable/disable advanced emulation features. \nPress ESC to return to the main menue."
+advanced_options=(\
+  "CUPS printing "	    "$(systemctl is-active cups)" \
+  "  Remote admin "	    "$(cupsctl | grep _remote_admin | sed 's/.*=\([01]\)/\1/')" \
+  "  Share printers "	"$(cupsctl | grep _share_printers | sed 's/.*=\([01]\)/\1/')" \
+  "MIDI emulation "	    "$(systemctl is-active timidity)" \
+  "SSH remote access "  "$(systemctl is-active sshd)")
+
+### ImageMgmt Menue ################################################################
+imgmgmt_title="FDD/HDD image management"
+imgmgmt_text="Add, create or delete disk images. \nChoose an action or press ESC to return to the main menu."
+imgmgmt_options=(\
+  "Create image "     "Create a new image" \
+  "Delete image "     "Delete an image" \
+  "Download image "   "Download an image from the Web" \
+  "Export image "     "Backup/Export an image to an USB drive" \
+  "Import image "     "Import/Restore an image archive from USB drive" )
+imgmgmt_del_confirm="Do you realy want to delete this image? All data will be lost!"
+imgmgmt_download="Please enter an URL of an image archive stored on the Web (http(s)://)"
+imgmgmt_invalid_url="The given URL isn't valid."
+imgmgmt_unpack_err="An error ocurred while extracting the image archive."
+imgmgmt_unpack_suc="The image was installed succesfully. Please go to the Basic Configuration to activate it."
+imgmgmt_exp_err="An error ocurred during image export. Please verfy you inserted a vFAT formated USB drive."
+imgmgmt_usb_not_present="No vFAT formatted USB drive was found. Unable to proceed."
+imgmgmt_image_size="Please enter the size in MiB for the image to be created."
+imgmgmt_image_file_name="Please enter a filename for the image. \nHINT: special characters are not allowed!"
+imgmgmt_image_descrition="Please enter a short description."
+imgmgmt_not_null="Image name and size must not emphty. Re-try?"
+imgmgmt_create_fail="An error ocurred during image creation. Re-try?"
+imgmgmt_create_ok="The image has been successfully created as: "
