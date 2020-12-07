@@ -32,28 +32,28 @@ imgsel_conf="Auswahl bestätigen oder abbrechen?"
 keybsel_title="Tastaturauswahl"
 keybsel_text="Tasturbelegung für DOS-Umgebung auswählen. \nDrücke ESC um zum Hauptmenü zurückzukehren."
 keybsel_options=(\
-  "be" "Belgien"
-  "br" "Brasilien"
-  "cf" "Kanada (franz.)"
-  "cz" "Tschechien"
-  "sl" "Slovakei"
-  "dk" "Dänemark"
-  "su" "Finnland"
-  "fr" "Frankreich"
-  "gr" "Deutschland"
-  "hu" "Ungarn"
-  "it" "Italien"
-  "la" "Lateinamerika"
-  "nl" "Niederlande"
-  "no" "Norwegen"
-  "pl" "Polen"
-  "po" "Portugal"
-  "sp" "Spanien"
-  "sv" "Schweden"
-  "sf" "Schweiz (franz.)"
-  "sg" "Schweiz (deutsch)"
-  "uk" "Vereinigtes Königreich"
-  "us" "Vereinigte Staaten"
+  "be" "Belgien" \
+  "br" "Brasilien" \
+  "cf" "Kanada (franz.)" \
+  "cz" "Tschechien" \
+  "sl" "Slovakei" \
+  "dk" "Dänemark" \
+  "su" "Finnland" \
+  "fr" "Frankreich" \
+  "gr" "Deutschland" \
+  "hu" "Ungarn" \
+  "it" "Italien" \
+  "la" "Lateinamerika" \
+  "nl" "Niederlande" \
+  "no" "Norwegen" \
+  "pl" "Polen" \
+  "po" "Portugal" \
+  "sp" "Spanien" \
+  "sv" "Schweden" \
+  "sf" "Schweiz (franz.)" \
+  "sg" "Schweiz (deutsch)" \
+  "uk" "Vereinigtes Königreich" \
+  "us" "Vereinigte Staaten" \
   "yu" "Jugoslawien")
   
 ### Advanced Menue #################################################################
