@@ -29,8 +29,12 @@ dial_menu()  {
   local title=$1; shift
   local text=$1; shift
   local items=("$@")
+  local itemc=$((${#items[@]}/2))
+  if [ $itemc -gt 10 ]; then
+    itemc=10
+  fi
   local sel=$($DIAL --backtitle "$BTITLE" --title "${title}" \
-	   --menu "${text}" 20 76 $((${#items[@]}/2)) "${items[@]}" \
+	   --menu "${text}" 20 76 $itemc "${items[@]}" \
 	   3>&1 1>&2 2>&3)
   [[ $? -eq 0 ]] && echo $sel || return 1
 }
@@ -90,7 +94,7 @@ basic_menu() {
       Hard*D*)	 	imgsel_menu hdd ;;
       Floppy*A*)	imgsel_menu fda ;;
       Floppy*B*)	imgsel_menu fdb ;;
-      Keyboard)		keybrd_menu ;;
+      Keyboard*)	keybrd_menu ;;
       *)		break
     esac
   done
