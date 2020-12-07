@@ -1,7 +1,7 @@
 #!/bin/bash
 # Pi/GEOS installer v0.1"
 #set -e
-set -x
+#set -x
 # essential raspi configuration files
 BOOT_CONFIG=/boot/config.txt
 BOOT_CMDLINE=/boot/cmdline.txt
@@ -85,7 +85,7 @@ install_pigeos_config() {
   sudo install -D  /tmp/$(basename "$URL_CONFIG_SYSCFG")\
      $PIGEOS_PREFIX/etc/$(basename "$URL_CONFIG_SYSCFG")
   # include system config in user config, if not allready present
-  grep $(basename "$URL_CONFIG_SYSCFG") $HOME/.pigeos || \
+  grep -q $(basename "$URL_CONFIG_SYSCFG") $HOME/.pigeos || \
     echo ". $PIGEOS_PREFIX/etc/$(basename $URL_CONFIG_SYSCFG)"\
     >$HOME/.pigeos
   for lang in ${URL_CONFIG_LANG[@]}; do
@@ -113,7 +113,7 @@ install_splash_screen() {
   sudo fc-cache -f 2>&1
   # create image config params req. by pigeos-splash, if not present
   for param in FDA_IMAGE FDB_IMAGE HDC_IMAGE HDD_IMAGE; do
-    grep "${param}=.*" $HOME/.pigeos || echo "${param}=NONE" >> $HOME/.pigeos
+    grep -q "${param}=.*" $HOME/.pigeos || echo "${param}=NONE" >> $HOME/.pigeos
   done
   pigeos-splash update 2>&1
   echo "Creating splash screen service" 
@@ -295,7 +295,7 @@ config_usbmount()
 PrivateMounts=no
 PRIV_MNT
   # add configuration option to the user config, if not present
-  grep MOUNT_USB $HOME/.pigeos || echo "MOUNT_USB=1" >>$HOME/.pigeos
+  grep -q MOUNT_USB $HOME/.pigeos || echo "MOUNT_USB=1" >>$HOME/.pigeos
 }
 
 config_midi()
@@ -338,7 +338,7 @@ config_boot()
                 'dtparam=audio=on' 'disable_splash=1' 'boot_delay=0'\
 				'gpu_mem=64' 'enable_uart=1' 'hdmi_enable_4kp60=1'
   do
-    grep "${option%=*}" $BOOT_CONFIG
+    grep -q "${option%=*}" $BOOT_CONFIG
 	if [ $? -eq 0 ]; then
 	  # option present -> alter the key=value pair
 	  sudo sed -i "s/.*${option%=*}.*/${option}/" $BOOT_CONFIG
@@ -351,10 +351,10 @@ config_boot()
   # route all audio to one sink (req. for Pi4)
   for option in  'quiet' 'logo.nologo'\
                  'snd_bcm2835.enable_hdmi=1'\
-				 'snd_bcm2835.enable_headphones=1'\
+		 'snd_bcm2835.enable_headphones=1'\
                  'snd_bcm2835.enable_compat_alsa=1'
   do
-    grep "${option%=*}" $BOOT_CMDLINE 
+    grep -q "${option%=*}" $BOOT_CMDLINE 
 	if [ $? -ne 0 ]; then
 	 sudo sed -i "s/$/ $option/" $BOOT_CMDLINE
 	  # TODO: update an existing key=value pair
