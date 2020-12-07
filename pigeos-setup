@@ -398,9 +398,7 @@ else
   # TODO use pigeos-config advanced menu
   config_midi		      || exit 10
   config_jed              || exit 11
-  # TODO use pigeos-config advanced menu
-  #config_ssh		      || exit 12
+  config_boot		      || exit 12
 fi
-cat $LOG_FILE
-echo "Press Enter to finish"; read
-rm $LOG_FILE
+echo "Finished! Press Enter to reboot or Ctrl+C to return to the shell."; read
+sudo reboot
