@@ -72,7 +72,8 @@ install_dosbox_pkg() {
 }
 
 install_pigeos_scripts() {
-  for file_url in "$URL_SETUP_SCRIPT" "$URL_IMAGE_SCRIPT" "$URL_LOADER_SCRIPT" "$URL_SPLASH_SCRIPT" "$URL_CONFIG_SCRIPT"
+  for file_url in "$URL_SETUP_SCRIPT" "$URL_IMAGE_SCRIPT" "$URL_LOADER_SCRIPT"\
+                  "$URL_SPLASH_SCRIPT" "$URL_CONFIG_SCRIPT"
   do
     download_file "$file_url" /tmp/$(basename "$file_url")
     sudo install -D /tmp/$(basename "$file_url") \
@@ -190,7 +191,7 @@ Description=Start PPPD for the given TTY
 Type=simple
 EnvironmentFile=/etc/default/pppd-%i.conf
 PIDFile=/run/pppd%i.pid
-ExecStartPre=-/usr/bin/og123 /usr/local/share/sound/dialing.ogg
+ExecStartPre=-/usr/bin/ogg123 /usr/local/share/sound/dialing.ogg
 ExecStartPre=/sbin/iptables -t nat -A POSTROUTING -s \$PPPD_NETWORK -j MASQUERADE
 ExecStartPre=/sbin/iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
 ExecStartPre=/sbin/iptables -A PREROUTING -t raw -p tcp --dport 21 -j CT --helper ftp
@@ -226,8 +227,8 @@ PPP_SYSCTL
   sudo systemctl enable pppd@ttyN0.path
   sudo systemctl start pppd@ttyN0.path
 
-  # Configuring DOSBox with modem on COM1
-  sed -i 's/serial1=.*/serial1=modem listenport:23/' $(dosbox -printconf)
+  # Configure DOSBox with modem connected on COM1
+  sed -i 's/serial1=.*/serial1=modem/' $(dosbox -printconf)
   return 0
 }
 
@@ -254,6 +255,9 @@ TELNET_SRV
   sudo systemctl daemon-reload
   sudo systemctl enable telnetd
   sudo systemctl start telnetd
+
+  # Configure DOSBox to have a nullmodem link on COM2
+  sed -i 's/serial2=.*/serial2=nullmodem server:127.0.0.1 port:2023/' $(dosbox -printconf)
 }
 
 config_login()
