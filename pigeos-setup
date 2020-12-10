@@ -45,6 +45,7 @@ download_file() {
 }
 
 install_dep_pkg() {
+  sudo apt-get update || exit 255
   sudo apt-get -y install $*
 }
 
@@ -353,9 +354,9 @@ config_boot()
   done
   # hide kernel boot messages
   # route all audio to one sink (req. for Pi4)
-  for option in  'quiet' 'logo.nologo'\
+  for option in  'quiet' 'splash' 'logo.nologo'\
                  'snd_bcm2835.enable_hdmi=1'\
-		 'snd_bcm2835.enable_headphones=1'\
+		         'snd_bcm2835.enable_headphones=1'\
                  'snd_bcm2835.enable_compat_alsa=1'
   do
     grep -q "${option%=*}" $BOOT_CMDLINE 
@@ -378,7 +379,6 @@ JEDRC
 config_imgprep() {
   # prepare the config for the imaging process
   sudo sed -i "s/$/ init=/usr/lib/raspi-config/init_resize\.sh/" $BOOT_CMDLINE
-  sudo sed -i "s/$/ sdhci\.debug_quirks2=4/" $BOOT_CMDLINE
 }
 ### Main ###
 >$LOG_FILE
