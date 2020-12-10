@@ -378,7 +378,7 @@ JEDRC
 
 config_imgprep() {
   # prepare the config for the imaging process
-  sudo sed -i "s/$/ init=/usr/lib/raspi-config/init_resize\.sh/" $BOOT_CMDLINE
+  sudo sed -i "s|$| init=/usr/lib/raspi-config/init_resize\.sh|" $BOOT_CMDLINE
 }
 ### Main ###
 >$LOG_FILE
