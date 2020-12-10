@@ -1,6 +1,6 @@
 #!/bin/bash
 # This script allows the user to maintain Pi/GEOS in an easy manner
-DEBUG=0
+DEBUG=1
 DIAL=$(which whiptail || which dialog)
 BTITLE="Pi/GEOS SETUP and configuration tool v0.1"
 CONFIG=$HOME/.pigeos
@@ -48,11 +48,16 @@ file_download() {
 
 file_archive() { 
   local arc="$1"; shift 
-  local src="$@"
+  # strip the path from the files to archive
+  local pth=$(dirname $1)
+  local src=("$(basename $1)")
+  while shift; do
+    [ -f "$1" ] && src+=("$(basename $1)")
+  done
   # compute number of allocated blocks to handle sparse files
-  local size=$(stat -c%b ${src} \
+  local size=$(stat -c%b ${src[@]} \
     | awk 'BEGIN{sum=0}{sum=sum+$1*512}END{print sum}')
-  (tar cSf - ${src} | pv -n -s${size} | gzip >${arc}) 2>&1 \
+  (tar cSf - -C $pth ${src[@]} | pv -n -s${size} | gzip >${arc}) 2>&1 \
     | $DIAL --backtitle "$BTITLE" --gauge "Archiving: ${arc}" 8 76 0
 }
 
@@ -106,8 +111,12 @@ imgsel_menu() {
   local imgsel_list=("NONE" "no image selected")
   local imgsel_dir=$HOME/${imgsel_drv:0:2}d_images/
   # build the list of available disk images
-  for f in ${imgsel_dir}/*.inf 
-    do imgsel_list+=("$(basename $f .inf)" "$(head -1 $f)"); done
+  for f in ${imgsel_dir}/*.inf; do 
+    # if no files are there f = '*', so it has to be validated
+	if [ -f $f ]; then
+	  imgsel_list+=("$(basename $f .inf)" "$(head -1 $f)")
+	fi
+  done
   # ask the user to choose one image
   selection=$(dial_menu "${imgsel_title}" "${imgsel_text}" "${imgsel_list[@]}")
   if [ "$selection" == "NONE" ]; then
@@ -272,9 +281,20 @@ imgmgmt_import() {
 	return 1
   fi
   # build the list of available disk images
+  local imgsel_count=$(ls /media/usb/*.tgz 2>/dev/null | wc -l)
+  if [ $imgsel_count -eq 0 ]; then
+    dial_err "$imgmgmt_no_arc_found"
+	return 2
+  fi
+  # init counters for gauge
+  local cnt=$((100 % $imgsel_count))
+  local stp=$((100 / $imgsel_count))
   for f in /media/usb/*.tgz ; do 
-    imgsel_list+=("$(basename $f .tgz)" "$(tar xzfO $f --wildcards '*.inf' | head -1)")
-  done
+    imgsel_list+=("$(basename $f .tgz)"\
+	              "$(tar xzf $f --wildcards '*.inf' --to-command 'head -1')")
+	cnt=$(($cnt + $stp))
+	echo $cnt | $DIAL --backtitle "$BTITLE" --gauge "Scanning archives" 8 76 0
+  done 
   # ask the user to choose one image
   selection=$(dial_menu "${imgsel_title}" "${imgsel_text}" "${imgsel_list[@]}")
   if [ ! -z "$selection" ]; then
