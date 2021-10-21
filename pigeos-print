@@ -1,0 +1,48 @@
+#!/bin/bash
+# This helper script handles printer selection and
+# special features to extract the original docuemnt
+# from PS printer driver output to generate a unique
+# file name in the case the user wants to print to PDF
+CONFIG=$HOME/.pigeos
+PDFDIR=$HOME/Shared/PDF
+
+get_doc_type() { file -b --mime-type $1; }
+get_doc_name() {
+  # extract title and map GEOS german ulauts to UTF-8
+  buffer=$(cat $1 \
+  	| sed -e 's/\r//' \
+  	| grep -a '%%Title:.*' \
+  	| sed  's/\x80/\xc3\x84/g; 
+	  	  	s/\x8a/\xc3\xa4/g;
+	  	  	s/\x85/\xc3\x96/g;
+	  	  	s/\x9a/\xc3\xb6/g;
+	  	  	s/\x86/\xc3\x9c/g;
+	  	  	s/\x9f/\xc3\xbc/g;
+	  	  	s/\xa7/\xc3\x9f/g' \
+  )
+  echo $(expr "$buffer" : '%%Title: \(.*\)')
+}
+
+### MAIN #######################################################################
+[[ -r $1 ]]   	  	  	  	  	  	  	  	  	  	  	  || exit 1
+. $CONFIG
+# AUTO -> select 1st form all available printers
+if [ "x$CUPS_DBPRN" == "xAUTO" ]; then
+  printer=$(lpstat -a | cut -d ' ' -f 1)
+else
+  # validate the desired printer is available
+  printer=`(lpstat -a | cut -d ' ' -f 1; echo PDF) | grep $CUPS_DBPRN`
+fi
+if [ "x$printer" == "x" ]; then
+  	  	  	  	  	    	  	  	  	  	  	  	  	     exit 2
+elif [ "x$printer" == "xPDF" ]; then
+  # try to create PDF out dir if not present
+  [[ -d $PDFDIR ]] || mkdir -p $PDFDIR    	  	  	  	  || exit 3
+  # validate printout is in Postscript format
+  [[ "$(get_doc_type $1)" == "application/postscript" ]]  || exit 4
+  # convert to PDF
+  ps2pdf12 $1 "${PDFDIR}/$(get_doc_name $1).pdf"
+  rm $1
+else
+  lpr -T "$(det_doc_name $1)" -P $printer $1
+fi
