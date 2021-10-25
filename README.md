@@ -6,7 +6,7 @@ Breadbox Ensemble.
 ## Intention
 
 Pi/GEOS intention is to simulate the user experience of running
-PC/GEOS a classic DOS-PC as much as possible on a Raspberry Pi.
+PC/GEOS on a classic DOS-PC as much as possible on a Raspberry Pi.
 Furthermore the user should be able to do some serious work on the
 system e.g. print documents or share them with other people in todays
 common data formats like PDF. 
@@ -18,15 +18,18 @@ possible and therefore doesn't require Linux knowledge.
   - stable operation of all English and German GEOS 2.x/3.x/4.x versions
   - 1024x768 desktop with correct aspect. ratio on any display 
   - network support via LAN or WiFi to allow Web enabled GEOS version
-to connect to the internet without any modification (e.g. using a
-virtual modem connection)
-  - printing from GEOS to any Linux supported printer connected to the
-Raspberry Pi via USB or network
+to connect to the internet without any modification using a
+virtual modem connection
+  - printing from GEOS to any AirPrint capable printer connected to the
+Raspberry Pi network
+  - document synchronization with other NAS, PC and mobile dives
   - support of modern input devices like USB keyboard and mouse
 
 ## Concepts
 Pi/GEOS is heavily based on disk images to allow for easy provision of a
-pre-configures GEOS environments contributed by the GEOS community.
+pre-configures GEOS environments contributed by the GEOS community. For the
+exchange of documents USB pentdrive support and data synchronization service
+is included.
 
 ## Components
 
@@ -36,4 +39,4 @@ boot very fast into DOSBox running on a console frame buffer console
   - **pigeos-config** a bash script to customize the Linux & DOSBox environment
 that looks and behaves much like classic PC BIOS/SETUP
   - **pigeos-loader** a launcher script that executes DOSBox during
-system boot and also attaches the requested DOS drive images 
+system boot and also attaches the requested DOS drive images
