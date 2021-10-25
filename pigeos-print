@@ -8,7 +8,7 @@ PDFDIR=$HOME/Shared/PDF
 
 get_doc_type() { file -b --mime-type $1; }
 get_doc_name() {
-  # extract title and map GEOS german ulauts to UTF-8
+  # extract title and map GEOS german umlauts to UTF-8
   buffer=$(cat $1 \
   	| sed -e 's/\r//' \
   	| grep -a '%%Title:.*' \
