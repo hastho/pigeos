@@ -1,25 +1,73 @@
 #!/bin/bash
-# Pi/GEOS installer v0.1"
-#set -e
-#set -x
+# (c) 2020-21 T.Hass
+#
+# USAGE pigeos-setup [<command>] [<parameters>]
+#
+# COMMANDS:
+# 	install   	<source> <boot> <root> installs files from source
+# 	netinstall	downloads files from GitHub and installs into the current system
+# 	configure 	(re)configure all services using the current user config
+# 	help  	  	show advanced help (manual)
+#
+# 	install_<service> expert options to install/configure a specific service
+# 	config_<service>  
+#
+###
+#
+# NAME: Pi/GEOS SETUP v0.9
+#
+# PURPOSE: Pi/GEOS installation und setup utillity
+#
+# DESCRIPTION: This utility is used to install the Pi/GEOS specific extensions
+# into a vanilla Raspberry Pi OS (Raspbian) lite image. It is also called by
+# pigeos-config after the user has modified the local configuration file
+# ($HOME/.pigeos) to apply configuration changes to the system.
+#
+# install
+# 	is the recommended method to deploy and update for regular users. A working
+# 	internet connection is required to work properly. Please refer to the
+# 	official documentation how to setup this. Raspberry Pi imaging utility
+# 	advanced options (Shift+Ctrl+X) are the recommended way to preconfigure
+# 	Wifi and locale settings when preparing a boot device (SD card).
+# 	The 1st stage installation can also run in an chroot environment on
+# 	a development system.
+# install_stage2
+# 	is called by pigeos-loader to finish a fresh a fresh installation.
+# 	No internet connection is required for this stage but it must only
+# 	be executed from within a running Pi/GEOS installation (after image
+# 	image resize has successfully finished).
+# configure
+# 	is called by pigeos-config the the interactive configuration utility. 
+# 	Is is usualy not intended to be used by the enduser direcly.
+# 	
+# SEE ALSO: pigeos-config, pigeos-loader
+#
+#####
+
+# setup for usage and manual
+PROGNAME=$(type $0 | cut -d ' ' -f 3)
+PROGDIR=$(dirname $PROGNAME)
+PROGNAME=$(basename $PROGNAME)
 # essential raspi configuration files
 BOOT_CONFIG=/boot/config.txt
 BOOT_CMDLINE=/boot/cmdline.txt
 # base for Pi/GEOS system files and binaries
 PIGEOS_PREFIX=/usr/local
+PIGEOS_USER=$(who | grep tty1 | cut -d\  -f 1)
 # which dosbox binary should be launched?
 DOSBOX_BIN=$PIGEOS_PREFIX/bin/dosbox
-DOSBOX_USER=$(who | grep tty1 | cut -d\  -f 1)
-# packages Pi/GEOS and dosbox-pigeos depend on:
-PKG_LIST="iptables ppp socat usbmount libsdl-sound1.2 libsdl-net1.2 libpcap0.8 timidity-daemon fbi imagemagick jed pv vorbis-tools gldriver-test libgl1-mesa-dri"
-# list of external files need to be installed by this script
-# a customized version of DOSBox
+# global depencies:
+PKG_LIST="fbi gldriver-test libgl1-mesa-dri jq pv"
+# list of external files need to be installed by this script in net_install mode
+# TODO setup a APT repo for the customized version of DOSBox
 URL_DOSBOX_PKG="https://dl.dropbox.com/s/8s7ge2co2qmw1q6/dosbox_0.74%2Bpigeos_armhf.deb"
 URL_DOSBOX_LANG=(\
   "https://raw.githubusercontent.com/hastho/pigeos/master/defaults/mapper-0.74.map.de_DE.UTF-8" \
   "https://raw.githubusercontent.com/hastho/pigeos/master/defaults/mapper-0.74.map.en_US.UTF-8" \
 )
 URL_DOSBOX_CONFIG="https://raw.githubusercontent.com/hastho/pigeos/master/defaults/dosbox-0.74.conf"
+# a free for non-commercial use file sync tool
+URL_RSLSYNC_PKG="https://download-cdn.resilio.com/stable/linux-armhf/resilio-sync_armhf.tar.gz"
 # a classic modem style dialing sound
 URL_DIALING_SOUND="https://upload.wikimedia.org/wikipedia/commons/3/33/Dial_up_modem_noises.ogg"
 # a font to be used in the BIOS splash screen and splash screen template
@@ -40,36 +88,31 @@ URL_CONFIG_LANG=(\
 
 LOG_FILE=/tmp/$(basename $0).log
 
+# this array is to map pidos config to systemctl: 0->disabled, 1->enabled
+declare -a disabled_enabled=("disabled" "enabled")
+
+usage() {
+  echo "" >&2
+  echo "$PROGNAME:" "$@" >&2
+  sed -n '/^###/q; /^#/!q; s/^#//; s/^ //; 4,$p' "$PROGDIR/$PROGNAME" >&2
+  exit 254
+}
+
+help() {
+  echo "" >&2
+  echo "$PROGNAME:" "$@" >&2
+  sed -n '/^#####/q; /^#/!q; s/^#*//; s/^ //; 4,$p' "$PROGDIR/$PROGNAME" >&2
+  exit 254
+}
+
 download_file() {
-  wget -q "$1" -O "$2" 
+  wget -q "$1" -O "$2"  || return 1
+  return 0
 }
 
 install_dep_pkg() {
-  sudo apt-get update || exit 255
-  sudo apt-get -y install $*
-}
-
-install_dosbox_pkg() {
-  download_file "$URL_DOSBOX_PKG" /tmp/dosbox.deb
-  # remove package from blacklist
-  echo "dosbox install" | sudo dpkg --set-selections
-  sudo dpkg -i /tmp/dosbox.deb
-  # blacklist dosbox package so it will not ibe replaced
-  # with the system default dosbox during any upgrades
-  echo "dosbox hold" | sudo dpkg --set-selections
-  # install a custom DOSBox configuration
-  download_file "$URL_DOSBOX_CONFIG" /tmp/$(basename "$URL_DOSBOX_CONFIG")
-  install -D /tmp/$(basename "$URL_DOSBOX_CONFIG")\
-    $HOME/.dosbox/$(basename "$URL_DOSBOX_CONFIG") 
-  # download locallolized key maps
-  for lang in ${URL_DOSBOX_LANG[@]}; do
-    download_file "$lang"    /tmp/$(basename "$lang")
-	sudo install -D          /tmp/$(basename "$lang")\
-	  $PIGEOS_PREFIX/share/pigeos/$(basename "$lang")
-  done
-  # create folder to store the disk images
-  test -d $HOME/hdd_images || mkdir $HOME/hdd_images
-  test -d $HOME/fdd_images || mkdir $HOME/fdd_images
+    sudo apt-get update || exit 255
+    sudo apt-get -y install $*
 }
 
 install_pigeos_scripts() {
@@ -83,13 +126,15 @@ install_pigeos_scripts() {
 }
 
 install_pigeos_config() {
+  # download the default config
   download_file "$URL_CONFIG_SYSCFG" /tmp/$(basename "$URL_CONFIG_SYSCFG")
   sudo install -D  /tmp/$(basename "$URL_CONFIG_SYSCFG")\
      $PIGEOS_PREFIX/etc/$(basename "$URL_CONFIG_SYSCFG")
-  # include system config in user config, if not allready present
-  grep -q $(basename "$URL_CONFIG_SYSCFG") $HOME/.pigeos || \
-    echo ". $PIGEOS_PREFIX/etc/$(basename $URL_CONFIG_SYSCFG)"\
-    >$HOME/.pigeos
+  # copy system config into user config, if not allready present
+  if [ -r ~$PIGEOS_USER/.pigeos ]; then
+    cp -p $PIGEOS_PREFIX/etc/$(basename $URL_CONFIG_SYSCFG) \
+    	  ~$PIGEOS_USER/.pigeos
+  fi
   for lang in ${URL_CONFIG_LANG[@]}; do
     download_file "$lang" /tmp/$(basename "$lang")
 	sudo install -D          /tmp/$(basename "$lang")\
@@ -97,15 +142,45 @@ install_pigeos_config() {
   done
 }
 
+install_dosbox_pkg() {
+  # dosbox-pigeos requires SDL-1.2 and libpacp for Ethernet emulation
+  install_dep_pkg libsdl1.2debian libsdl-sound1.2 libsdl-net1.2 libpcap0.8
+  # ToDo build a official repository
+  download_file "$URL_DOSBOX_PKG" /tmp/dosbox.deb
+  # remove package from blacklist
+  echo "dosbox install" | sudo dpkg --set-selections
+  dpkg -v /tmp/dosbox.deb && sudo dpkg -i /tmp/dosbox.deb
+  # blacklist dosbox package so it will not be replaced
+  # with the system default dosbox during any upgrades
+  echo "dosbox hold" | sudo dpkg --set-selections
+  # install a custom DOSBox configuration
+  download_file "$URL_DOSBOX_CONFIG" /tmp/$(basename "$URL_DOSBOX_CONFIG")
+  install -D /tmp/$(basename "$URL_DOSBOX_CONFIG")\
+    ~$PIGEOS_USER/.dosbox/$(basename "$URL_DOSBOX_CONFIG") 
+  # download locallolized key maps
+  for lang in ${URL_DOSBOX_LANG[@]}; do
+    download_file "$lang"    /tmp/$(basename "$lang")
+	sudo install -D          /tmp/$(basename "$lang")\
+	  $PIGEOS_PREFIX/share/pigeos/$(basename "$lang")
+  done
+  # create folder to store the disk images
+  test -d ~$PIGEOS_USER/hdd_images || mkdir ~$PIGEOS_USER/hdd_images
+  test -d ~$PIGEOS_USER/fdd_images || mkdir ~$PIGEOS_USER/fdd_images
+}
+
 install_splash_screen() {
   # This custom splash screen simluates a PC BIOS
   # screen and provides some information about the
   # current Pi/GEOS configuration.
+  echo "Creating splash screen service" 
+  install_dep_pkg imagemagick 
+  # template for the spash screen
   download_file $URL_SPLASH \
     /tmp/splash_tpl.png 2>&1
   sudo install -D /tmp/splash_tpl.png  \
     $PIGEOS_PREFIX/share/pigeos/splash_tpl.png 2>&1
   sudo mkdir -p $PIGEOS_PREFIX/lib/pigeos 2>&1
+  # special font used by BIOS manufacturers
   download_file $URL_FONTS \
     /tmp/ultimate_oldschool_pc_font_pack.zip 2>&1
   unzip -jod /tmp /tmp/ultimate_oldschool_pc_font_pack.zip \
@@ -115,10 +190,9 @@ install_splash_screen() {
   sudo fc-cache -f 2>&1
   # create image config params req. by pigeos-splash, if not present
   for param in FDA_IMAGE FDB_IMAGE HDC_IMAGE HDD_IMAGE; do
-    grep -q "${param}=.*" $HOME/.pigeos || echo "${param}=NONE" >> $HOME/.pigeos
+    grep -q   "${param}=.*"   	~$PIGEOS_USER/.pigeos \
+	  || echo "${param}=NONE" >>~$PIGEOS_USER/.pigeos
   done
-  pigeos-splash update 2>&1
-  echo "Creating splash screen service" 
   sudo tee /etc/systemd/system/splash_screen.service >/dev/null <<SPLASH_SCR
 [Unit]
 Description=Pi/GEOS splash screen service
@@ -134,10 +208,13 @@ StandardOutput=tty
 [Install]
 WantedBy=multi-user.target
 SPLASH_SCR
+}
+
+config_splash_screen() {
+  pigeos-splash update 2>&1
   # enable service
   sudo systemctl daemon-reload 2>&1
-  sudo systemctl enable splash_screen 2>&1
-  sudo systemctl start splash_screen 2>&1
+  sudo systemctl --now enable splash_screen 2>&1
   return 0
 }
 
@@ -146,6 +223,7 @@ install_dosbox_modem() {
   # to a local telnet port that will be redirects to
   # a virtuel TTy where a PPPD can bind to
   echo -n "Creating modem service "
+  install_dep_pkg iptables ppp socat vorbis-tools 
   sudo tee /etc/systemd/system/modem@.service >/dev/null <<MODEM_SRV
 [Unit]
 Description=Start DOSBox virtual modem on given TTY
@@ -218,24 +296,25 @@ FTP_MOD
   sudo tee /etc/sysctl.d/98-ppd.conf >/dev/null <<PPP_SYSCTL
 net.ipv4.ip_forward=1
 PPP_SYSCTL
+}
 
+config_dosbox_modem() {
   # reload system configuration and enable/start services
   sudo sysctl -p /etc/sysctl.conf
   sudo modprobe nf_nat_ftp
   sudo systemctl daemon-reload
-  sudo systemctl enable modem@ttyN0
-  sudo systemctl start modem@ttyN0
-  sudo systemctl enable pppd@ttyN0.path
-  sudo systemctl start pppd@ttyN0.path
+  sudo systemctl --now enable modem@ttyN0
+  sudo systemctl --now enable pppd@ttyN0.path
 
   # Configure DOSBox with modem connected on COM1
-  sed -i 's/serial1=.*/serial1=modem/' $(dosbox -printconf)
+  sed -i 's/serial1=.*/serial1=modem/' $($DOSBOX_BIN -printconf)
   return 0
 }
 
 install_dosbox_telnetd() {
   # install a simple telnet service on localhost that can be accessed from
   # GEOS via DOSBox COM2 nullmodem link
+  install_dep_pkg socat
   sudo tee /etc/systemd/system/telnetd.service >/dev/null <<TELNET_SRV
 [Unit]
 Description=Start DOSBox null-modem host link
@@ -253,19 +332,20 @@ ExecStart=/usr/bin/socat -L /run/telnetd.pid -d -d -s -lf /var/log/telnetd.log  
 [Install]
 WantedBy=multi-user.target
 TELNET_SRV
-  sudo systemctl daemon-reload
-  sudo systemctl enable telnetd
-  sudo systemctl start telnetd
-
-  # Configure DOSBox to have a nullmodem link on COM2
-  sed -i 's/serial2=.*/serial2=nullmodem server:127.0.0.1 port:2023/' $(dosbox -printconf)
 }
 
-config_login()
-{
+config_dosbox_telnetd() {
+  sudo systemctl daemon-reload
+  sudo systemctl --now enable telnetd
+
+  # Configure DOSBox to have a nullmodem link on COM2
+  sed -i 's/serial2=.*/serial2=nullmodem server:127.0.0.1 port:2023/' \
+  	$($DOSBOX_BIN -printconf) 
+}
+
+install_pigeos_loader() {
   # raspi-config will switch to text console mode and 
-  # enables auto-login  on TTY1 for the user who 
-  # executes this script
+  # enables auto-login  on TTY1 for the user who executes this script
   sudo /usr/bin/raspi-config nonint do_boot_behaviour B2
   # to make the login realy "silent" so that no output apears between the BIOS splash 
   # and theDOSBox splash the autologin.conf file needs to be modified
@@ -283,16 +363,40 @@ if [ "\$(tty)" = "/dev/tty1" ]; then
 fi
 LOGIN_PROF
   # disable license msg at login
-  touch $HOME/.hushlogin
+  touch ~$PIGEOS_USER/.hushlogin
 }
 
-config_usbmount()
-{
+install_cups() {
+  install_dep_pkg cups cups-browsed cups-client
+  # enable automatic print queue creation for AirPrint printer found
+  sudo sed -i 's/^CreateIPPPrinterQueues.*/CreateIPPPrinterQueues Driverless/' \
+    /etc/cups/cups-browsed.conf
+}
+
+config_cups() {
+  sudo systemctl --now ${disabled_enabled[$CUPS_SLOAD]} cups
+  sudo systemctl --now ${disabled_enabled[$CUPS_SLOAD]} cups-browsed
+  # enable remote administration of printers used by Pi/GEOS
+  [[ $CUPS_ADMIN -eq 1 ]] && cupsctl --remote-admin || cupsctl --no-remote-admin
+  [[ $CUPS_ADMIN -eq 1 ]] && cupsctl --remote-any 	|| cupsctl --no-remote-any
+  # share printer attached localy to Pi/GEOS
+  [[ $CUPS_SHARE -eq 1 ]] && cupsctl --share-printers || cupsctl --no-share-printers
+}
+
+install_jed() {
+  install_dep_pkg jed
+  # make the jed editor look & feel like on DOS
+  cat >~$PIGEOS_USER/.jedrc <<JEDRC
+() = evalfile ("cua");
+set_color_scheme ("blue3");
+TAB_DEFAULT = 4;
+JEDRC
+}
+
+install_usbmount() {
+  install_dep_pkg usbmount
   # add the pi user to the disk group
-  sudo usermod -aG disk $DOSBOX_USER  
-  # set mount option to allow write acces
-  sudo sed -i 's/^FS_MOUNTOPTIONS=.*/FS_MOUNTOPTIONS="-fstype=vfat,gid=disk,dmask=0007,fmask=0117"/' \
-	  /etc/usbmount/usbmount.conf
+  sudo usermod -aG disk $PIGEOS_USER  
   # usbmount failed without this setting
   sudo mkdir -p /etc/systemd/system/systemd-udevd.service.d
   sudo tee /etc/systemd/system/systemd-udevd.service.d/override.conf >/dev/null <<PRIV_MNT
@@ -300,26 +404,44 @@ config_usbmount()
 PrivateMounts=no
 PRIV_MNT
   # add configuration option to the user config, if not present
-  grep -q MOUNT_USB $HOME/.pigeos || echo "MOUNT_USB=1" >>$HOME/.pigeos
+  grep -q MOUNT_USB ~$PIGEOS_USER/.pigeos || echo "MOUNT_USB=0" >>~$PIGEOS_USER/.pigeos
 }
 
-config_midi()
-{
+config_usbmount() {
+  # set mount option to automount VFAT USB devices and allow write acces for the pi user
+  [[ $MOUNT_USB -eq 1 ]] \
+  	&& sudo sed -i 's/^FS_MOUNTOPTIONS=.*/FS_MOUNTOPTIONS="-fstype=vfat,gid=disk,dmask=0007,fmask=0117"/' \
+	   /etc/usbmount/usbmount.conf \
+ 	|| sudo sed -i 's/^FS_MOUNTOPTIONS=.*/FS_MOUNTOPTIONS=""/' \
+	   /etc/usbmount/usbmount.conf
+}
+
+install_midi() {
+  install_dep_pkg timidity-daemon 
+}
+
+config_midi() {
+  sudo systemctl --now ${disabled_enabled[$MIDI_SLOAD]} timidity
   # route midi output to timidity
-  sed -i 's/midiconfig\s*=.*/midiconfig=128:0/' $($DOSBOX_BIN -printconf)
+  [[ $MIDI_SLOAD -eq 1 ]] \
+  	&& sed -i 's/midiconfig\s*=.*/midiconfig=128:0/'  $($DOSBOX_BIN -printconf) \
+	|| sed -i 's/midiconfig\s*=.*/midiconfig=/'   	  $($DOSBOX_BIN -printconf)
 }
 
-config_ssh()
-{
+install_rslsync() {
+  download_file $URL_RSLSYNC_PKG /tmp/$(basename $URL_RSLSYNC_PKG)
+  sudo install rslsync /usr/local/bin
+}
+
+config_ssh() {
   sudo /usr/bin/raspi-config nonint do_ssh 0
   # SSH private key is req. for RSYNC/UNISON
-  if [ ! -f $HOME/.ssh/id_rsa ]; then
+  if [ ! -f ~$PIGEOS_USER/.ssh/id_rsa ]; then
     ssh-keygen -t rsa -f ~/.ssh/id_rsa -q -P ''
   fi
 }
 
-config_locale()
-{
+config_locale() {
   LANG=${1:-de_DE.UTF-8}
   sudo /usr/bin/raspi-config nonint do_change_locale $LANG
   local keyb_lang=$(echo $LANG \
@@ -328,11 +450,10 @@ config_locale()
   sudo /usr/bin/raspi-config nonint do_configure_keyboard ${keyb_lang}
   # link DOSBox mapper file for the given language
   ln -sf $PIGEOS_PREFIX/share/pigeos/mapper-0.74.map.$LANG \
-         $HOME/.dosbox/mapper-0.74.map
+        ~$PIGEOS_USER/.dosbox/mapper-0.74.map
 }
 
-config_boot()
-{
+config_boot() {
   # don't wait for the network
   sudo /usr/bin/raspi-config nonint do_boot_wait 1
   # set the default framebuff resolution to 1024x768 as this gives
@@ -367,42 +488,56 @@ config_boot()
   done
 }
 
-config_jed() {
-  # make the jed editor look & feel like on DOS
-  cat >$HOME/.jedrc <<JEDRC
-() = evalfile ("cua");
-set_color_scheme ("blue3");
-TAB_DEFAULT = 4;
-JEDRC
-}
-
 config_imgprep() {
   # prepare the config for the imaging process
   sudo sed -i "s|$| init=/usr/lib/raspi-config/init_resize\.sh|" $BOOT_CMDLINE
 }
+
+install() {
+  # 1st stage install executes all modules in the default order
+  install_dep_pkg $PKG_LIST 	|| exit 1
+  install_dosbox_pkg      || exit 2
+  install_pigeos_scripts  || exit 3
+  install_pigeos_config   || exit 4
+  install_pigeos_loader   || exit 5
+  install_splash_screen   || exit 6
+  install_dosbox_modem    || exit 7
+  install_dosbox_telnetd  || exit 8
+  # TODO use pigeos-config advanced menu
+  install_usbmount     	  || exit 9
+  install_jed             || exit 10
+}
+
+install_stage2() {
+  # 2nd stage install configures core services
+  config_locale   	  	  || exit 1
+  config_splash_screen	  || exit 2
+  config_dosbox_modem 	  || exit 3
+  config_dosbox_telnetd   || exit 4
+  config_usbmount 	  	  || exit 5
+  config_midi 	  	  	  || exit 6
+  config_boot 	  	  	  || exit 7
+  # clear 2nd stage setup execution in system default config
+  sed -i 's/CONTINUE_SETUP=.*/CONTINUE_SETUP=0/' \
+  	$PIGEOS_PREFIX/etc/$(basename "$URL_CONFIG_SYSCFG")
+}
+
+configure() { 
+  # TODO use pigeos-config basic menu
+  config_locale	          || exit 11 
+  # TODO use pigeos-config advanced menu
+  config_midi		      || exit 12
+  config_boot		      || exit 13
+  exit 0
+}
+
 ### Main ###
 >$LOG_FILE
 if [ $# -ne 0 ]; then
   # exec the given module
   $@
 else
-  # execute all modules in the default order
-  install_dep_pkg $PKG_LIST 	|| exit 1
-  install_dosbox_pkg      || exit 2
-  install_pigeos_scripts  || exit 3
-  install_pigeos_config   || exit 4
-  install_splash_screen   || exit 5
-  install_dosbox_modem    || exit 6
-  install_dosbox_telnetd  || exit 14
-  config_login            || exit 7
-  # TODO use pigeos-config advanced menu
-  config_usbmount     	  || exit 8
-  # TODO use pigeos-config basic menu
-  config_locale	          || exit 9 
-  # TODO use pigeos-config advanced menu
-  config_midi		      || exit 10
-  config_jed              || exit 11
-  config_boot		      || exit 12
+  usage
 fi
 echo "Finished! Press Enter to reboot or Ctrl+C to return to the shell."; read
 sudo reboot
