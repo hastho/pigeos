@@ -1,5 +1,9 @@
 #!/bin/bash
-### Main Menue #####################################################################
+### Global settings #############################################################
+# map conf flags 0->disabled and 1->enabled to clear text
+declare -a disabled_enabled=("deaktiviert" "aktiviert")
+
+### Main Menue ##################################################################
 main_title="Hauptmenü"
 main_text="Pi/GEOS Konfigurationsoption  wählen oder Raspberry Pi Konfigurations-Tool starten."
 main_options=(\
@@ -10,9 +14,10 @@ main_options=(\
   "Hard Disk "	"Festplattenimages verwalten" \
   "Write"		"Änderungen sichern und System neu starten" \
   "Abort"		"Änderungen verwerfen und System neu starten")
+main_reset_msg="Pi/GEOS Konfiguration wirklich zurücksetzen?" 
 main_abort_msg="Änderungen verwerfen und SETUP beenden?"
 
-### Basic Menue ####################################################################
+### Basic Menue #################################################################
 basic_title="Baiskonfiguration"
 basic_text="Anpassung grundlegender DOS- und Ugebungseinstellungen. Drücke ESC um zum Hauptmenü zurückzukehren."
 basic_options=(\
@@ -25,7 +30,7 @@ basic_options=(\
 
 ### ImageSelection Menue ###########################################################
 imgsel_title="FDD/HHD Abbild Verwaltung"
-imgsel_text="Bitte wähle ein Disketten-bzw. Festplattenabbild. \nDrück ENTER für detailierte Inforamtionen und um das Abbild auszuwählen. Drücke ESC um zum Hauptmenü zurückzukehren."
+imgsel_text="Bitte wähle ein Disketten-bzw. Festplattenabbild. \nDrücke ENTER für detailierte Inforamtionen und um das Abbild auszuwählen. Drücke ESC um zum Hauptmenü zurückzukehren."
 imgsel_conf="Auswahl bestätigen oder abbrechen?"
 
 ### KeyboardSelection Menu #########################################################
@@ -60,11 +65,20 @@ keybsel_options=(\
 advanced_title="Erweiterte Konfiguration"
 advanced_text="Anpassung erweiterter Umgebungseinstellungen. \nDrücke ESC um zum Hauptmenü zurückzukehren."
 advanced_options=(\
-  "SSH Fernwartung "    "$(systemctl is-active sshd)" \
-  "CUPS Druckersystem "	"$(systemctl is-active cups)" \
-  "  Remote admin "	    "$(cupsctl | grep _remote_admin | sed 's/.*=\([01]\)/\1/')" \
-  "  Share printers "	"$(cupsctl | grep _share_printers | sed 's/.*=\([01]\)/\1/')" \
-  "MIDI Emulation "	    "$(systemctl is-active timidity)" )
+  "CUPS Druckersystem "		"${disabled_enabled[$CUPS_SLOAD]}" \
+  "  DOSBox-Drucker "		"${CUPS_DBPRN}" \
+  "  Remote Verwalt. "		"${disabled_enabled[$CUPS_ADMIN]}" \
+  "MIDI Emulation "	    	"${disabled_enabled[$MIDI_SLOAD]}" \
+  "ResilioSync Service "	"${disabled_enabled[$RSLSYNC_SLOAD]}" \
+  "  Acces Key (rw) "		"${RSLSYNC_KEY}" \
+  "  Internet Zugriff "		"${disabled_enabled[$RSLSYNC_WAN]}" )
+advanced_serv_activate="Gewählten Dienst/Funktion beim Systemstart aktivieren?"
+advanced_sync_key_warn="Der Resilio-Sync Zugriffsschlüssel kann nicht geändert werden."
+advanced_sync_key_edit="Gib einen vorhandenen Zugriffsschlüssel ein oder \nlösche den alten um einen neuen zu erzeugen."
+
+### Printer Selection Menu #########################################################
+prnsel_title="Druckerauswahl"
+prnsel_text="Wähle 'AUTO' um automatisch den ersten erkannten Drucker zu nutzen \noder selektiere ein bestimmtes Modell \nDrücke ESC um zum Hauptmenü zurückzukehren."
 
 ### ImageMgmt Menue ################################################################
 imgmgmt_title="FDD/HDD Abbild Verwaltungs"

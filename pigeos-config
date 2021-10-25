@@ -1,8 +1,15 @@
 #!/bin/bash
 # This script allows the user to maintain Pi/GEOS in an easy manner
-DEBUG=0
+# 
+# While in the UI only values in the pigeos user config file are altered.
+# When the user saves the configuration it will applied by caling pigoes-setup
+# or when pigeos-loder determinates the paramters for DOSBox.
+#
+# see also: pigeos-loader, pigeos-setup
+DEBUG=1
+SN=$(cat /sys/firmware/devicetree/base/serial-number)
 DIAL=$(which whiptail || which dialog)
-BTITLE="Pi/GEOS SETUP and configuration tool v0.1"
+BTITLE="Pi/GEOS SETUP configuration tool v0.1 (S/N:$SN)"
 CONFIG=$HOME/.pigeos
 FONT=/usr/share/consolefonts/Uni2-TerminusBold24x12.psf.gz
 
@@ -11,7 +18,7 @@ conf_get()   { echo  ${CONFIG}.new; }
 conf_new()   { cp -p ${CONFIG} ${CONFIG}.new; }
 conf_save()  { mv    ${CONFIG}.new ${CONFIG}; pigeos-splash update; }
 conf_abort() { rm    ${CONFIG}.new; }
-conf_reset() { dial_info "Sorry, this function hasn't been implemented yet."; }
+conf_reset() { dial_yesno $main_reset_msg && cp /etc/pigeos ${CONFIG}.new; }
 
 ## UI functions ###########################################
 dial_info()  { $DIAL --backtitle "$BTITLE" --title "Information"  --msgbox   "$1" 8 50; }
@@ -20,9 +27,9 @@ dial_yesno() { $DIAL --backtitle "$BTITLE" --title "Confirmation" --yesno    "$1
 
 dial_input() { 
   local sel=$($DIAL --backtitle "$BTTILE" --title "${1}" \
-       --inputbox "$2" 8 76 "$3" \
-       3>&1 1>&2 2>&3)
-   [[ $? -eq 0 ]] && echo $sel || return 1
+    --inputbox "$2" 8 76 "$3" \
+    3>&1 1>&2 2>&3)
+  [[ $? -eq 0 ]] && echo $sel || return 1
 }
 
 dial_menu()  {
@@ -82,7 +89,7 @@ main_menu() {
       Default)	conf_reset ;;
       Hard*)	imgmgmt_menu ;;
       Write)	return 0 ;;
-      *)		dial_yesno "$main_abort_msg" && return 1 ;;
+      *)		dial_yesno "$main_abort_msg" && return 1
     esac
   done
 }
@@ -154,16 +161,62 @@ advanced_menu() {
   while :; do
     source $(conf_get); source $MENU_TEXT
 	selection=$(dial_menu "${advanced_title}" "${advanced_text}" "${advanced_options[@]}")
-    case $selection in
-      SSH*)		    dial_info "Sorry, this function hasn't been implemented yet." ;;
-      CUPS*)		dial_info "Sorry, this function hasn't been implemented yet." ;;
-      Remote*)	 	dial_info "Sorry, this function hasn't been implemented yet." ;;
-      Share*print*)	dial_info "Sorry, this function hasn't been implemented yet." ;;
-      MIDI*)	    dial_info "Sorry, this function hasn't been implemented yet." ;;
+    case "$selection" in
+      CUPS*)		service_activcation_menu "CUPS_SLOAD" ;;
+  	  DOSBox*)  	prnsel_menu ;;
+      Remote*)	 	service_activcation_menu "CUPS_ADMIN" ;;
+      MIDI*)	    service_activcation_menu "MIDI_SLOAD" ;;
+	  ResilioSync*) service_activcation_menu "RSLSYNC_SLOAD" ;;
+	  Acces*Key*)	advanced_sync_key_edit ;;
+	  Internet*)	service_activcation_menu "RSLSYNC_WAN" ;;
       *)		    break
     esac
   done
 }
+
+prnsel_menu() {
+  local selection
+  local prnsel_list=("AUTO" "autodetect" "PDF" "PDF Export")
+  # build the list of available printers
+  for p in $(lpstat -a | cut -d ' ' -f 1); do 
+    [[ ! -z "$p" ]] && prnsel_list+=("$p" "${p//_/ }")
+  done
+  # ask the user to choose a printer
+  selection=$(dial_menu "${prnsel_title}" "${prnsel_text}" "${prnsel_list[@]}")
+  if [ ! -z "$selection" ]; then
+    grep -q CUPS_DBPRN $(conf_get) \
+	  && sed -i "s#CUPS_DBPRN=.*#CUPS_DBPRN=${selection}#" $(conf_get) \
+	  || echo "CUPS_DBPRN=${selection}" >> $(conf_get)
+  fi
+}
+
+advanced_sync_key_edit() {
+  local selection
+  source $(conf_get)
+  # the sync key can only set once but not changed later 
+  if [ "x$RSLSYNC_KEY" == "x" ]; then
+    selection=$(dial_input "Input" "${advanced_sync_key_edit}" "$RSLSYNC_KEY" || echo ABORT)
+  	if [ "x$selection" != "xABORT" ]; then
+      grep -q "RSLSYNC_KEY" $(conf_get) \
+	  	&& sed -i "s#RSLSYNC_KEY=.*#RSLSYNC_KEY=${selection}#" $(conf_get) \
+	  	|| echo 	   "RSLSYNC_KEY=${selection}" >> $(conf_get)
+  	fi
+  else
+  	dial_info "$advanced_sync_key_warn"
+  fi
+}
+
+service_activcation_menu() {
+  local service=$1
+  local selection
+  dial_yesno "$service $advanced_serv_activate"; selection=$?
+  if [ $selection -ne 255 ]; then
+	grep -q "$service" $(conf_get) \
+  	  && sed -i "s#${service}=.*#${service}=$(($selection==0?1:0))#" $(conf_get) \
+	  || echo 	  "${service}=$(($selection==0?1:0))" >> $(conf_get)
+  fi
+}
+
 
 ## System menu ##################################
 system_menu() { sudo raspi-config; }
@@ -320,16 +373,13 @@ conf_new
 # launch menue
 main_menu
 if [ $? -eq 0 ]; then
-  # save changes and reboot
+  # save changes
   conf_save
-  sudo reboot
+  # and reboot if not in debug mode
+  [[ $DEBUG -eq 0 ]] && reboot	  	|| exit 0
 else
-  # remove interim config file and return to DOSBox
-  if [ $DEBUG -eq 0 ]; then
-   conf_abort
-  else
-    exit 255 # to break the pigeos-loader loop
-  fi
+  # remove interim config file and return to the pigeos-loader loop
+  [[ $DEBUG -eq 0 ]] && conf_abort	|| exit 255
 fi
 exit 0
 
