@@ -25,13 +25,13 @@ while :; do
     else
       d_args="echo off"
     fi
-	if [ "x${MOUNT_DOC^^}" == "xTRUE" -a -d $HOME/documents ] ; then
-      x_args="mount x $HOME/documents"
+	if [ ${MOUNT_DOC} -eq 1 -a -d "$HOME/Documents" ] ; then
+      x_args="mount s $HOME/Documents"
 	else
 	  x_args="echo off"
 	fi
-    if [ "x${MOUNT_USB^^}" == "xTRUE" ] ; then
-      y_args="mount y /media/usb"
+    if [ ${MOUNT_USB} -eq 1 ] ; then
+      y_args="mount u /media/usb"
 	else
 	  y_args="echo."
 	fi
