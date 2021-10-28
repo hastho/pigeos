@@ -1,5 +1,5 @@
 #!/bin/bash
-# This script allows the user to maintain Pi/GEOS in an easy manner
+# This script allows the user to configure Pi/GEOS in an easy manner
 # 
 # While in the UI only values in the pigeos user config file are altered.
 # When the user saves the configuration it will applied by caling pigoes-setup
@@ -18,7 +18,15 @@ conf_get()   { echo  ${CONFIG}.new; }
 conf_new()   { cp -p ${CONFIG} ${CONFIG}.new; }
 conf_save()  { mv    ${CONFIG}.new ${CONFIG}; pigeos-splash update; }
 conf_abort() { rm    ${CONFIG}.new; }
-conf_reset() { dial_yesno $main_reset_msg && cp /etc/pigeos ${CONFIG}.new; }
+conf_reset() { 
+  if [ dial_yesno $main_reset_msg ]; then
+  	echo ". /usr/local/etc/pigeos.conf" \
+	  > ${CONFIG}.new
+  	egrep -v 'DOSBOX_BIN|CONTINUE_SETUP|IMAGE_URL|.*[\\\)]$|^#.*' \
+	  /usr/local/etc/pigeos.conf \
+  	  >>${CONFIG}.new
+  fi
+}
 
 ## UI functions ###########################################
 dial_info()  { $DIAL --backtitle "$BTITLE" --title "Information"  --msgbox   "$1" 8 50; }
