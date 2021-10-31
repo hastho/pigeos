@@ -27,26 +27,28 @@ while :; do
     fi
 	if [ -w ${HDD_IMAGE} ] ; then
       d_args="imgmount d ${HDD_IMAGE} -t hdd"
-    else
-      d_args="echo off"
-    fi
-	if [ ${MOUNT_DOC} -eq 1 -a -d "$HOME/Documents" ] ; then
-      x_args="mount s $HOME/Documents"
+	elif [ ${MOUNT_DOC} -eq 1 -a -d "$HOME/Documents" ] ; then
+      d_args="mount d $HOME/Documents"
 	else
-	  x_args="echo off"
+	  d_args="echo off"
+	fi
+	if [ ${RSLSYNC_SLOAD} -eq 1 -a -d "$HOME/Shared" ] ; then
+      s_args="mount s $HOME/Shared"
+	else
+	  s_args="echo off"
 	fi
     if [ ${MOUNT_USB} -eq 1 ] ; then
-      y_args="mount u /media/usb"
+      u_args="mount u /media/usb"
 	else
-	  y_args="echo."
+	  u_args="echo."
 	fi
 	$DOSBOX_BIN \
 	  -c "$a_args" \
 	  -c "$b_args" \
   	  -c "$c_args" \
 	  -c "$d_args" \
-	  -c "$x_args" \
-	  -c "$y_args" \
+	  -c "$s_args" \
+	  -c "$u_args" \
 	  -c "keyb ${KEYB:-us} 850" \
 	  -c "call c:\autoexec.bat" \
 	1>/tmp/loader.log 2>&1
