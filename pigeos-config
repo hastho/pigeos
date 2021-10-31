@@ -16,7 +16,7 @@ FONT=/usr/share/consolefonts/Uni2-TerminusBold24x12.psf.gz
 ## Configuration functions ################################
 conf_get()   { echo  ${CONFIG}.new; }
 conf_new()   { cp -p ${CONFIG} ${CONFIG}.new; }
-conf_save()  { mv    ${CONFIG}.new ${CONFIG}; pigeos-splash update; }
+conf_save()  { mv    ${CONFIG}.new ${CONFIG}; pigeos-splash update; pigeos-setup configure; }
 conf_abort() { rm    ${CONFIG}.new; }
 conf_reset() { 
   if [ dial_yesno $main_reset_msg ]; then
