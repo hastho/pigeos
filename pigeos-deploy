@@ -1,0 +1,10 @@
+#!/bin/bash
+sudo rpi-imager --cli ~/Downloads/2021-05-07-raspios-buster-armhf-lite.img \
+  /dev/mmcblk0
+echo ", +256M" | sudo sfdisk -N 2 /dev/mmcblk0
+sudo fsck.ext4 -f /dev/mmcblk0p2
+sudo resize2fs /dev/mmcblk0p2 
+sudo mount /dev/mmcblk0p2 /mnt/pigeos/root/
+sudo cp pigeos-setup /mnt/pigeos/root/usr/local/bin
+sudo chroot /mnt/pigeos/root/ /bin/bash -ic 'cd /tmp; pigeos-setup setup'
+sudo umount /dev/mmcblk0p2
