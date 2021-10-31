@@ -61,8 +61,8 @@ PIGEOS_USER=${PIGEOS_USER:-pi} # default to pi when executed in a chroot env.
 PIGEOS_HOME=$(grep "^$PIGEOS_USER:" /etc/passwd | cut -d: -f 6)
 # which dosbox binary should be launched?
 DOSBOX_BIN=$PIGEOS_PREFIX/bin/dosbox
-# global depencies:
-PKG_LIST="fbi gldriver-test libgl1-mesa-dri jq pv"
+# global depencies: gldriver-test libgl1-mesa-dri 
+PKG_LIST="fbi jq pv"
 # list of external files need to be installed by this script in net_install mode
 # TODO setup a APT repo for the customized version of DOSBox
 URL_DOSBOX_PKG="https://dl.dropbox.com/s/8zg8q5o2mgwoqgf/dosbox-pigeos-0.74.2_armhf.deb"
@@ -532,7 +532,9 @@ config_boot() {
 	  sudo tee -a $BOOT_CONFIG <<<"${option}"
 	fi
   done
-  # hide kernel boot messages
+  # disable 3d overlay drivers 
+  sudo sed $BOOT_CONFIG -i -e "s/^dtoverlay=vc4-kms-v3d/#dtoverlay=vc4-kms-v3d/g"
+  sudo sed $BOOT_CONFIG -i -e "s/^dtoverlay=vc4-fkms-v3d/#dtoverlay=vc4-fkms-v3d/g"
   # route all audio to one sink (req. for Pi4)
   for option in  'quiet' 'splash' 'logo.nologo'\
                  'snd_bcm2835.enable_hdmi=1'\
@@ -564,6 +566,7 @@ setup() {
   install_dosbox_telnetd  	  	|| return 8
   install_usbmount     	  	  	|| return 9
   install_rslsync				|| return 10
+  install_cups	  	  	  	  	|| return 11
   # enable 2nd stage setup execution in system default config
   sudo sed -i 's/CONTINUE_SETUP=.*/CONTINUE_SETUP=1/' \
   	$PIGEOS_PREFIX/etc/$(basename "$URL_CONFIG_SYSCFG")
