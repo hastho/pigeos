@@ -141,6 +141,14 @@ install_pigeos_config() {
 	sudo install -D          /tmp/$(basename "$lang")\
 	  $PIGEOS_PREFIX/share/pigeos/$(basename "$lang")
   done
+  # create user config if not present
+  test -f  ${PIGEOS_HOME}/.pigeos \
+  	|| echo ". $PIGEOS_PREFIX/etc/$(basename $URL_CONFIG_SYSCFG)" \
+	 > ${PIGEOS_HOME}/.pigeos
+  # change owner to Pi/GEOS user in case this script was exec. as root
+  chown -R ${PIGEOS_USER}.${PIGEOS_USER} \
+           ${PIGEOS_HOME}/.pigeos
+
 }
 
 install_dosbox_pkg() {
@@ -167,6 +175,9 @@ install_dosbox_pkg() {
   # create folder to store the disk images
   test -d $PIGEOS_HOME/hdd_images || mkdir $PIGEOS_HOME/hdd_images
   test -d $PIGEOS_HOME/fdd_images || mkdir $PIGEOS_HOME/fdd_images
+  # change owner to Pi/GEOS user in case this script was exec. as root
+  chown -R ${PIGEOS_USER}.${PIGEOS_USER} \
+           ${PIGEOS_HOME}/{.dosbox,fdd_images,hdd_images}
 }
 
 install_splash_screen() {
@@ -462,7 +473,8 @@ config_rslsync() {
   if [ "x$RSLSYNC_KEY" == "x" -a $RSLSYNC_SLOAD -eq 1 ]; then
     RSLSYNC_KEY=$(rslsync --generate-secret)
   fi
-  test -d $PIGEOS_HOME/.sync || mkdir $PIGEOS_HOME/.sync
+  test -d $PIGEOS_HOME/Shared 	|| mkdir $PIGEOS_HOME/Shared
+  test -d $PIGEOS_HOME/.sync 	|| mkdir $PIGEOS_HOME/.sync
   tee $PIGEOS_HOME/.sync/config.json >/dev/null <<RSLCFG
 {
   "device_name"         : "Pi/GEOS S/N: ${PIGEOS_SN}",
@@ -477,7 +489,7 @@ config_rslsync() {
   [
     {
       "secret"          : "$RSLSYNC_KEY",
-      "dir"             : "$PIGEOS_HOME/Documents",
+      "dir"             : "$PIGEOS_HOME/Shared",
       "use_relay_server" : ${false_true[$RSLSYNC_WAN]},
       "use_tracker"     : ${false_true[$RSLSYNC_WAN]},
       "search_lan"      : true,
@@ -575,13 +587,13 @@ setup() {
 install_stage2() {
   # 2nd stage install configures core services using system default config
   . $PIGEOS_PREFIX/etc/$(basename "$URL_CONFIG_SYSCFG")
-  config_locale   	  	  	  	|| return 1
-  config_splash_screen	  	  	|| return 2
-  config_dosbox_modem 	  	  	|| return 3
-  config_dosbox_telnetd   	  	|| return 4
-  config_usbmount 	  	  	  	|| return 5
-  config_midi 	  	  	  	  	|| return 6
-  config_boot 	  	  	  	  	|| return 7
+  config_locale
+  config_splash_screen
+  config_dosbox_modem
+  config_dosbox_telnetd
+  config_usbmount
+  config_midi
+  config_boot
   # clear 2nd stage setup execution in system default config
   sudo sed -i 's/CONTINUE_SETUP=.*/CONTINUE_SETUP=0/' \
   	$PIGEOS_PREFIX/etc/$(basename "$URL_CONFIG_SYSCFG")
