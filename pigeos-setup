@@ -52,7 +52,7 @@ PROGNAME=$(basename $PROGNAME)
 BOOT_CONFIG=/boot/config.txt
 BOOT_CMDLINE=/boot/cmdline.txt
 # a per device unique string to edentify this in a network
-PIGEOS_SN=$(cat /sys/firmware/devicetree/base/serial-number)
+PIGEOS_SN=$(cat /sys/firmware/devicetree/base/serial-number | sed 's/\x0//')
 # base for Pi/GEOS system files and binaries
 PIGEOS_PREFIX=/usr/local
 # base for user configuration files
@@ -387,11 +387,19 @@ install_cups() {
 }
 
 config_cups() {
-  sudo systemctl --now ${disable_enable[$CUPS_SLOAD]} cups
-  sudo systemctl --now ${disable_enable[$CUPS_SLOAD]} cups-browsed
+  sudo systemctl --now ${disable_enable[$CUPS_SLOAD]} cups 2>$LOG_FILE 1>&2
+  sudo systemctl --now ${disable_enable[$CUPS_SLOAD]} cups-browsed 2>$LOG_FILE 1>&2
   # enable remote administration of printers used by Pi/GEOS
-  [[ $CUPS_ADMIN -eq 1 ]] && cupsctl --remote-admin || cupsctl --no-remote-admin
-  [[ $CUPS_ADMIN -eq 1 ]] && cupsctl --remote-any 	|| cupsctl --no-remote-any
+  if [ $CUPS_ADMIN -eq 1 ]; then 
+    cupsctl --remote-admin 2>$LOG_FILE 1>&2
+  else
+    cupsctl --no-remote-admin 2>$LOG_FILE 1>&2
+  fi
+  if [ $CUPS_ADMIN -eq 1 ]; then
+    cupsctl --remote-any 2>$LOG_FILE 1>&2
+  else
+    cupsctl --no-remote-any 2>$LOG_FILE 1>&2
+  fi
 }
 
 install_jed() {
@@ -432,7 +440,7 @@ install_midi() {
 }
 
 config_midi() {
-  sudo systemctl --now ${disable_enable[$MIDI_SLOAD]} timidity
+  sudo systemctl --now ${disable_enable[$MIDI_SLOAD]} timidity 2>$LOG_FILE 1>&2
   # route midi output to timidity
   [[ $MIDI_SLOAD -eq 1 ]] \
   	&& sed -i 's/midiconfig\s*=.*/midiconfig=128:0/'  $($DOSBOX_BIN -printconf) \
@@ -468,7 +476,7 @@ RSLSYNC_SRV
 
 config_rslsync() {
   # stop service before updating its config
-  sudo systemctl --now disable rslsync@${PIGEOS_USER}
+  sudo systemctl --now disable rslsync@${PIGEOS_USER} 2>$LOG_FILE 1>&2
   # generate sync key if service is enabled but no key given
   if [ "x$RSLSYNC_KEY" == "x" -a $RSLSYNC_SLOAD -eq 1 ]; then
     RSLSYNC_KEY=$(rslsync --generate-secret)
@@ -500,12 +508,12 @@ config_rslsync() {
   ]
 }
 RSLCFG
-  sudo systemctl daemon-reload
-  sudo systemctl --now ${disable_enable[$RSLSYNC_SLOAD]} rslsync@${PIGEOS_USER}
+  sudo systemctl daemon-reload 2>$LOG_FILE 1>&2
+  sudo systemctl --now ${disable_enable[$RSLSYNC_SLOAD]} rslsync@${PIGEOS_USER} 2>$LOG_FILE 1>&2
 }
 
 config_ssh() {
-  sudo /usr/bin/raspi-config nonint do_ssh 0
+  sudo /usr/bin/raspi-config nonint do_ssh 0 2>$LOG_FILE 1>&2
   # SSH private key is req. for RSYNC/UNISON
   if [ ! -f $PIGEOS_HOME/.ssh/id_rsa ]; then
     ssh-keygen -t rsa -f ~/.ssh/id_rsa -q -P ''
@@ -514,11 +522,11 @@ config_ssh() {
 
 config_locale() {
   LANG=${1:-de_DE.UTF-8}
-  sudo /usr/bin/raspi-config nonint do_change_locale $LANG
+  sudo /usr/bin/raspi-config nonint do_change_locale $LANG 2>$LOG_FILE 1>&2
   local keyb_lang=$(echo $LANG \
     | tr '[:upper:]' '[:lower:]' \
 	| sed 's/.._\(..\).*/\1/')
-  sudo /usr/bin/raspi-config nonint do_configure_keyboard ${keyb_lang}
+  sudo /usr/bin/raspi-config nonint do_configure_keyboard ${keyb_lang} 2>$LOG_FILE 1>&2
   # link DOSBox mapper file for the given language
   ln -sf $PIGEOS_PREFIX/share/pigeos/mapper-0.74.map.$LANG \
          $PIGEOS_HOME/.dosbox/mapper-0.74.map
@@ -602,12 +610,10 @@ install_stage2() {
 configure() { 
   # (re)configure services using user config
   . $PIGEOS_HOME/.pigeos
-  # TODO use pigeos-config basic menu
-  config_locale
   # TODO use pigeos-config advanced menu
-  config_midi
-  config_cups
-  config_rslsync
+  config_midi && echo 33
+  config_cups && echo 66
+  config_rslsync && echo 100
   exit 0
 }
 

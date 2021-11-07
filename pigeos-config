@@ -7,7 +7,7 @@
 #
 # see also: pigeos-loader, pigeos-setup
 DEBUG=1
-SN=$(cat /sys/firmware/devicetree/base/serial-number)
+SN=$(cat /sys/firmware/devicetree/base/serial-number | sed 's/\x0//')
 DIAL=$(which whiptail || which dialog)
 BTITLE="Pi/GEOS SETUP configuration tool v0.1 (S/N:$SN)"
 CONFIG=$HOME/.pigeos
@@ -16,7 +16,13 @@ FONT=/usr/share/consolefonts/Uni2-TerminusBold24x12.psf.gz
 ## Configuration functions ################################
 conf_get()   { echo  ${CONFIG}.new; }
 conf_new()   { cp -p ${CONFIG} ${CONFIG}.new; }
-conf_save()  { mv    ${CONFIG}.new ${CONFIG}; pigeos-splash update; pigeos-setup configure; }
+conf_save()  {
+  mv    ${CONFIG}.new ${CONFIG}
+  pigeos-splash update
+  pigeos-setup configure \
+    | $DIAL --backtitle "$BTITLE" --title "Information"  \
+            --gauge  "Applying config" 8 72 0
+}
 conf_abort() { rm    ${CONFIG}.new; }
 conf_reset() { 
   if [ dial_yesno $main_reset_msg ]; then
