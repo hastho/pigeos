@@ -127,6 +127,7 @@ basic_menu() {
       Floppy*A*)	imgsel_menu fda ;;
       Floppy*B*)	imgsel_menu fdb ;;
       Keyboard*)	keybrd_menu ;;
+	  Screen*)	  	screen_menu ;;
       *)		break
     esac
   done
@@ -175,6 +176,17 @@ keybrd_menu() {
   fi
 }
 
+screen_menu() {
+  local selection
+  source $(conf_get); source $MENU_TEXT
+  selection=$(dial_menu "${screenres_title}" "${screenres_text}" "${screenres_options[@]}")
+  if [ "x$selection" != "x" ]; then
+    # screenres settings where not present in early versions
+    grep -q SCREEN_RESOLUTION $(conf_get) || echo "SCREEN_RESOLUTION=1024x768" >>$(conf_get)
+	# set selected lang.
+    sed -i "s#SCREEN_RESOLUTION=.*#SCREEN_RESOLUTION=$selection#" $(conf_get)
+  fi
+}
 ## Advanced Menu ################################
 advanced_menu() { 
   local selection

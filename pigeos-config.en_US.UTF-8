@@ -1,4 +1,12 @@
 #!/bin/bash
+### Global settings #############################################################
+# map conf flags 0->disabled and 1->enabled to clear text
+declare -a disabled_enabled=("disabled" "enabled")
+yes_button="Yes"
+no_button="No"
+ok_button="Select"
+cancel_button="Back"
+
 ### Main Menue #############################################################
 main_title="Main Menue"
 main_text="Select Pi/GEOS configuration option or launch the Raspberry Pi Software Cconfiguration Tool."
@@ -21,7 +29,8 @@ basic_options=(\
   "Hard Disk D: Image "	"$(basename ${HDD_IMAGE^^} .IMG)" \
   "Floppy Drive A:"		"$(basename ${FDA_IMAGE^^} .IMG)" \
   "Floppy Drive B:"		"$(basename ${FDB_IMAGE^^} .IMG)" \
-  "Keyboard mapping"	"${KEYB^^}" )
+  "Keyboard mapping"	"${KEYB^^}"  \
+  "Screen resolution"   "${SCREEN_RESOLUTION}")
 
 ### ImageSelection Menue ###########################################################
 imgsel_title="FDD/HHD image mangement"
@@ -56,6 +65,19 @@ keybsel_options=(\
   "us" "United States" \
   "yu" "Serbo-Croatian")
 
+### ScreenResolution Menu #########################################################
+screenres_title="Screen resolution"
+screenres_text="Please select the screen resolution you want to use. \nPress ESC to return to the main menue."
+screenres_options=(\
+  "800x480" 	"800x480 (Raspberry 7\" Touchscreen Display)" \
+  "800x600" 	"800x600" \
+  "1024x600"	"1024x600" \
+  "1024x768"	"1024x768 (Standard 4:3)" \
+  "1280x720"	"1280x720 (HD ready 16:9)" \
+  "1280x768"	"1280x768" \
+  "1280x800"	"1280x800" \
+  "1280x1024"	"1280x1024" )
+    
 ### Advanced Menue #################################################################
 advanced_title="Advanced configuration"
 advanced_text="Enable/disable advanced emulation features. \nPress ESC to return to the main menue."
