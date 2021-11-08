@@ -6,12 +6,12 @@
 # or when pigeos-loder determinates the paramters for DOSBox.
 #
 # see also: pigeos-loader, pigeos-setup
-DEBUG=1
+DEBUG=0
 SN=$(cat /sys/firmware/devicetree/base/serial-number | sed 's/\x0//')
 DIAL=$(which whiptail || which dialog)
 BTITLE="Pi/GEOS SETUP configuration tool v0.2 (S/N:$SN)"
 CONFIG=$HOME/.pigeos
-FONT=(\
+declare -A FONT=(\
   [tiny]=/usr/share/consolefonts/Uni2-TerminusBoldVGA14.psf.gz \
   [small]=/usr/share/consolefonts/Uni2-TerminusBold20x10.psf.gz \
   [medium]=/usr/share/consolefonts/Uni2-TerminusBold24x12.psf.gz \
@@ -389,14 +389,6 @@ imgmgmt_import() {
 }
 
 ### Main ###########################################################################
-# switch console font to get a aprox. 25x80 char text screen resolution like in DOS
-case $SCREEN_RESOLUTION in
-  640x*)	setfont ${FONT[tiny]};;
-  800x*)	setfont ${FONT[small]};;
-  1024x*)	setfont ${FONT[medium]};;
-  1280x*)	setfont ${FONT[large]};;
-  *)  	  	setfont ${FONT[medium]};;
-esac
 # load menue language
 if   [ -r ./pigeos-config.$LANG ]; then
   MENU_TEXT=./pigeos-config.$LANG
@@ -406,6 +398,15 @@ else
   dial_err "Unable to load language file!"
   exit 254
 fi
+# switch console font to get a aprox. 25x80 char text screen resolution like in DOS
+source ${CONFIG}
+case $SCREEN_RESOLUTION in
+  640x*)	setfont ${FONT[tiny]};;
+  800x*)	setfont ${FONT[small]};;
+  1024x*)	setfont ${FONT[medium]};;
+  1280x*)	setfont ${FONT[large]};;
+  *)  	  	setfont ${FONT[medium]};;
+esac
 # changes made by the config tool are applied to a new file
 conf_new
 # launch menue
