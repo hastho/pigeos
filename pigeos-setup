@@ -81,6 +81,7 @@ URL_SPLASH="https://raw.githubusercontent.com/hastho/pigeos/master/gfx/splash_tp
 # pigeos configuration and helper scripts
 URL_SETUP_SCRIPT="https://raw.githubusercontent.com/hastho/pigeos/master/pigeos-setup"
 URL_IMAGE_SCRIPT="https://raw.githubusercontent.com/hastho/pigeos/master/pigeos-image"
+URL_PRINT_SCRIPT="https://raw.githubusercontent.com/hastho/pigeos/master/pigeos-print"
 URL_LOADER_SCRIPT="https://raw.githubusercontent.com/hastho/pigeos/master/pigeos-loader"
 URL_SPLASH_SCRIPT="https://raw.githubusercontent.com/hastho/pigeos/master/pigeos-splash"
 # Pi/GEOS configuration script, fixed values configuration file and language files
@@ -123,7 +124,8 @@ install_dep_pkg() {
 
 install_pigeos_scripts() {
   for file_url in "$URL_IMAGE_SCRIPT" "$URL_LOADER_SCRIPT"\
-                  "$URL_SPLASH_SCRIPT" "$URL_CONFIG_SCRIPT"
+                  "$URL_SPLASH_SCRIPT" "$URL_CONFIG_SCRIPT"\
+				  "$URL_PRINT_SCRIPT" "$URL_SETUP_SCRIPT"
   do
     download_file "$file_url" /tmp/$(basename "$file_url")
     sudo install -D /tmp/$(basename "$file_url") \
@@ -600,6 +602,13 @@ setup() {
   	$PIGEOS_PREFIX/etc/$(basename "$URL_CONFIG_SYSCFG")
 }
 
+update() {
+  # 
+  install_dosbox_pkg      	  	|| return 2
+  install_pigeos_scripts  	  	|| return 3
+  install_pigeos_config   	  	|| return 4
+}
+
 install_stage2() {
   # 2nd stage install configures core services using system default config
   . $PIGEOS_PREFIX/etc/$(basename "$URL_CONFIG_SYSCFG")
@@ -619,9 +628,10 @@ configure() {
   # (re)configure services using user config
   . $PIGEOS_HOME/.pigeos
   # echo percentage value to visualize progress in pigeos-config
-  config_midi 					&& echo 33
-  config_cups 					&& echo 66
-  config_rslsync 				&& echo 100
+  config_midi 					&& echo 25
+  config_cups 					&& echo 50
+  config_rslsync 				&& echo 75
+  config_boot					&& echo 100
   exit 0
 }
 
