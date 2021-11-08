@@ -38,13 +38,13 @@ update() {
   local mimg="$(basename ${HDC_IMAGE^^} .IMG)"
   local simg="$(basename ${HDD_IMAGE^^} .IMG)"
   local msg="\
-PIGEOS ALPHA Rev 0.1 $(date '+%D')\n\
+Pi/GEOS beta Rev 0.2 $(date '+%D')\n\
 \n\
 ${cpu}, CPU at ${speed}MHz\n\
 Memory Test : 16384K OK\n\
 \n\
 Raspberry Pi Plug and Play PC/GEOS extension\n\
-Copyright \(C\) 2020, Thomas Hass\n\
+Copyright \(C\) 2020-21, Thomas Hass\n\
 http://www.thobipix.de\n\
 \n\
 Initialize Plug and Play Options ...\n\
@@ -57,8 +57,8 @@ PnP init Completed\n\
 \n\
 \n\
 \n\
-Press Ctrl+F9 to enter SETUP-config\n\
-Please wait, Raspbian is being booted ..."
+Press Ctrl+F9 to enter SETUP configuration tool\n\
+Please wait, Pi/GEOS is booting up ..."
 
   sudo convert /usr/local/share/pigeos/splash_tpl.png \
    -font Px437-PhoenixEGA-8x16 -pointsize 28 -fill '#e7e7e7' -annotate +33+170 "$msg" \
