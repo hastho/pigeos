@@ -9,9 +9,14 @@
 DEBUG=1
 SN=$(cat /sys/firmware/devicetree/base/serial-number | sed 's/\x0//')
 DIAL=$(which whiptail || which dialog)
-BTITLE="Pi/GEOS SETUP configuration tool v0.1 (S/N:$SN)"
+BTITLE="Pi/GEOS SETUP configuration tool v0.2 (S/N:$SN)"
 CONFIG=$HOME/.pigeos
-FONT=/usr/share/consolefonts/Uni2-TerminusBold24x12.psf.gz
+FONT=(\
+  [tiny]=/usr/share/consolefonts/Uni2-TerminusBoldVGA14.psf.gz \
+  [small]=/usr/share/consolefonts/Uni2-TerminusBold20x10.psf.gz \
+  [medium]=/usr/share/consolefonts/Uni2-TerminusBold24x12.psf.gz \
+  [large]=/usr/share/consolefonts/Uni2-TerminusBold32x16.psf.gz \
+)
 
 ## Configuration functions ################################
 conf_get()   { echo  ${CONFIG}.new; }
@@ -21,7 +26,7 @@ conf_save()  {
   pigeos-splash update
   pigeos-setup configure \
     | $DIAL --backtitle "$BTITLE" --title "Information"  \
-            --gauge  "Applying config" 8 72 0
+            --gauge  "$main_save_msg" 8 50 0
 }
 conf_abort() { rm    ${CONFIG}.new; }
 conf_reset() { 
@@ -41,7 +46,7 @@ dial_yesno() { $DIAL --backtitle "$BTITLE" --title "Confirmation" --yesno    "$1
 
 dial_input() { 
   local sel=$($DIAL --backtitle "$BTTILE" --title "${1}" \
-    --inputbox "$2" 8 76 "$3" \
+    --inputbox "$2" 8 50 "$3" \
     3>&1 1>&2 2>&3)
   [[ $? -eq 0 ]] && echo $sel || return 1
 }
@@ -55,6 +60,7 @@ dial_menu()  {
     itemc=10
   fi
   local sel=$($DIAL --backtitle "$BTITLE" --title "${title}" \
+  	   --ok-button ${ok_button} --cancel-button ${cancel_button} \
 	   --menu "${text}" 20 76 $itemc "${items[@]}" \
 	   3>&1 1>&2 2>&3)
   [[ $? -eq 0 ]] && echo $sel || return 1
@@ -64,7 +70,7 @@ dial_menu()  {
 file_download() {
   wget --progress=dot "$1" -O "$2" 2>&1 \
   | sed -un 's/.* \([0-9]\+\)% .*/\1/p' \
-  | $DIAL --backtitle "$BTITLE" --gauge "Downloading: $1" 8 76 0
+  | $DIAL --backtitle "$BTITLE" --gauge "Downloading: $1" 8 50 0
 }
 
 file_archive() { 
@@ -79,7 +85,7 @@ file_archive() {
   local size=$(stat -c%b ${src[@]} \
     | awk 'BEGIN{sum=0}{sum=sum+$1*512}END{print sum}')
   (tar cSf - -C $pth ${src[@]} | pv -n -s${size} | gzip >${arc}) 2>&1 \
-    | $DIAL --backtitle "$BTITLE" --gauge "Archiving: ${arc}" 8 76 0
+    | $DIAL --backtitle "$BTITLE" --gauge "Archiving: ${arc}" 8 50 0
 }
 
 file_extract() {
@@ -150,7 +156,7 @@ imgsel_menu() {
 	  <${imgsel_dir}/${selection}.inf
     $DIAL --backtitle "$BTITLE" --title "Image Information" \
 	  --yesno "${imgsel_inf}\n\n${imgsel_conf}" \
-	  $(($(echo -e "$imgsel_inf" | wc -l)+10)) 78
+	  $(($(echo -e "$imgsel_inf" | wc -l)+10)) 76
     if [ $? -eq 0 ]; then
       sed -i "s#${imgsel_drv^^}_IMAGE=.*#${imgsel_drv^^}_IMAGE=${imgsel_dir}${selection}.img#" $(conf_get)
     fi
@@ -360,7 +366,7 @@ imgmgmt_import() {
     imgsel_list+=("$(basename $f .tgz)"\
 	              "$(tar xzf $f --wildcards '*.inf' --to-command 'head -1')")
 	cnt=$(($cnt + $stp))
-	echo $cnt | $DIAL --backtitle "$BTITLE" --gauge "Scanning archives" 8 76 0
+	echo $cnt | $DIAL --backtitle "$BTITLE" --gauge "Scanning archives" 8 50 0
   done 
   # ask the user to choose one image
   selection=$(dial_menu "${imgsel_title}" "${imgsel_text}" "${imgsel_list[@]}")
@@ -371,8 +377,14 @@ imgmgmt_import() {
 }
 
 ### Main ###########################################################################
-# switch console font to get a aprox. 25x80 char resolution
-setfont $FONT
+# switch console font to get a aprox. 25x80 char text screen resolution like in DOS
+case $SCREEN_RESOLUTION in
+  640x*)	setfont ${FONT[tiny]};;
+  800x*)	setfont ${FONT[small]};;
+  1024x*)	setfont ${FONT[medium]};;
+  1280x*)	setfont ${FONT[large]};;
+  *)  	  	setfont ${FONT[medium]};;
+esac
 # load menue language
 if   [ -r ./pigeos-config.$LANG ]; then
   MENU_TEXT=./pigeos-config.$LANG
