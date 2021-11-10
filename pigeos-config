@@ -109,7 +109,8 @@ main_menu() {
       Default)	conf_reset ;;
       Hard*)	imgmgmt_menu ;;
       Write)	return 0 ;;
-      *)		dial_yesno "$main_abort_msg" && return 1
+	  Shutdown) dial_yesno "$main_shutdown_msg" && return 1 ;;
+      *)		dial_yesno "$main_abort_msg" && return 255
     esac
   done
 }
@@ -410,12 +411,14 @@ esac
 # changes made by the config tool are applied to a new file
 conf_new
 # launch menue
-main_menu
-if [ $? -eq 0 ]; then
+main_menu; res=$?
+if [ $res -eq 0 ]; then
   # save changes
   conf_save
   # and reboot if not in debug mode
   [[ $DEBUG -eq 0 ]] && reboot	  	|| exit 0
+elif [ $res -eq 1 ]; then
+  conf_abort && sudo halt -p
 else
   # remove interim config file and return to the pigeos-loader loop
   [[ $DEBUG -eq 0 ]] && conf_abort	|| exit 255
