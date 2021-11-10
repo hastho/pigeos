@@ -9,20 +9,24 @@ cancel_button="Back"
 
 ### Main Menue #############################################################
 main_title="Main Menue"
-main_text="Select Pi/GEOS configuration option or launch the Raspberry Pi Software Cconfiguration Tool."
+main_text="Select Pi/GEOS configuration section you would like to enter."
 main_options=(\
-  "Basic"		"Basic DOS configuration" \
-  "Advanced"	"Advanced emulator setting" \
-  "System"		"Advanced system setting (raspi-config)" \
+  "Basic"		"Basic DOS environment settings" \
+  "Advanced"	"Advanced system and serivce settings" \
+  "System"		"Raspbian system setting (raspi-config)" \
   "Default"		"Reset to the default configuration" \
-  "Hard Disk"	"Hard disk/image management" \
+  "Hard Disk"	"Hard disk image management" \
   "Write"		"Write changes and reboot the system" \
-  "Abort"		"Revert changes and reboot the system")
+  "Abort"		"Revert changes and return to GEOS" \
+  "Shutdown"    "Savely shutdown the system")
+main_reset_msg="Reset all settings to system defaults?" 
 main_abort_msg="Discard changes and exit SETUP?"
+main_shutdown_msg="Ready to shutdown the system?"
+main_save_msg="Changes have been saves, reconfiguring the system..."
 
 ### Basic Menue ####################################################################
 basic_title="Base configuration"
-basic_text="Modify basic DOS and environment settings. \nPress ESC to return to the main menue."
+basic_text="Modify basic DOS and environment settings."
 basic_options=(\
   "Date/Time"			"$(date '+%F %R')" \
   "Hard Disk C: Image "	"$(basename ${HDC_IMAGE^^} .IMG)" \
@@ -34,12 +38,12 @@ basic_options=(\
 
 ### ImageSelection Menue ###########################################################
 imgsel_title="FDD/HHD image mangement"
-imgsel_text="Please select an floppy or disk image to be mapped as DOS drives. \nPress ENTER for detailed information. \nPress ESC to return to the main menue."
+imgsel_text="Please select an floppy or disk image to be mapped as DOS drives. \nPress ENTER for detailed information."
 imgsel_conf="Confirm selection or abbort?"
 
 ### KeyboardSelection Menu #########################################################
 keybsel_title="Keyboard configuration"
-keybsel_text="Please select the DOS keyboard map you want to use. \nPress ESC to return to the main menue."
+keybsel_text="Please select the DOS keyboard map you want to use."
 keybsel_options=(\
   "be" "Belgium" \
   "br" "Brazil" \
@@ -67,7 +71,7 @@ keybsel_options=(\
 
 ### ScreenResolution Menu #########################################################
 screenres_title="Screen resolution"
-screenres_text="Please select the screen resolution you want to use. \nPress ESC to return to the main menue."
+screenres_text="Please select the screen resolution of the used display device. \nHint: you need to set the GEOS dsiplay resolution to the same value for optimum results."
 screenres_options=(\
   "800x480" 	"800x480 (Raspberry 7\" Touchscreen Display)" \
   "800x600" 	"800x600" \
@@ -80,13 +84,21 @@ screenres_options=(\
     
 ### Advanced Menue #################################################################
 advanced_title="Advanced configuration"
-advanced_text="Enable/disable advanced emulation features. \nPress ESC to return to the main menue."
-advanced_options=(\
-  "CUPS printing "	    "$(systemctl is-active cups)" \
-  "  Remote admin "	    "$(cupsctl | grep _remote_admin | sed 's/.*=\([01]\)/\1/')" \
-  "  Share printers "	"$(cupsctl | grep _share_printers | sed 's/.*=\([01]\)/\1/')" \
-  "MIDI emulation "	    "$(systemctl is-active timidity)" \
-  "SSH remote access "  "$(systemctl is-active sshd)")
+advanced_text="Enable/disable and manage advanced system services."
+  "CUPS printing system "	"${disabled_enabled[$CUPS_SLOAD]}" \
+  "  DOSBox printer "		"${CUPS_DBPRN}" \
+  "  Remote management "	"${disabled_enabled[$CUPS_ADMIN]} (http://$(hostname -I | cut -d\  -f1):631)" \
+  "MIDI emulation "	    	"${disabled_enabled[$MIDI_SLOAD]}" \
+  "ResilioSync service "	"${disabled_enabled[$RSLSYNC_SLOAD]}" \
+  "  Acces Key (rw) "		"${RSLSYNC_KEY}" \
+  "  Internet access "		"${disabled_enabled[$RSLSYNC_WAN]}" )
+advanced_serv_activate="Activate the selected function/server at system start?"
+advanced_sync_key_warn="The Resilio-Sync can't be changed."
+advanced_sync_key_edit="Please enter an existing sync key, if you want to (re)connect to an existing Resilio share \nHint: If you leave this field blank a new access key will we generated which allows other systems to connect to your Pi/GEOS system."
+
+### Printer Selection Menu #########################################################
+prnsel_title="Printer Selection"
+prnsel_text="Select 'AUTO' to allow Pi/GEOS to connect to the first available printer or force to use a certain printer. Select 'PDF' to create PDF documents on the shared drive (S:). \nHint: PDF printing requires ResilioSync service to be enbled."
 
 ### ImageMgmt Menue ################################################################
 imgmgmt_title="FDD/HDD image management"

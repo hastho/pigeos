@@ -11,20 +11,22 @@ cancel_button="Zurück"
 main_title="Hauptmenü"
 main_text="Pi/GEOS Konfigurationsoption  wählen oder Raspberry Pi Konfigurations-Tool starten."
 main_options=(\
-  "Basic"		"Basiskonfiguration" \
-  "Advanced"	"Erweiterte Emulatoreinstellungen" \
+  "Basic"		"Basiskonfiguration der DOS Umgebung" \
+  "Advanced"	"Erweiterte System- und Serviceeinstellungen" \
   "System"		"Raspbian Systemeinstellungen (raspi-config)" \
   "Default"		"Sytem auf Standardkonfiguration zurücksetzen" \
-  "Hard Disk "	"Festplattenimages verwalten" \
+  "Hard Disk "	"Festplattenabbilder verwalten" \
   "Write"		"Änderungen sichern und System neu starten" \
-  "Abort"		"Änderungen verwerfen und System neu starten")
+  "Abort"		"Änderungen verwerfen und zu GEOS zurückkehren" \
+  "Shutdown"    "System sicher herunterfahren")
 main_reset_msg="Pi/GEOS Konfiguration wirklich zurücksetzen?" 
 main_abort_msg="Änderungen verwerfen und SETUP beenden?"
-main_save_msg="Änderungen gesichert, das System wird konfiguriert..."
+main_shutdown_msg="System sicher herunterfahren?"
+main_save_msg="Änderungen wurden gesichert, das System wird konfiguriert..."
 
 ### Basic Menue #################################################################
 basic_title="Baiskonfiguration"
-basic_text="Anpassung grundlegender DOS- und Ugebungseinstellungen. Drücke ESC um zum Hauptmenü zurückzukehren."
+basic_text="Anpassung grundlegender DOS- und Ugebungseinstellungen."
 basic_options=(\
   "Date/Time"			"$(date '+%F %R')" \
   "Hard Disk C: Image "	"$(basename ${HDC_IMAGE^^} .IMG)" \
@@ -36,12 +38,12 @@ basic_options=(\
 
 ### ImageSelection Menue ###########################################################
 imgsel_title="FDD/HHD Abbild Verwaltung"
-imgsel_text="Bitte wähle ein Disketten-bzw. Festplattenabbild. \nDrücke ENTER für detailierte Inforamtionen und um das Abbild auszuwählen. Drücke ESC um zum Hauptmenü zurückzukehren."
+imgsel_text="Bitte wähle ein Disketten-bzw. Festplattenabbild. \nDrücke ENTER für detailierte Inforamtionen und um das Abbild auszuwählen."
 imgsel_conf="Auswahl bestätigen oder abbrechen?"
 
 ### KeyboardSelection Menu #########################################################
 keybsel_title="Tastaturauswahl"
-keybsel_text="Tasturbelegung für DOS-Umgebung auswählen. \nDrücke ESC um zum Hauptmenü zurückzukehren."
+keybsel_text="Tasturbelegung für DOS-Umgebung auswählen."
 keybsel_options=(\
   "be" "Belgien" \
   "br" "Brasilien" \
@@ -69,7 +71,7 @@ keybsel_options=(\
 
 ### ScreenResolution Menu #########################################################
 screenres_title="Bildschirmauflösung"
-screenres_text="Bildschirmauflösung für DOS-Umgebung auswählen. \nDrücke ESC um zum Hauptmenü zurückzukehren."
+screenres_text="Bildschirmauflösung für das angeschlossene Ausgabegerät auswählen. \nHinweis: Die GEOS-Bildschirmauflösung sollte für eine optimale Darstellung auf den selben Wert gesetzt werden."
 screenres_options=(\
   "800x480" 	"800x480 (Raspberry 7\" Touchscreen Display)" \
   "800x600" 	"800x600" \
@@ -81,8 +83,8 @@ screenres_options=(\
   "1280x1024"	"1280x1024" )
     
 ### Advanced Menue #################################################################
-advanced_title="Erweiterte Konfiguration"
-advanced_text="Anpassung erweiterter Umgebungseinstellungen. \nDrücke ESC um zum Hauptmenü zurückzukehren."
+advanced_title="Erweiterte Einstellungen"
+advanced_text="Anpassung erweiterte System- und Serviceeinstellungen."
 advanced_options=(\
   "CUPS Druckersystem "		"${disabled_enabled[$CUPS_SLOAD]}" \
   "  DOSBox-Drucker "		"${CUPS_DBPRN}" \
@@ -93,11 +95,11 @@ advanced_options=(\
   "  Internet Zugriff "		"${disabled_enabled[$RSLSYNC_WAN]}" )
 advanced_serv_activate="Gewählten Dienst/Funktion beim Systemstart aktivieren?"
 advanced_sync_key_warn="Der Resilio-Sync Zugriffsschlüssel kann nicht geändert werden."
-advanced_sync_key_edit="Gib einen vorhandenen Zugriffsschlüssel ein oder \nlösche den alten um einen neuen zu erzeugen."
+advanced_sync_key_edit="Gib einen vorhandenen Zugriffsschlüssel ein um das System mit einer existieren Resilio-Freigabe zu verbinden. \Hinweis: Bleibt das Feld leer, wird automatisch ein neuer Schlüssel generiert mit dem sich andere Systeme mit Pi/GEOS verbinden können."
 
 ### Printer Selection Menu #########################################################
 prnsel_title="Druckerauswahl"
-prnsel_text="Wähle 'AUTO' um automatisch den ersten erkannten Drucker zu nutzen \noder selektiere ein bestimmtes Modell \nDrücke ESC um zum Hauptmenü zurückzukehren."
+prnsel_text="Wähle 'AUTO' um automatisch den ersten erkannten Drucker zu nutzen \noder selektiere ein bestimmtes Modell. Wähle 'PDF' um die Druckausgabe in PDF Dokumente auf der Dokumentenfreigabe (S:) umzuleiten. \nHinweis: PDF-Druck erfodert die Aktivierung des ResilioSync Dienstes."
 
 ### ImageMgmt Menue ################################################################
 imgmgmt_title="FDD/HDD Abbild Verwaltungs"
