@@ -424,8 +424,6 @@ install_usbmount() {
 [Service]
 PrivateMounts=no
 PRIV_MNT
-  # add configuration option to the user config, if not present
-  grep -q MOUNT_USB $PIGEOS_HOME/.pigeos || echo "MOUNT_USB=0" >> $PIGEOS_HOME/.pigeos
 }
 
 config_usbmount() {
@@ -643,5 +641,5 @@ if [ $# -ne 0 ]; then
 else
   usage
 fi
-echo "Finished! Press Enter to reboot or Ctrl+C to return to the shell."; read
+echo "Finished! Wait 10s to reboot or press Ctrl+C to return to the shell."; sleep 10
 sudo reboot
