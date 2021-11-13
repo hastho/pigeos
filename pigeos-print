@@ -44,5 +44,5 @@ elif [ "x$printer" == "xPDF" ]; then
   ps2pdf12 $1 "${PDFDIR}/$(get_doc_name $1).pdf"
   rm $1
 else
-  lpr -T "$(det_doc_name $1)" -P $printer $1
+  lpr -T "$(get_doc_name $1)" -P $printer $1
 fi
