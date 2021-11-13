@@ -68,7 +68,7 @@ PKG_LIST="fbi jq pv mtools"
 URL_DOSBOX_PKG="https://dl.dropbox.com/s/8zg8q5o2mgwoqgf/dosbox-pigeos-0.74.2_armhf.deb"
 URL_DOSBOX_LANG=(\
   "https://raw.githubusercontent.com/hastho/pigeos/master/defaults/mapper-0.74.map.de_DE.UTF-8" \
-  "https://raw.githubusercontent.com/hastho/pigeos/master/defaults/mapper-0.74.map.en_US.UTF-8" \
+  "https://raw.githubusercontent.com/hastho/pigeos/master/defaults/mapper-0.74.map.en_GB.UTF-8" \
 )
 URL_DOSBOX_CONFIG="https://raw.githubusercontent.com/hastho/pigeos/master/defaults/dosbox-0.74.conf"
 # a free for non-commercial use file sync tool
@@ -89,7 +89,7 @@ URL_CONFIG_SCRIPT="https://raw.githubusercontent.com/hastho/pigeos/master/pigeos
 URL_CONFIG_SYSCFG="https://raw.githubusercontent.com/hastho/pigeos/master/defaults/pigeos.conf"
 URL_CONFIG_LANG=(\
   "https://raw.githubusercontent.com/hastho/pigeos/master/pigeos-config.de_DE.UTF-8" \
-  "https://raw.githubusercontent.com/hastho/pigeos/master/pigeos-config.en_US.UTF-8" \
+  "https://raw.githubusercontent.com/hastho/pigeos/master/pigeos-config.en_GB.UTF-8" \
 )
 
 LOG_FILE=/tmp/$(basename $0).log
@@ -381,7 +381,7 @@ LOGIN_PROF
 }
 
 install_cups() {
-  install_dep_pkg cups cups-browsed cups-client
+  install_dep_pkg cups cups-browsed cups-client cups-bsd
   # enable automatic print queue creation for AirPrint printer found
   sudo sed -i 's/^CreateIPPPrinterQueues.*/CreateIPPPrinterQueues Driverless/' \
     /etc/cups/cups-browsed.conf
@@ -521,7 +521,7 @@ config_ssh() {
 }
 
 config_locale() {
-  LANG=${1:-de_DE.UTF-8}
+  LANG=${1:-en_GB.UTF-8}
   sudo /usr/bin/raspi-config nonint do_change_locale $LANG 2>$LOG_FILE 1>&2
   local keyb_lang=$(echo $LANG \
     | tr '[:upper:]' '[:lower:]' \
@@ -608,6 +608,8 @@ update() {
 }
 
 install_stage2() {
+  # try to update the entire system before proceed
+  sudo apt update && sudo apt -y upgrade
   # 2nd stage install configures core services using system default config
   . $PIGEOS_PREFIX/etc/$(basename "$URL_CONFIG_SYSCFG")
   config_locale
