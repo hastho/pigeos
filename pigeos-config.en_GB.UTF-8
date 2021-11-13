@@ -85,6 +85,7 @@ screenres_options=(\
 ### Advanced Menue #################################################################
 advanced_title="Advanced configuration"
 advanced_text="Enable/disable and manage advanced system services."
+advanced_options=(\
   "CUPS printing system "	"${disabled_enabled[$CUPS_SLOAD]}" \
   "  DOSBox printer "		"${CUPS_DBPRN}" \
   "  Remote management "	"${disabled_enabled[$CUPS_ADMIN]} (http://$(hostname -I | cut -d\  -f1):631)" \
