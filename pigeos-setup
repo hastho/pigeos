@@ -609,7 +609,7 @@ update() {
 
 install_stage2() {
   # try to update the entire system before proceed
-  sudo apt update && sudo apt -y upgrade
+  sudo apt update; sudo apt -y upgrade
   # 2nd stage install configures core services using system default config
   . $PIGEOS_PREFIX/etc/$(basename "$URL_CONFIG_SYSCFG")
   config_locale
