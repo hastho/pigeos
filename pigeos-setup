@@ -576,7 +576,7 @@ config_boot() {
 }
 
 setup() {
-  # 1st stage install executes all modules in the default order
+  # 1st stage: install executes all modules in the default order
   install_dep_pkg $PKG_LIST 	|| return 1
   install_dosbox_pkg      	  	|| return 2
   install_pigeos_scripts  	  	|| return 3
@@ -589,23 +589,20 @@ setup() {
   install_rslsync				|| return 10
   install_cups	  	  	  	  	|| return 11
   # enable 2nd stage setup execution in system default config
-  sudo sed -i 's/CONTINUE_SETUP=.*/CONTINUE_SETUP=1/' \
+  sudo sed -i 's/CONTINUE_SETUP=.*/CONTINUE_SETUP=2/' \
   	$PIGEOS_PREFIX/etc/$(basename "$URL_CONFIG_SYSCFG")
 }
 
-update() {
-  # upd. apt sources first and try to fix missing packges
-  sudo apt update --fix-missing
-  # install latest Pi/GEOS files from Git master repo
-  install_dosbox_pkg      	  	|| return 2
-  install_pigeos_scripts  	  	|| return 3
-  install_pigeos_config   	  	|| return 4
+install_stage2() {
+  # 2nd stage: try to update the entire system before proceed
+  sudo apt update --fix-missing; sudo apt -y upgrade
+  # enable 3rd stage setup execution in system default config
+  sudo sed -i 's/CONTINUE_SETUP=.*/CONTINUE_SETUP=3/' \
+  	$PIGEOS_PREFIX/etc/$(basename "$URL_CONFIG_SYSCFG")
 }
 
-install_stage2() {
-  # try to update the entire system before proceed
-  sudo apt update --fix-missing; sudo apt -y upgrade
-  # 2nd stage install configures core services using system default config
+install_stage3() {
+  # 3rd stage: install configures core services using system default config
   . $PIGEOS_PREFIX/etc/$(basename "$URL_CONFIG_SYSCFG")
   config_splash_screen
   config_dosbox_pkg
@@ -617,6 +614,15 @@ install_stage2() {
   # clear 2nd stage setup execution in system default config
   sudo sed -i 's/CONTINUE_SETUP=.*/CONTINUE_SETUP=0/' \
   	$PIGEOS_PREFIX/etc/$(basename "$URL_CONFIG_SYSCFG")
+}
+
+update() {
+  # upd. apt sources first and try to fix missing packges
+  sudo apt update --fix-missing
+  # install latest Pi/GEOS files from Git master repo
+  install_dosbox_pkg      	  	|| return 2
+  install_pigeos_scripts  	  	|| return 3
+  install_pigeos_config   	  	|| return 4
 }
 
 configure() { 

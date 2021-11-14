@@ -3,8 +3,9 @@
 #set -e
 # second stage installation
 source /usr/local/etc/pigeos.conf
-if [ $CONTINUE_SETUP -eq 1 ]; then
-  pigeos-setup install_stage2
+# finish pending setup stages
+if [ $CONTINUE_SETUP -ne 0 ]; then
+  pigeos-setup install_stage${CONTINUE_SETUP}
 fi
 # when exec this script from the profile no keyboard is available
 # therefore DOSBox & pigeos-config are running in an endless loop
