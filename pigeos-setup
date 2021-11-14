@@ -588,6 +588,7 @@ setup() {
   install_usbmount     	  	  	|| return 9
   install_rslsync				|| return 10
   install_cups	  	  	  	  	|| return 11
+  install_midi					|| return 12
   # enable 2nd stage setup execution in system default config
   sudo sed -i 's/CONTINUE_SETUP=.*/CONTINUE_SETUP=2/' \
   	$PIGEOS_PREFIX/etc/$(basename "$URL_CONFIG_SYSCFG")
