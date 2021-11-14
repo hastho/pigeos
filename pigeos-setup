@@ -4,9 +4,9 @@
 # USAGE pigeos-setup [<command>] [<parameters>]
 #
 # COMMANDS:
-# 	install   	<source> <boot> <root> installs files from source
-# 	netinstall	downloads files from GitHub and installs into the current system
+# 	setup		downloads files from GitHub and installs into the current system
 # 	configure 	(re)configure all services using the current user config
+#	update		update the Pi/GEOS by downloading lastest file from GitHub
 # 	help  	  	show advanced help (manual)
 #
 # 	install_<service> expert options to install/configure a specific service
@@ -118,8 +118,12 @@ download_file() {
 }
 
 install_dep_pkg() {
-    sudo apt-get update || exit 255
-    sudo apt-get -y install $*
+	local retryc=3
+    sudo apt update
+    while [ $retryc -gt 0 ]; do
+		sudo apt-get -y install $* && retryc=0
+	done
+	sudo apt clean
 }
 
 install_pigeos_scripts() {
@@ -168,7 +172,7 @@ install_dosbox_pkg() {
   download_file "$URL_DOSBOX_CONFIG" /tmp/$(basename "$URL_DOSBOX_CONFIG")
   install -D /tmp/$(basename "$URL_DOSBOX_CONFIG")\
     $PIGEOS_HOME/.dosbox/$(basename "$URL_DOSBOX_CONFIG") 
-  # download locallolized key maps
+  # download locallized key maps
   for lang in ${URL_DOSBOX_LANG[@]}; do
     download_file "$lang"    /tmp/$(basename "$lang")
 	sudo install -D          /tmp/$(basename "$lang")\
@@ -180,6 +184,12 @@ install_dosbox_pkg() {
   # change owner to Pi/GEOS user in case this script was exec. as root
   chown -R ${PIGEOS_USER}.${PIGEOS_USER} \
            ${PIGEOS_HOME}/{.dosbox,fdd_images,hdd_images}
+}
+
+config_dosbox_pkg() {
+  # link DOSBox mapper file for the given language
+  ln -sf $PIGEOS_PREFIX/share/pigeos/mapper-0.74.map.$LANG \
+         $PIGEOS_HOME/.dosbox/mapper-0.74.map
 }
 
 install_splash_screen() {
@@ -520,18 +530,6 @@ config_ssh() {
   fi
 }
 
-config_locale() {
-  LANG=${1:-en_GB.UTF-8}
-  sudo /usr/bin/raspi-config nonint do_change_locale $LANG 2>$LOG_FILE 1>&2
-  local keyb_lang=$(echo $LANG \
-    | tr '[:upper:]' '[:lower:]' \
-	| sed 's/.._\(..\).*/\1/')
-  sudo /usr/bin/raspi-config nonint do_configure_keyboard ${keyb_lang} 2>$LOG_FILE 1>&2
-  # link DOSBox mapper file for the given language
-  ln -sf $PIGEOS_PREFIX/share/pigeos/mapper-0.74.map.$LANG \
-         $PIGEOS_HOME/.dosbox/mapper-0.74.map
-}
-
 config_boot() {
   # don't wait for the network
   sudo /usr/bin/raspi-config nonint do_boot_wait 1
@@ -577,11 +575,6 @@ config_boot() {
   done
 }
 
-config_imgprep() {
-  # prepare the config for the imaging process
-  sudo sed -i "s|$| init=/usr/lib/raspi-config/init_resize\.sh|" $BOOT_CMDLINE
-}
-
 setup() {
   # 1st stage install executes all modules in the default order
   install_dep_pkg $PKG_LIST 	|| return 1
@@ -601,7 +594,9 @@ setup() {
 }
 
 update() {
-  # 
+  # upd. apt sources first and try to fix missing packges
+  sudo apt update --fix-missing
+  # install latest Pi/GEOS files from Git master repo
   install_dosbox_pkg      	  	|| return 2
   install_pigeos_scripts  	  	|| return 3
   install_pigeos_config   	  	|| return 4
@@ -609,11 +604,11 @@ update() {
 
 install_stage2() {
   # try to update the entire system before proceed
-  sudo apt update; sudo apt -y upgrade
+  sudo apt update --fix-missing; sudo apt -y upgrade
   # 2nd stage install configures core services using system default config
   . $PIGEOS_PREFIX/etc/$(basename "$URL_CONFIG_SYSCFG")
-  config_locale
   config_splash_screen
+  config_dosbox_pkg
   config_dosbox_modem
   config_dosbox_telnetd
   config_usbmount
@@ -628,9 +623,10 @@ configure() {
   # (re)configure services using user config
   . $PIGEOS_HOME/.pigeos
   # echo percentage value to visualize progress in pigeos-config
-  config_midi 					&& echo 25
-  config_cups 					&& echo 50
-  config_rslsync 				&& echo 75
+  config_dosbox_okg				&& echo 20
+  config_midi 					&& echo 40
+  config_cups 					&& echo 60
+  config_rslsync 				&& echo 80
   config_boot					&& echo 100
   exit 0
 }
