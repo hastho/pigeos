@@ -630,7 +630,7 @@ configure() {
   # (re)configure services using user config
   . $PIGEOS_HOME/.pigeos
   # echo percentage value to visualize progress in pigeos-config
-  config_dosbox_okg				&& echo 20
+  config_dosbox_pkg				&& echo 20
   config_midi 					&& echo 40
   config_cups 					&& echo 60
   config_rslsync 				&& echo 80
