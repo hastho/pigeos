@@ -1,22 +1,37 @@
 #!/bin/bash
+img_stage=${1?Err. missing <stage>}
 img_dev=/dev/mmcblk0
 img_boot=p1
 img_root=p2
 img_file_in=~/Downloads/2021-05-07-raspios-buster-armhf-lite.img
 img_file_out=~/Downloads/$(date -Idate)-pigeos-buster-armhf-beta.img.xz
 
-# write base image
-sudo rpi-imager --cli $img_file_in $img_dev
-# extend root file system
-echo ", +256M" | sudo sfdisk -N 2 $img_dev
-sudo fsck.ext4 -f $img_dev$img_root
-sudo resize2fs $img_dev$img_root 
-# ingest Pi/GEOS files
-sudo mount $img_dev$img_root /mnt/pigeos/root/
-sudo cp pigeos-setup /mnt/pigeos/root/usr/local/bin
-sudo chroot /mnt/pigeos/root/ /bin/bash -ic 'cd /tmp; pigeos-setup setup'
-sudo umount $img_dev$img_root
-# calculate imgage size
-img_last_sector=$(fdisk -l $img_dev | awk 'END{print $4}')
-dd if=$img_dev bs=512 count=$img_last_sector status=progress \
-  | xz > $img_file_out
+if [ $img_stage -eq 1 ]; then
+	# write base image
+	sudo rpi-imager --cli $img_file_in $img_dev
+	# extend root file system
+	echo ", +512M" | sudo sfdisk -N 2 $img_dev
+	sudo fsck.ext4 -f $img_dev$img_root
+	sudo resize2fs $img_dev$img_root 
+	# ingest Pi/GEOS files
+	sudo mount -t ext4 $img_dev$img_root 	/mnt/pigeos/root/
+	sudo mount -f vfat $img_dev$img_boot 	/mnt/pigeos/root/boot
+	sudo mount -t proc proc					/mnt/pigeos/root/proc
+	sudo mount -t sysfs sys					/mnt/pigeos/root/sys
+	sudo mount -o bind /dev					/mnt/pigeos/root/dev
+	sudo cp    -L /etc/resolv.conf			/mnt/pigeos/root/etc
+	sudo cp 	pigeos-setup 				/mnt/pigeos/root/usr/local/bin
+	sudo chroot 							/mnt/pigeos/root/ \
+	  /bin/bash -ic 'cd /tmp; pigeos-setup setup'
+	  sync
+	sudo umount 							/mnt/pigeos/root/{proc,sys,dev,boot}
+	sudo umount $img_dev$img_root
+elif [ $img_stage -eq 2 ]; then
+	# calculate imgage size
+	img_last_sector=$(fdisk -l $img_dev | awk 'END{print $4/8}')
+	dd if=$img_dev bs=4096 count=$img_last_sector status=progress \
+	  | xz --threads=0 > $img_file_out
+else
+	echo "Invalid stage given: $img_stage"
+	exit 255
+fi
