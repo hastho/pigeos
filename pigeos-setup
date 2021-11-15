@@ -61,8 +61,8 @@ PIGEOS_USER=${PIGEOS_USER:-pi} # default to pi when executed in a chroot env.
 PIGEOS_HOME=$(grep "^$PIGEOS_USER:" /etc/passwd | cut -d: -f 6)
 # which dosbox binary should be launched?
 DOSBOX_BIN=$PIGEOS_PREFIX/bin/dosbox
-# global depencies: gldriver-test libgl1-mesa-dri 
-PKG_LIST="fbi jq pv mtools"
+# global depencies 
+PKG_LIST="jq pv mtools"
 # list of external files need to be installed by this script in net_install mode
 # TODO setup a APT repo for the customized version of DOSBox
 URL_DOSBOX_PKG="https://dl.dropbox.com/s/8zg8q5o2mgwoqgf/dosbox-pigeos-0.74.2_armhf.deb"
@@ -124,6 +124,17 @@ install_dep_pkg() {
 		sudo apt-get -y install $* && retryc=0
 	done
 	sudo apt clean
+}
+
+install_locales () {
+	install_dep_pkg locales tzdata keyboard-configuration
+	# Pi/GEOS UI unly support British english and German
+	sed -i -e 's/^#\s*en_GB.UTF-8 UTF-8/en_GB.UTF-8 UTF-8/' /etc/locale.gen
+	sed -i -e 's/^#\s*de_DE.UTF-8 UTF-8/de_DE.UTF-8 UTF-8/' /etc/locale.gen
+	locale-gen
+	update-locale --reset LANG=${1:-en_GB.UTF-8}
+	# keyboard layout and time zone may be set by rpi-imager
+	# so we will not change them yet
 }
 
 install_pigeos_scripts() {
@@ -197,7 +208,7 @@ install_splash_screen() {
   # screen and provides some information about the
   # current Pi/GEOS configuration.
   echo "Creating splash screen service" 
-  install_dep_pkg imagemagick 
+  install_dep_pkg fbi imagemagick 
   # template for the spash screen
   download_file $URL_SPLASH \
     /tmp/splash_tpl.png 2>&1
@@ -490,6 +501,9 @@ config_rslsync() {
   # generate sync key if service is enabled but no key given
   if [ "x$RSLSYNC_KEY" == "x" -a $RSLSYNC_SLOAD -eq 1 ]; then
     RSLSYNC_KEY=$(rslsync --generate-secret)
+    grep -q "RSLSYNC_KEY" $PIGEOS_HOME/.pigeos \
+	  && sed -i "s#RSLSYNC_KEY=.*#RSLSYNC_KEY=${RSLSYNC_KEY}#" $PIGEOS_HOME/.pigeos \
+	  || echo  "RSLSYNC_KEY=${RSLSYNC_KEY}" >>$PIGEOS_HOME/.pigeos
   fi
   test -d $PIGEOS_HOME/Shared 	|| mkdir $PIGEOS_HOME/Shared
   test -d $PIGEOS_HOME/.sync 	|| mkdir $PIGEOS_HOME/.sync
@@ -577,18 +591,19 @@ config_boot() {
 
 setup() {
   # 1st stage: install executes all modules in the default order
-  install_dep_pkg $PKG_LIST 	|| return 1
-  install_dosbox_pkg      	  	|| return 2
-  install_pigeos_scripts  	  	|| return 3
-  install_pigeos_config   	  	|| return 4
-  install_pigeos_loader   	  	|| return 5
-  install_splash_screen   	  	|| return 6
-  install_dosbox_modem    	  	|| return 7
-  install_dosbox_telnetd  	  	|| return 8
-  install_usbmount     	  	  	|| return 9
-  install_rslsync				|| return 10
-  install_cups	  	  	  	  	|| return 11
-  install_midi					|| return 12
+  install_locales $1			|| return 1
+  install_dep_pkg $PKG_LIST 	|| return 2
+  install_dosbox_pkg      	  	|| return 3
+  install_pigeos_scripts  	  	|| return 4
+  install_pigeos_config   	  	|| return 5
+  install_pigeos_loader   	  	|| return 6
+  install_splash_screen   	  	|| return 7
+  install_dosbox_modem    	  	|| return 8
+  install_dosbox_telnetd  	  	|| return 9
+  install_usbmount     	  	  	|| return 10
+  install_rslsync				|| return 11
+  install_cups	  	  	  	  	|| return 12
+  install_midi					|| return 13
   # enable 2nd stage setup execution in system default config
   sudo sed -i 's/CONTINUE_SETUP=.*/CONTINUE_SETUP=2/' \
   	$PIGEOS_PREFIX/etc/$(basename "$URL_CONFIG_SYSCFG")
