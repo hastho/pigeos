@@ -123,7 +123,6 @@ install_dep_pkg() {
     while [ $retryc -gt 0 ]; do
 		sudo apt-get -y install $* && retryc=0
 	done
-	sudo apt clean
 }
 
 install_locales () {
@@ -661,5 +660,5 @@ if [ $# -ne 0 ]; then
 else
   usage
 fi
-echo "Finished! Wait 10s to reboot or press Ctrl+C to return to the shell."; sleep 10
+echo "Finished! Wait 20s to reboot or press Ctrl+C to return to the shell."; sleep 20
 sudo reboot
