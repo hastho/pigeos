@@ -67,8 +67,8 @@ PKG_LIST="jq pv mtools"
 # TODO setup a APT repo for the customized version of DOSBox
 URL_DOSBOX_PKG="https://dl.dropbox.com/s/8zg8q5o2mgwoqgf/dosbox-pigeos-0.74.2_armhf.deb"
 URL_DOSBOX_LANG=(\
-  "https://raw.githubusercontent.com/hastho/pigeos/master/defaults/mapper-0.74.map.de_DE.UTF-8" \
-  "https://raw.githubusercontent.com/hastho/pigeos/master/defaults/mapper-0.74.map.en_GB.UTF-8" \
+  "https://raw.githubusercontent.com/hastho/pigeos/master/defaults/mapper-0.74.map.de" \
+  "https://raw.githubusercontent.com/hastho/pigeos/master/defaults/mapper-0.74.map.gb" \
 )
 URL_DOSBOX_CONFIG="https://raw.githubusercontent.com/hastho/pigeos/master/defaults/dosbox-0.74.conf"
 # a free for non-commercial use file sync tool
@@ -197,8 +197,9 @@ install_dosbox_pkg() {
 }
 
 config_dosbox_pkg() {
-  # link DOSBox mapper file for the given language
-  ln -sf $PIGEOS_PREFIX/share/pigeos/mapper-0.74.map.$LANG \
+  # link DOSBox mapper file matching the linux kbd-layout
+  source /etc/default/keyboard
+  ln -sf $PIGEOS_PREFIX/share/pigeos/mapper-0.74.map.${XKBLAYOUT%%,*} \
          $PIGEOS_HOME/.dosbox/mapper-0.74.map
 }
 
