@@ -1,12 +1,77 @@
 #!/bin/bash
-img_stage=${1?Err. missing <stage>}
+#!/bin/bash
+# (c) 2020-21 T.Hass
+#
+# USAGE pigeos-deploy <stage> [<stage>]
+#
+# STAGE:
+# 	img_erase	erase the deployment dev be overwriting it with zeros
+#	img_build	build the image
+#	img_extract	extract the image file from the build SD card
+#	ext_write	write the extracted image to an external card
+# 	help  	  	show advanced help (manual)
+#
+###
+#
+# NAME: Pi/GEOS DEPLOY v0.2
+#
+# PURPOSE: Pi/GEOS deployment utillity
+#
+# DESCRIPTION: This utility is used to prepare a Pi/GEOS image.
+#
+# img_erase
+# 	ensure all non-used blocks are zero for best compression results
+#	for final image 
+# img_build
+#	build the image inside of a change_root environment
+# img_extract
+#	extract the image file from the build SD card and create an compressed
+#	archive ready to use with rpi-imager or similar tools
+# ext_write	
+#	write the extracted image to an external card to test it on an other
+#	system
+# 	
+# SEE ALSO: pigeos-setup, pigeos-config
+#
+#####
+
+# setup for usage and manual
+PROGNAME=$(type $0 | cut -d ' ' -f 3)
+PROGDIR=$(dirname $PROGNAME)
+PROGNAME=$(basename $PROGNAME)
+
+img_file_in=~/Downloads/2021-05-07-raspios-buster-armhf-lite.img
+img_file_out=~/Downloads/$(date -Idate)-pigeos-buster-armhf-beta.img.xz
+# internal SD card to build to image on
 img_dev=/dev/mmcblk0
 img_boot=p1
 img_root=p2
-img_file_in=~/Downloads/2021-05-07-raspios-buster-armhf-lite.img
-img_file_out=~/Downloads/$(date -Idate)-pigeos-buster-armhf-beta.img.xz
+# external SD card to export image on
+ext_dev=/dev/sdb
+ext_boot=1
+ext_root=2
+ext_conf=defaults/config.txt
+ext_1str=$HOME/Downloads/firstrun.sh
 
-if [ $img_stage -eq 1 ]; then
+usage() {
+  echo "" >&2
+  echo "$PROGNAME:" "$@" >&2
+  sed -n '/^###/q; /^#/!q; s/^#//; s/^ //; 4,$p' "$PROGDIR/$PROGNAME" >&2
+  exit 254
+}
+
+help() {
+  echo "" >&2
+  echo "$PROGNAME:" "$@" >&2
+  sed -n '/^#####/q; /^#/!q; s/^#*//; s/^ //; 4,$p' "$PROGDIR/$PROGNAME" >&2
+  exit 254
+}
+
+img_erase() {
+	dd if=/dev/zero of=$img_dev bs=1M status=progress
+}
+
+img_build() {
 	# write base image
 	sudo rpi-imager --cli $img_file_in $img_dev
 	# extend root file system
@@ -15,23 +80,38 @@ if [ $img_stage -eq 1 ]; then
 	sudo resize2fs $img_dev$img_root 
 	# ingest Pi/GEOS files
 	sudo mount -t ext4 $img_dev$img_root 	/mnt/pigeos/root/
-	sudo mount -f vfat $img_dev$img_boot 	/mnt/pigeos/root/boot
+	sudo mount -t vfat $img_dev$img_boot 	/mnt/pigeos/root/boot
 	sudo mount -t proc proc					/mnt/pigeos/root/proc
 	sudo mount -t sysfs sys					/mnt/pigeos/root/sys
-	sudo mount -o bind /dev					/mnt/pigeos/root/dev
+	sudo mount -B /dev						/mnt/pigeos/root/dev
+	sudo mount -B /dev/pts					/mnt/pigeos/root/dev/pts
 	sudo cp    -L /etc/resolv.conf			/mnt/pigeos/root/etc
 	sudo cp 	pigeos-setup 				/mnt/pigeos/root/usr/local/bin
 	sudo chroot 							/mnt/pigeos/root/ \
 	  /bin/bash -ic 'cd /tmp; pigeos-setup setup'
 	  sync
-	sudo umount 							/mnt/pigeos/root/{proc,sys,dev,boot}
+	sudo umount 							/mnt/pigeos/root/{dev/pts,dev,sys,proc,boot}
 	sudo umount $img_dev$img_root
-elif [ $img_stage -eq 2 ]; then
+}
+
+img_extract() {
 	# calculate imgage size
 	img_last_sector=$(fdisk -l $img_dev | awk 'END{print $4/8}')
 	dd if=$img_dev bs=4096 count=$img_last_sector status=progress \
 	  | xz --threads=0 > $img_file_out
-else
-	echo "Invalid stage given: $img_stage"
-	exit 255
-fi
+	sync
+}
+
+ext_write() {
+	sudo rpi-imager --cli $img_file_out $ext_dev
+	sudo mount -t vfat $ext_dev$ext_boot 	/mnt/pigeos
+	sudo cp		$ext_conf					/mnt/pigeos
+	sudo cp		$ext_1str					/mnt/pigeos
+	sync
+	sudo umount	$ext_dev$ext_boot
+}
+
+### MAIN ###
+for  action in $*; do
+	$action || break
+done
