@@ -467,11 +467,11 @@ config_usbmount() {
 install_midi() {
   install_dep_pkg timgm6mb-soundfont timidity-daemon
   # remove the large 120 MB soundfont installed by default
-  sudo apt remove fluid-soundfont-gm
+  sudo apt remove -y fluid-soundfont-gm
   # remove it also all references from Timidity config
   sudo sed -i '/.*fluidr3.*/d' /etc/timidity/timidity.cfg
   # add the timGM6mb font instead
-  grep -qi timgm6mb.cfg \
+  grep -qi timgm6mb.cfg /etc/timidity/timidity.cfg \
   	|| echo "source /etc/timidity/timgm6mb.cfg" \
 	>> /etc/timidity/timidity.cfg
 }
