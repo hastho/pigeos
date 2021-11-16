@@ -207,8 +207,7 @@ install_dosbox_pkg() {
 
 config_dosbox_pkg() {
   # link DOSBox mapper file matching the linux kbd-layout
-  source /etc/default/keyboard
-  ln -sf $PIGEOS_PREFIX/share/pigeos/mapper-0.74.map.${XKBLAYOUT%%,*} \
+  ln -sf $PIGEOS_PREFIX/share/pigeos/mapper-0.74.map.$KEYB \
          $PIGEOS_HOME/.dosbox/mapper-0.74.map
 }
 
