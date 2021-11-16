@@ -44,7 +44,7 @@ while :; do
 	  u_args="echo."
 	fi
 	# match linux console keyb language with DOSBox keyboard settings
-	sudo setupcon --current-tty -k ${KEYB:-us} 1>/tmp/loader.log 2>&1
+	sudo setupcon --current-tty -k ${KEYB:-us} 1>>/tmp/loader.log 2>&1
 	# launch DOSBox
 	$DOSBOX_BIN \
 	  -c "$a_args" \
@@ -55,7 +55,7 @@ while :; do
 	  -c "$u_args" \
 	  -c "keyb ${KEYB:-us} 850" \
 	  -c "call c:\autoexec.bat" \
-	1>/tmp/loader.log 2>&1
+	1>>/tmp/loader.log 2>&1
   fi
   # run SETUP-config if something went wrong
   pigeos-config
