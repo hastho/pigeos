@@ -4,7 +4,9 @@
 # USAGE pigeos-setup [<command>] [<parameters>]
 #
 # COMMANDS:
-# 	setup		downloads files from GitHub and installs into the current system
+# 	setup [<locale>]
+#				downloads files from GitHub and install to the current system
+#				and set locale to 'de_DE.UTF-8' or 'en_GB.UTF-8' (default)
 # 	configure 	(re)configure all services using the current user config
 #	update		update the Pi/GEOS by downloading lastest file from GitHub
 # 	help  	  	show advanced help (manual)
@@ -66,9 +68,9 @@ PKG_LIST="jq pv mtools"
 # list of external files need to be installed by this script in net_install mode
 # TODO setup a APT repo for the customized version of DOSBox
 URL_DOSBOX_PKG="https://dl.dropbox.com/s/8zg8q5o2mgwoqgf/dosbox-pigeos-0.74.2_armhf.deb"
+# specific mapping file for certain languages to fix bad kbd mappings in GEOS
 URL_DOSBOX_LANG=(\
   "https://raw.githubusercontent.com/hastho/pigeos/master/defaults/mapper-0.74.map.de" \
-  "https://raw.githubusercontent.com/hastho/pigeos/master/defaults/mapper-0.74.map.gb" \
 )
 URL_DOSBOX_CONFIG="https://raw.githubusercontent.com/hastho/pigeos/master/defaults/dosbox-0.74.conf"
 # a free for non-commercial use file sync tool
@@ -87,11 +89,15 @@ URL_SPLASH_SCRIPT="https://raw.githubusercontent.com/hastho/pigeos/master/pigeos
 # Pi/GEOS configuration script, fixed values configuration file and language files
 URL_CONFIG_SCRIPT="https://raw.githubusercontent.com/hastho/pigeos/master/pigeos-config"
 URL_CONFIG_SYSCFG="https://raw.githubusercontent.com/hastho/pigeos/master/defaults/pigeos.conf"
+# linux console keyboard configuration to match DOSBox mapper file above
+URL_CONFIG_KEYB=(\
+  "https://raw.githubusercontent.com/hastho/pigeos/master/defaults/keyboard.gr" \
+  "https://raw.githubusercontent.com/hastho/pigeos/master/defaults/keyboard.us" \
+)
 URL_CONFIG_LANG=(\
   "https://raw.githubusercontent.com/hastho/pigeos/master/pigeos-config.de_DE.UTF-8" \
   "https://raw.githubusercontent.com/hastho/pigeos/master/pigeos-config.en_GB.UTF-8" \
 )
-
 LOG_FILE=/tmp/$(basename $0).log
 
 # this array is to map pidos config to systemctl: 0->disable, 1->enable
@@ -125,14 +131,18 @@ install_dep_pkg() {
 }
 
 install_locales () {
-	install_dep_pkg locales tzdata keyboard-configuration
-	# Pi/GEOS UI unly support British english and German
-	sed -i -e 's/^#\s*en_GB.UTF-8 UTF-8/en_GB.UTF-8 UTF-8/' /etc/locale.gen
-	sed -i -e 's/^#\s*de_DE.UTF-8 UTF-8/de_DE.UTF-8 UTF-8/' /etc/locale.gen
-	locale-gen
-	update-locale --reset LANG=${1:-en_GB.UTF-8}
-	# keyboard layout and time zone may be set by rpi-imager
-	# so we will not change them yet
+  install_dep_pkg locales tzdata keyboard-configuration
+  # linux keyb configurations to map with DOS keyb def.
+  for lang in ${URL_CONFIG_KEYB[@]}; do
+    download_file "$lang"    /tmp/$(basename "$lang")
+	sudo install -D          /tmp/$(basename "$lang")\
+	  /etc/default/$(basename "$lang")
+  done
+  # Pi/GEOS UI localization for pigeos-config
+  sed -i -e 's/^#\s*en_GB.UTF-8 UTF-8/en_GB.UTF-8 UTF-8/' /etc/locale.gen
+  sed -i -e 's/^#\s*de_DE.UTF-8 UTF-8/de_DE.UTF-8 UTF-8/' /etc/locale.gen
+  locale-gen
+  update-locale --reset LANG=${1:-en_GB.UTF-8}
 }
 
 install_pigeos_scripts() {
@@ -605,13 +615,14 @@ setup() {
   install_rslsync				|| return 11
   install_cups	  	  	  	  	|| return 12
   install_midi					|| return 13
-  # enable 2nd stage setup execution in system default config
-  sudo sed -i 's/CONTINUE_SETUP=.*/CONTINUE_SETUP=2/' \
+  # skip 2nd stage to allow for off-line installation and move over 
+  # to 3rd stage setup execution in system default config
+  sudo sed -i 's/CONTINUE_SETUP=.*/CONTINUE_SETUP=3/' \
   	$PIGEOS_PREFIX/etc/$(basename "$URL_CONFIG_SYSCFG")
 }
 
 install_stage2() {
-  # 2nd stage: try to update the entire system before proceed
+  # 2nd stage: try to update the entire system before proceeding
   sudo apt clean; sudo apt update --fix-missing; sudo apt -y upgrade
   # enable 3rd stage setup execution in system default config
   sudo sed -i 's/CONTINUE_SETUP=.*/CONTINUE_SETUP=3/' \
