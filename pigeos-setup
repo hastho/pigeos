@@ -486,9 +486,9 @@ config_midi() {
 
 install_rslsync() {
   download_file $URL_RSLSYNC_PKG /tmp/$(basename $URL_RSLSYNC_PKG)
-  tar xzf $(basename $URL_RSLSYNC_PKG)
-  sudo install rslsync 		$PIGEOS_PREFIX/bin
-  sudo install LICENSE.TXT 	$PIGEOS_PREFIX/share/pigeos/resilio.lic
+  tar xzf $(basename $URL_RSLSYNC_PKG) -C /tmp
+  sudo install /tmp/rslsync 		$PIGEOS_PREFIX/bin
+  sudo install /tmp/LICENSE.TXT 	$PIGEOS_PREFIX/share/pigeos/resilio.lic
   # TODO create systemd service
     sudo tee /etc/systemd/system/rslsync@.service >/dev/null <<RSLSYNC_SRV
 [Unit]
