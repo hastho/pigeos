@@ -70,7 +70,7 @@ PKG_LIST="jq pv mtools"
 URL_DOSBOX_PKG="https://dl.dropbox.com/s/8zg8q5o2mgwoqgf/dosbox-pigeos-0.74.2_armhf.deb"
 # specific mapping file for certain languages to fix bad kbd mappings in GEOS
 URL_DOSBOX_LANG=(\
-  "https://raw.githubusercontent.com/hastho/pigeos/master/defaults/mapper-0.74.map.de" \
+  "https://raw.githubusercontent.com/hastho/pigeos/master/defaults/mapper-0.74.map.gr" \
 )
 URL_DOSBOX_CONFIG="https://raw.githubusercontent.com/hastho/pigeos/master/defaults/dosbox-0.74.conf"
 # a free for non-commercial use file sync tool
