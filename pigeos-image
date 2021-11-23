@@ -1,5 +1,73 @@
 #!/bin/bash
-# manage HDD images used by Pi/GEOS
+# (c) 2020-21 T.Hass
+#
+# USAGE pigeos-image [<command>] [<parameters>]
+#
+# COMMANDS:
+# 	create <size> <image name> <image description>
+#				creates a disk image of the given size in the default
+#				image localtion as well as an inf-file where the given
+#				description is stored as the first line
+# 	copy <image name> <file/folder to copy> [<more files to copy>]
+#				copies the given file(s) into the image. Also copies
+#				directories and their content.				
+#	label <image name> [<fs label>]
+#				set the file system label in the image. If no label
+#				is given the name of the image will be used
+#	rename <image name> <new name>
+#				renames the image
+# 	help  	  	show advanced help (manual)
+#
+# 	install_<service> expert options to install/configure a specific service
+# 	config_<service>  
+#
+###
+#
+# NAME: Pi/GEOS Image v0.2
+#
+# PURPOSE: manage HDD images used by Pi/GEOS
+#
+# DESCRIPTION: This utility is used to create and mainain files system images
+# used by Pi/GEOS to store GEOS and user files. It is called by # pigeos-config
+# when using the FDD/HDD image management functions.
+#
+# create
+#	creates an sparse file in the image folder with '.img' extension and creates
+#	a DOS partition containing a FAT16 file system inside. Forthermore a auxilary
+#	'.inf' file is created where the given description is stored in the 1st line.
+# copy
+#	copy files and folders from a local linux filesystem into the image without
+#	mounting it. This operation well also preserve date and time stamps.
+# label
+# 	DOS partitions can be labeled using a 11 character long label string. By
+#	default the image basename is used as label to better identify the image
+#	when mounted inside DOSBox. E.g. the label is shown in GeoManager.
+# rename
+#	is simple function the just unsures that the image and all related auxilary
+#	files are correctly (re)named.
+# 	
+# SEE ALSO: pigeos-config
+#
+#####
+
+# setup for usage and manual
+PROGNAME=$(type $0 | cut -d ' ' -f 3)
+PROGDIR=$(dirname $PROGNAME)
+PROGNAME=$(basename $PROGNAME)
+
+usage() {
+  echo "" >&2
+  echo "$PROGNAME:" "$@" >&2
+  sed -n '/^###/q; /^#/!q; s/^#//; s/^ //; 4,$p' "$PROGDIR/$PROGNAME" >&2
+  exit 254
+}
+
+help() {
+  echo "" >&2
+  echo "$PROGNAME:" "$@" >&2
+  sed -n '/^#####/q; /^#/!q; s/^#*//; s/^ //; 4,$p' "$PROGDIR/$PROGNAME" >&2
+  exit 254
+}
 
 # creates an image of the given size in the current users HDD image folder
 create() {
@@ -20,7 +88,7 @@ create() {
     # create a DOS partition and file systems in the image
     mpartition -I   -s 63 -t $cyl -h 16 c:
     mpartition -cvp -s 63 -t $cyl -h 16 c:
-    mformat c:
+    mformat    -v ${iname} 		c:
   else
     return 1
   fi
@@ -33,5 +101,16 @@ copy() {
   mcopy -bsm "$*" c:
 }
 
+label() {
+  echo "Not yet implemented."
+  return 254
+}
+
+rename() {
+  echo "Not yet implemented."
+  return 254
+}
+
 ### MAIN #######################
 "$@"
+
