@@ -55,6 +55,9 @@ PROGNAME=$(type $0 | cut -d ' ' -f 3)
 PROGDIR=$(dirname $PROGNAME)
 PROGNAME=$(basename $PROGNAME)
 
+# path where disk images are stored
+IPATH=$HOME/hdd_images
+
 usage() {
   echo "" >&2
   echo "$PROGNAME:" "$@" >&2
@@ -75,40 +78,65 @@ create() {
   local iname="$1"
   shift; shift
   local idescr="$*"
-  local ipath=$HOME/hdd_images
-  if [ ! -f ${ipath}/${iname}.img -a -d $ipath ] ; then
+  if [ $isize -gt 2048 ]; then
+    echo "size must be <= 2048 MB because FAT16 linitations" >&2
+	return 253
+  elif [ \( ! -f ${IPATH}/${iname}.img \) -a -d $IPATH ] ; then
     # calculate number of cylinders
     cyl=$(($isize*128/64))
     # create a sparse file to save disk space
-    dd if=/dev/zero bs=512 count=1 seek=$((63*16*$cyl-1)) of=${ipath}/${iname}.img
+    dd if=/dev/zero bs=512 count=1 seek=$((63*16*$cyl-1)) of=${IPATH}/${iname}.img
     # add meta data
-    echo "$idescr" > ${ipath}/${iname}.inf
+    echo "$idescr" > ${IPATH}/${iname}.inf
     # prepare the image to be used with mtools
-    echo -e "drive c: file=\"${ipath}/${iname}.img\" partition=1\n" >$HOME/.mtoolsrc
+    echo -e "drive c: file=\"${IPATH}/${iname}.img\" partition=1\n" >$HOME/.mtoolsrc
     # create a DOS partition and file systems in the image
     mpartition -I   -s 63 -t $cyl -h 16 c:
     mpartition -cvp -s 63 -t $cyl -h 16 c:
-    mformat    -v ${iname} 		c:
+    mformat    -v "${iname}"			c:
   else
-    return 1
+    echo "${IPATH}/${iname}.img allready exists." >&2
+    return 252
   fi
 }
 
 copy() {
   local iname="$1";  shift
-  local ipath=$HOME/hdd_images
-  echo -e "drive c: file=\"${ipath}/${iname}.img\" partition=1\n" >$HOME/.mtoolsrc
-  mcopy -bsm "$*" c:
+  if [ -f ${IPATH}/${iname}.img -a -f ${IPATH}/${iname}.inf ] ; then
+    echo -e "drive c: file=\"${IPATH}/${iname}.img\" partition=1\n" >$HOME/.mtoolsrc
+    mcopy -bsm "$*" c:
+  else
+    echo "${IPATH}/${iname}.img does not exist." >&2
+  	return 252
+  fi
+
 }
 
 label() {
-  echo "Not yet implemented."
-  return 254
+  local iname=$1; shift && local ilabel=$1
+  if [ -f ${IPATH}/${iname}.img -a -f ${IPATH}/${iname}.inf ] ; then
+    # prepare the image to be used with mtools
+    echo -e "drive c: file=\"${IPATH}/${iname}.img\" partition=1\n" >$HOME/.mtoolsrc
+	mlabel c:"${ilabel:-$iname}"
+  else
+    echo "${IPATH}/${iname}.img does not exist." >&2
+  	return 252
+  fi
 }
 
 rename() {
-  echo "Not yet implemented."
-  return 254
+  local iname=${1:?img name req.}
+  local oname=${2:?new name req.}
+  if [ -f ${IPATH}/${iname}.img -a -f ${IPATH}/${iname}.inf ] ; then
+    mv ${IPATH}/${iname}.img ${IPATH}/${oname}.img
+    mv ${IPATH}/${iname}.inf ${IPATH}/${oname}.inf	
+    # prepare the image to be used with mtools
+    echo -e "drive c: file=\"${IPATH}/${oname}.img\" partition=1\n" >$HOME/.mtoolsrc
+	mlabel c:"${oname}"
+  else
+    echo "${IPATH}/${iname}.img does not exist." >&2
+  	return 252
+  fi
 }
 
 ### MAIN #######################
