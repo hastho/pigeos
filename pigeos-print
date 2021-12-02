@@ -5,6 +5,7 @@
 # file name in the case the user wants to print to PDF
 CONFIG=$HOME/.pigeos
 PDFDIR=$HOME/Shared/PDF
+LOGFILE=/tmp/pigeos-print.log
 
 get_doc_type() { file -b --mime-type $1; }
 get_doc_name() {
@@ -22,9 +23,23 @@ get_doc_name() {
   )
   echo $(expr "$buffer" : '%%Title: \(.*\)')
 }
-
+get_doc_psize() {
+  # search for the SetPageSize line in the PgaeSetup section
+  buffer=$(awk '/%%BeginPageSetup/	{f=1;next} \
+                /%%.*/				{f=0;next} \
+	            /.*SPS/ && f		{printf("%dx%d\n", $1*10, $2*10);exit}' $1 \
+  )
+  if [ ! -z "$buffer" ]; then
+    echo $buffer
+  else
+    return 1
+  fi
+}
 ### MAIN #######################################################################
-[[ -r $1 ]]   	  	  	  	  	  	  	  	  	  	  	  || exit 1
+if [ !-r $1 ]; then
+  echo "File $1 is not readable" &>>LOGFILE
+  exit 1
+fi
 . $CONFIG
 # AUTO -> select 1st form all available printers
 if [ "x$CUPS_DBPRN" == "xAUTO" ]; then
@@ -33,6 +48,7 @@ else
   # validate the desired printer is available
   printer=`(lpstat -a | cut -d ' ' -f 1; echo PDF) | grep $CUPS_DBPRN`
 fi
+echo "Using printer '$printer' to print '$1'" >>$LOGFILE
 if [ "x$printer" == "x" ]; then
   	  	  	  	  	    	  	  	  	  	  	  	  	     exit 2
 elif [ "x$printer" == "xPDF" ]; then
@@ -41,8 +57,11 @@ elif [ "x$printer" == "xPDF" ]; then
   # validate printout is in Postscript format
   [[ "$(get_doc_type $1)" == "application/postscript" ]]  || exit 4
   # convert to PDF
-  ps2pdf12 $1 "${PDFDIR}/$(get_doc_name $1).pdf"
+  # ps2pdf12 $1 "${PDFDIR}/$(get_doc_name $1).pdf"
+  gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite \
+     -dCompatibilityLevel=1.1 -g"$(get_doc_psize $1)" \
+	 -sOutputFile="${PDFDIR}/$(get_doc_name $1).pdf" "$1" &>>$LOGFILE
   rm $1
 else
-  lpr -T "$(get_doc_name $1)" -P $printer $1
+  lpr -T "$(get_doc_name $1)" -P $printer $1 &>>$LOGFILE
 fi
