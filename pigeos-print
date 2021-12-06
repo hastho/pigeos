@@ -57,7 +57,6 @@ elif [ "x$printer" == "xPDF" ]; then
   # validate printout is in Postscript format
   [[ "$(get_doc_type $1)" == "application/postscript" ]]  || exit 4
   # convert to PDF
-  # ps2pdf12 $1 "${PDFDIR}/$(get_doc_name $1).pdf"
   gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite \
      -dCompatibilityLevel=1.1 -g"$(get_doc_psize $1)" \
 	 -sOutputFile="${PDFDIR}/$(get_doc_name $1).pdf" "$1" &>>$LOGFILE
