@@ -1,0 +1,105 @@
+#!/bin/bash
+IMG2GEOS_GPALETTE=/usr/local/share/pigeos/palette.tif
+IMG2GEOS_INPATH=$HOME/Shared/IMG2GEOS
+IMG2GEOS_OUTPATH=$HOME/Shared/IMG4GEOS
+IMG2GEOS_DITHER_TH=32000
+ING2GEOS_MAX_WIDTH=800
+
+LOGFILE=/tmp/${0}.log
+
+# req. for locking
+set -C
+
+__unix2geosname() {
+  local bname="${1%.*}" 
+  # create an uppercase DOS file name for the source image
+  local gname=$(echo ${bname:0:8} | tr [:lower:] [:upper:] | tr -d " ")
+  # 
+  if [ -f ${IMG2GEOS_OUTPATH}/${gname}.$2 ]; then
+    gname=${gname:0:7}
+    for idx in $(seq 0 9); do
+      if [ ! -f ${IMG2GEOS_OUTPATH}/${gname}${idx}.$2 ]; then
+        gname=${gname}${idx}
+        break
+      fi
+    done
+  fi
+  echo ${gname}.$2
+}
+
+__img2geos() {
+  local img="$1"
+  local iccount=$(identify -format %k "${IMG2GEOS_INPATH}/$img")
+  local igname=$(__unix2geosname "$img" GIF)
+  # use dithering only for photos, unfortunately most cliparts are JEPG
+  # compressed what results in color artifacts so the images contain >256 colors
+  if [ $iccount -le $IMG2GEOS_DITHER_TH ]
+  then
+    convert -median 2 -fuzz 10% -alpha remove -alpha off \
+			+dither -remap $IMG2GEOS_GPALETTE \
+	        -resize $ING2GEOS_MAX_WIDTH\> -filter Point \
+			"${IMG2GEOS_INPATH}/$img" "${IMG2GEOS_OUTPATH}/$igname"
+  else
+    convert -dither FloydSteinberg -remap $IMG2GEOS_GPALETTE \
+	        -resize $ING2GEOS_MAX_WIDTH\> -filter Cubic \
+			"${IMG2GEOS_INPATH}/$img" "${IMG2GEOS_OUTPATH}/$igname"
+  fi
+  [[ $? -eq 0 ]] && rm "${IMG2GEOS_INPATH}/$img"
+}
+
+__antiword() {
+  local docfile="$1"
+  local gdocname=$(__unix2geosname "$docfile" TXT)
+  antiword "${IMG2GEOS_INPATH}/$docfile" \
+  | iconv -s -t CP850 \
+  | sed 's/$/\r/g' > ${IMG2GEOS_OUTPATH}/$gdocname
+  [[ ${PIPESTATUS[0]} -eq 0 ]] && rm "${IMG2GEOS_INPATH}/$docfile"
+}
+
+__docx2txt() {
+  local docfile="$1"
+  local gdocname=$(__unix2geosname "$docfile" TXT)
+  docx2txt ${IMG2GEOS_INPATH}/$docfile - \
+  | iconv -s -t CP850 \
+  | sed 's/$/\r/g' > ${IMG2GEOS_OUTPATH}/$gdocname
+  [[ ${PIPESTATUS[0]} -eq 0 ]] && rm "${IMG2GEOS_INPATH}/$docfile"
+}
+
+__xlsx2csv() {
+  local docfile="$1"
+  local gdocname=$(__unix2geosname "$docfile" CSV)
+  xlsx2csv ${IMG2GEOS_INPATH}/$docfile \
+  | iconv -s -t CP850 \
+  | sed 's/$/\r/g' > ${IMG2GEOS_OUTPATH}/$gdocname
+  [[ ${PIPESTATUS[0]} -eq 0 ]] && rm "${IMG2GEOS_INPATH}/$docfile"
+}
+
+# create folder, if not present
+test -d $IMG2GEOS_INPATH 	|| mkdir -p $IMG2GEOS_INPATH
+test -d $IMG2GEOS_OUTPATH 	|| mkdir -p $IMG2GEOS_OUTPATH
+
+# try to lock the input folder, after rslsync has hopefully synced
+# lock files from other remote peers...
+while sleep 10; do
+  echo >$IMG2GEOS_INPATH/${0}.lock 2>/dev/null || continue
+  trap "rm $IMG2GEOS_INPATH/${0}.lock" EXIT
+  break
+done
+
+# first check for existing files than watch for newly copied or created files
+(
+  ls $IMG2GEOS_INPATH/
+  inotifywait -qm -e MOVED_TO,CLOSE_WRITE --format '%f' $IMG2GEOS_INPATH
+) | while read document
+do
+  case $(file -b --mime-type "$IMG2GEOS_INPATH/$document") in
+    image/*)  __img2geos "$document";;
+    application/msword)
+  			  __antiword "$document";;
+    application/vnd.openxmlformats-officedocument.wordprocessingml.document)
+  			  __docx2txt "$document";;
+    application/vnd.openxmlformats-officedocument.spreadsheetml.sheet)
+  			  __xlsx2csv "$document";;
+    *)		  echo "unsupported document type: $document" >>$LOGFILE
+  esac
+done
