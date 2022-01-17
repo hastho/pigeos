@@ -38,11 +38,11 @@ __img2geos() {
     convert -median 2 -fuzz 10% -alpha remove -alpha off \
 			+dither -remap $IMG2GEOS_GPALETTE \
 	        -resize $ING2GEOS_MAX_WIDTH\> -filter Point \
-			"${IMG2GEOS_INPATH}/$img" "${IMG2GEOS_OUTPATH}/$igname"
+			"${IMG2GEOS_INPATH}/$img" "GIF87:${IMG2GEOS_OUTPATH}/$igname"
   else
     convert -dither FloydSteinberg -remap $IMG2GEOS_GPALETTE \
 	        -resize $ING2GEOS_MAX_WIDTH\> -filter Cubic \
-			"${IMG2GEOS_INPATH}/$img" "${IMG2GEOS_OUTPATH}/$igname"
+			"${IMG2GEOS_INPATH}/$img" "GIF87:${IMG2GEOS_OUTPATH}/$igname"
   fi
   [[ $? -eq 0 ]] && rm "${IMG2GEOS_INPATH}/$img"
 }
