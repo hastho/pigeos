@@ -564,18 +564,62 @@ config_boot() {
   # don't wait for the network
   sudo /usr/bin/raspi-config nonint do_boot_wait 1
   # set the default framebuff resolution to 1024x768 as this gives
-  # a 4:3 image ration as it was commen in the old days...
-  if [ "x$SCREEN_RESOLUTION" == "x" ]; then
-  	screen_width=1024
-	screen_height=768
-  else
-  	screen_width=${SCREEN_RESOLUTION%x*}
-	screen_height=${SCREEN_RESOLUTION#*x}
-  fi
+  # a 4:3 image ration as it was commen in the old days (XGA ni) and
   # furthermore most modern displays can handle this using HW scaling
+  if [ "x$SCREEN_RESOLUTION" == "x" ]; then
+  	SCREEN_RESOLUTION=1024x768
+  fi
+  # starting with beta 1 the desired video is more precisely defined
+  # to support non-standard Raspi-displays (eg. 1024x600 types) and
+  # old CRTs at 75 Hz V. frequency connected using a HDMI2VGA adapter 
+  case $SCREEN_RESOLUTION in
+    800x480)	screen_mode=800 480 60 6
+			  	screen_width=800
+				screen_height=480
+				;;
+    800x600)	screen_mode=800 600 60 1
+			  	screen_width=800
+				screen_height=600
+				;;
+    800x600@75)	screen_mode=800 600 75 1
+			  	screen_width=800
+				screen_height=600
+				;;
+    1024x600)	screen_mode=1024 600 60 6
+			  	screen_width=1024
+				screen_height=600
+				;;
+    1024x768)	screen_mode=1024 768 60 1
+			  	screen_width=1024
+				screen_height=768
+				;;
+    1024x768@75)	screen_mode=1024 768 75 1
+			  	screen_width=1024
+				screen_height=768
+				;;
+    1280x720)	screen_mode=1280 720 60 3
+			  	screen_width=1280
+				screen_height=720
+				;;
+    1280x768)	screen_mode=1280 768 60 6
+			  	screen_width=1280
+				screen_height=768
+				;;
+    1280x800)	screen_mode=1280 800 60 5
+			  	screen_width=1280
+				screen_height=800
+				;;
+    1280x1024)	screen_mode=1280 1024 60 4
+			  	screen_width=1280
+				screen_height=1024
+				;;
+  esac
+  
   for option in "disable_overscan=1" "dtparam=i2c_arm=on" \
                 "framebuffer_width=${screen_width}" \
 				"framebuffer_height=${screen_height}" \
+				"hdmi_cvt=${screen_mode}" "hdmi_group=2" \
+				"hdmi_mode=87" "hdmi_drive=2" \
                 "dtparam=audio=on" "disable_splash=1" "boot_delay=0"\
 				"gpu_mem=64" "enable_uart=1" "hdmi_enable_4kp60=1"
   do

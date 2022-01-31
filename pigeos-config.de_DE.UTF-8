@@ -73,14 +73,16 @@ keybsel_options=(\
 screenres_title="Bildschirmauflösung"
 screenres_text="Bildschirmauflösung für das angeschlossene Ausgabegerät auswählen. \nHinweis: Die GEOS-Bildschirmauflösung sollte für eine optimale Darstellung auf den selben Wert gesetzt werden."
 screenres_options=(\
-  "800x480" 	"800x480 (Raspberry 7\" Touchscreen Display)" \
-  "800x600" 	"800x600" \
-  "1024x600"	"1024x600" \
-  "1024x768"	"1024x768 (Standard 4:3)" \
-  "1280x720"	"1280x720 (HD ready 16:9)" \
-  "1280x768"	"1280x768" \
-  "1280x800"	"1280x800" \
-  "1280x1024"	"1280x1024" )
+  "800x480" 	"800x480   (Raspberry 7\" touchscreen display)" \
+  "800x600" 	"800x600   (SVGA)" \
+  "800x600@75" 	"800x600   (75 Hz Bildwiederholrate für CRT Monitore)" \
+  "1024x600"	"1024x600  " \
+  "1024x768"	"1024x768  (Standard XGA)" \
+  "1024x768@75"	"1024x768  (75 Hz Bildwiederholrate für CRT Monitore)" \
+  "1280x720"	"1280x720  (HD   16:9 TVs)" \
+  "1280x768"	"1280x768  (HD   15:9 LCD-Monitore oder TVs)" \
+  "1280x800"	"1280x800  (WXGA 16:10 LCD-Monitore" \
+  "1280x1024"	"1280x1024 " )
     
 ### Advanced Menue #################################################################
 advanced_title="Erweiterte Einstellungen"

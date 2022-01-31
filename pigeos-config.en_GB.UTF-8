@@ -73,11 +73,13 @@ keybsel_options=(\
 screenres_title="Screen resolution"
 screenres_text="Please select the screen resolution of the used display device. \nHint: you need to set the GEOS dsiplay resolution to the same value for optimum results."
 screenres_options=(\
-  "800x480" 	"800x480 (Raspberry 7\" Touchscreen Display)" \
+  "800x480" 	"800x480 (Raspberry 7\" touchscreen display)" \
   "800x600" 	"800x600" \
+  "800x600@75" 	"800x600 at 75 Hz refresh rate (for CRT displays)" \
   "1024x600"	"1024x600" \
-  "1024x768"	"1024x768 (Standard 4:3)" \
-  "1280x720"	"1280x720 (HD ready 16:9)" \
+  "1024x768"	"1024x768 (Standard for LCD type displays)" \
+  "1024x768@75"	"1024x768 at 75 Hz refresh rate (for CRT displays)" \
+  "1280x720"	"1280x720 (HDready 16:9 LCD type displays)" \
   "1280x768"	"1280x768" \
   "1280x800"	"1280x800" \
   "1280x1024"	"1280x1024" )
