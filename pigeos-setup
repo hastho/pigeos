@@ -573,48 +573,48 @@ config_boot() {
   # to support non-standard Raspi-displays (eg. 1024x600 types) and
   # old CRTs at 75 Hz V. frequency connected using a HDMI2VGA adapter 
   case $SCREEN_RESOLUTION in
-    800x480)	screen_mode=800 480 60 6
-			  	screen_width=800
-				screen_height=480
+    800x480)	screen_mode="800 480 60 6"
+			  	screen_width="800"
+				screen_height="480"
 				;;
-    800x600)	screen_mode=800 600 60 1
-			  	screen_width=800
-				screen_height=600
+    800x600)	screen_mode="800 600 60 1"
+			  	screen_width="800"
+				screen_height="600"
 				;;
-    800x600@75)	screen_mode=800 600 75 1
-			  	screen_width=800
-				screen_height=600
+    800x600@75)	screen_mode="800 600 75 1"
+			  	screen_width="800"
+				screen_height="600"
 				;;
-    1024x600)	screen_mode=1024 600 60 6
-			  	screen_width=1024
-				screen_height=600
+    1024x600)	screen_mode="1024 600 60 6"
+			  	screen_width="1024"
+				screen_height="600"
 				;;
-    1024x768)	screen_mode=1024 768 60 1
-			  	screen_width=1024
-				screen_height=768
+    1024x768)	screen_mode="1024 768 60 1"
+			  	screen_width="1024"
+				screen_height="768"
 				;;
-    1024x768@75)	screen_mode=1024 768 75 1
-			  	screen_width=1024
-				screen_height=768
+    1024x768@75)	screen_mode="1024 768 75 1"
+			  	screen_width="1024"
+				screen_height="768"
 				;;
-    1280x720)	screen_mode=1280 720 60 3
-			  	screen_width=1280
-				screen_height=720
+    1280x720)	screen_mode="1280 720 60 3"
+			  	screen_width="1280"
+				screen_height="720"
 				;;
-    1280x768)	screen_mode=1280 768 60 6
-			  	screen_width=1280
-				screen_height=768
+    1280x768)	screen_mode="1280 768 60 6"
+			  	screen_width="1280"
+				screen_height="768"
 				;;
-    1280x800)	screen_mode=1280 800 60 5
-			  	screen_width=1280
-				screen_height=800
+    1280x800)	screen_mode="1280 800 60 5"
+			  	screen_width="1280"
+				screen_height="800"
 				;;
-    1280x1024)	screen_mode=1280 1024 60 4
-			  	screen_width=1280
-				screen_height=1024
+    1280x1024)	screen_mode="1280 1024 60 4"
+			  	screen_width="1280"
+				screen_height="1024"
 				;;
   esac
-  
+  # write parameter /boot/config.txt
   for option in "disable_overscan=1" "dtparam=i2c_arm=on" \
                 "framebuffer_width=${screen_width}" \
 				"framebuffer_height=${screen_height}" \
