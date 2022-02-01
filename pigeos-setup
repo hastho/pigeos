@@ -350,13 +350,13 @@ config_dosbox_modem() {
   sudo systemctl --now enable pppd@ttyN0.path
 
   # Configure DOSBox with modem connected on COM1
-  sed -i 's/serial2=.*/serial2=modem/' $($DOSBOX_BIN -printconf)
+  sed -i 's/serial1=.*/serial1=modem/' $($DOSBOX_BIN -printconf)
   return 0
 }
 
 install_dosbox_telnetd() {
   # install a simple telnet service on localhost that can be accessed from
-  # GEOS via DOSBox COM1 nullmodem link
+  # GEOS via DOSBox COM2 nullmodem link
   install_dep_pkg socat
   sudo tee /etc/systemd/system/telnetd.service >/dev/null <<TELNET_SRV
 [Unit]
@@ -382,7 +382,7 @@ config_dosbox_telnetd() {
   sudo systemctl --now enable telnetd
 
   # Configure DOSBox to have a nullmodem link on COM2
-  sed -i 's/serial1=.*/serial1=nullmodem server:127.0.0.1 port:2023/' \
+  sed -i 's/serial2=.*/serial2=nullmodem server:127.0.0.1 port:2023/' \
   	$($DOSBOX_BIN -printconf) 
 }
 
