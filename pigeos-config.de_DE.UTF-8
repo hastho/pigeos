@@ -110,9 +110,13 @@ imgmgmt_options=(\
   "Create image "     "Neues Abbild erstellen" \
   "Delete image "     "Abbild löschen" \
   "Download image "   "Abbild aus dem Intenet laden" \
+  "Editiere image "   "Abbildbeschreibung editieren" \
   "Export image "     "Abbild auf USB-Lw sichern" \
-  "Import image "     "Abbild von USB-Lw laden/wiederherstellen" )
+  "Import image "     "Abbild von USB-Lw laden/wiederherstellen" \
+  "Rename image "     "Abbild umbenennen" )
 imgmgmt_del_confirm="Gewähltes Abbild wirklich löschen? Alle Daten gehen verlogen!"
+imgmgmt_del_mounted="Das Abbild ist aktuell einem Lw zugewiesen, Löschen nicht möglich!"
+imgmgmt_mod_mounted="Das Abbild ist aktuell einem Lw zugewiesen, Bearbeiten nicht möglich!"
 imgmgmt_download="Bitte gib eine URL zum zu installierenden Abbild ein (http(s):// oder file://)"
 imgmgmt_invalid_url="Die angegebene URL ist ungültig."
 imgmgmt_unpack_err="Beim Entpacken des Abbildes ist ein Fehler aufgetreten."

@@ -264,8 +264,10 @@ imgmgmt_menu() {
       Create*)		imgmgmt_create ;;
       Delete*)		imgmgmt_delete ;;
       Download*)	imgmgmt_download ;;
+	  Edit*)		imgmgmt_edit ;;
       Export*)	    imgmgmt_export ;;
       Import*)      imgmgmt_import ;;
+	  Rename*)		imgmgmt_rename ;;
       *)		    break
     esac
   done
@@ -298,7 +300,58 @@ imgmgmt_create() {
   done
 }
 
-imgmgmt_delete() { dial_info "Sorry, this function hasn't been implemented yet."; }
+imgmgmt_delete() { 
+  local selection
+  local imgsel_list=()
+  local imgsel_dir=$HOME/hdd_images/
+  # build the list of available disk images
+  for f in ${imgsel_dir}/*.inf 
+    do imgsel_list+=("$(basename $f .inf)" "$(head -1 $f)"); done
+  # ask the user to choose one image
+  selection=$(dial_menu "${imgsel_title}" "${imgsel_text}" "${imgsel_list[@]}")
+  if [ ! -z "$selection" ]; then
+    if grep -q ".D._IMAGE=${selection}" $(conf_get); then
+	  dial_err "${imgmgmt_del_mounted}"
+	else
+	  dial_yesno "${imgmgmt_del_confirm}" && rm ${imgsel_dir}/${selection}.i??
+	fi
+  fi
+}
+
+imgmgmt_rename() { 
+  local selection
+  local imgsel_list=()
+  local imgsel_dir=$HOME/hdd_images/
+  # build the list of available disk images
+  for f in ${imgsel_dir}/*.inf 
+    do imgsel_list+=("$(basename $f .inf)" "$(head -1 $f)"); done
+  # ask the user to choose one image
+  selection=$(dial_menu "${imgsel_title}" "${imgsel_text}" "${imgsel_list[@]}")
+  if [ ! -z "$selection" ]; then
+    if grep -q ".D._IMAGE=${selection}" $(conf_get); then
+	  dial_err "${imgmgmt_mod_mounted}"
+	else
+	  iname=$(dial_input "Image name" "$imgmgmt_image_filename" "$selection")
+	  if [ ! -z "$iname" -a "x$selection" <> "x$iname" ]; then
+	    pigeos-image rename "$selection" "$iname" 2>/dev/null 1>&1
+	  fi
+	fi
+  fi
+}
+
+imgmgmt_edit() { 
+  local selection
+  local imgsel_list=()
+  local imgsel_dir=$HOME/hdd_images/
+  # build the list of available disk images
+  for f in ${imgsel_dir}/*.inf 
+    do imgsel_list+=("$(basename $f .inf)" "$(head -1 $f)"); done
+  # ask the user to choose one image
+  selection=$(dial_menu "${imgsel_title}" "${imgsel_text}" "${imgsel_list[@]}")
+  if [ ! -z "$selection" ]; then
+    jed +3 ${imgsel_dir}/${selection}.inf
+  fi
+}
 
 imgmgmt_download() {
   local selection

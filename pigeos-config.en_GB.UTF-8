@@ -110,9 +110,13 @@ imgmgmt_options=(\
   "Create image "     "Create a new image" \
   "Delete image "     "Delete an image" \
   "Download image "   "Download an image from the Web" \
+  "Edit image"		  "Edit image description" \
   "Export image "     "Backup/Export an image to an USB drive" \
-  "Import image "     "Import/Restore an image archive from USB drive" )
+  "Import image "     "Import/Restore an image archive from USB drive" \
+  "Rename image "     "Rename an image" )
 imgmgmt_del_confirm="Do you realy want to delete this image? All data will be lost!"
+imgmgmt_del_mounted="You can't delete a mounted image, please unassign it first!"
+imgmgmt_mod_mounted="You can't modify a mounted image, please unassign it first!"
 imgmgmt_download="Please enter an URL of an image archive stored on the Web (http(s)://)"
 imgmgmt_invalid_url="The given URL isn't valid."
 imgmgmt_unpack_err="An error ocurred while extracting the image archive."
