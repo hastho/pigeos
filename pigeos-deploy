@@ -35,12 +35,14 @@
 #
 #####
 
+set -e
+
 # setup for usage and manual
 PROGNAME=$(type $0 | cut -d ' ' -f 3)
 PROGDIR=$(dirname $PROGNAME)
 PROGNAME=$(basename $PROGNAME)
 
-img_file_in=~/Downloads/2021-05-07-raspios-buster-armhf-lite.img
+img_file_in=~/Downloads/2022-01-28-raspios-buster-armhf-lite.img
 img_file_out=~/Downloads/$(date -Idate)-pigeos-buster-armhf-beta.img.xz
 # internal SD card to build to image on
 img_dev=/dev/mmcblk0
@@ -88,13 +90,16 @@ img_build() {
 	sudo cp    -L /etc/resolv.conf			/mnt/pigeos/root/etc
 	sudo cp 	pigeos-setup 				/mnt/pigeos/root/usr/local/bin
 	sudo chroot 							/mnt/pigeos/root/ \
-	  /bin/bash -ic 'cd /tmp; pigeos-setup setup'
+	  /bin/bash -ic 'cd /tmp; pigeos-setup setup de_DE.UTF-8'
 	  sync
 	sudo umount 							/mnt/pigeos/root/{dev/pts,dev,sys,proc,boot}
 	sudo umount $img_dev$img_root
+	sudo fsck.ext4 -f $img_dev$img_root
 }
 
 img_extract() {
+	# clean free sectors for better comression result
+	sudo zerofree -v $img_dev$img_root
 	# calculate imgage size
 	img_last_sector=$(fdisk -l $img_dev | awk 'END{print $4/8}')
 	dd if=$img_dev bs=4096 count=$img_last_sector status=progress \
@@ -109,6 +114,24 @@ ext_write() {
 	sudo cp		$ext_1str					/mnt/pigeos
 	sync
 	sudo umount	$ext_dev$ext_boot
+}
+
+img_debug() {
+	# ingest Pi/GEOS files
+	sudo mount -t ext4 $img_dev$img_root 	/mnt/pigeos/root/
+	sudo mount -t vfat $img_dev$img_boot 	/mnt/pigeos/root/boot
+	sudo mount -t proc proc					/mnt/pigeos/root/proc
+	sudo mount -t sysfs sys					/mnt/pigeos/root/sys
+	sudo mount -B /dev						/mnt/pigeos/root/dev
+	sudo mount -B /dev/pts					/mnt/pigeos/root/dev/pts
+	sudo cp    -L /etc/resolv.conf			/mnt/pigeos/root/etc
+	sudo cp 	pigeos-setup 				/mnt/pigeos/root/usr/local/bin
+	sudo chroot 							/mnt/pigeos/root/ \
+	  /bin/bash -l
+	  sync
+	sudo umount 							/mnt/pigeos/root/{dev/pts,dev,sys,proc,boot}
+	sudo umount $img_dev$img_root
+	sudo fsck.ext4 -f $img_dev$img_root
 }
 
 ### MAIN ###
