@@ -313,7 +313,7 @@ Description=Start PPPD for the given TTY
 Type=simple
 EnvironmentFile=/etc/default/pppd-%i.conf
 PIDFile=/run/pppd%i.pid
-ExecStartPre=-/usr/bin/ogg123 /usr/local/share/sound/dialing.ogg
+ExecStartPre=-/usr/bin/ogg123 -q -k1 -K4 /usr/local/share/sound/dialing.ogg
 ExecStartPre=/sbin/iptables -t nat -A POSTROUTING -s \$PPPD_NETWORK -j MASQUERADE
 ExecStartPre=/sbin/iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
 ExecStartPre=/sbin/iptables -A PREROUTING -t raw -p tcp --dport 21 -j CT --helper ftp
@@ -662,10 +662,11 @@ setup() {
   install_splash_screen   	  	|| return 7
   install_dosbox_modem    	  	|| return 8
   install_dosbox_telnetd  	  	|| return 9
-  install_usbmount     	  	  	|| return 10
-  install_rslsync				|| return 11
-  install_cups	  	  	  	  	|| return 12
-  install_midi					|| return 13
+  install_jed					|| return 10
+  install_usbmount     	  	  	|| return 11
+  install_rslsync				|| return 12
+  install_cups	  	  	  	  	|| return 13
+  install_midi					|| return 14
   # clear apt cache
   sudo apt clean
   # skip 2nd stage to allow for off-line installation and move over 
