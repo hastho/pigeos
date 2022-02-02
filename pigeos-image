@@ -127,6 +127,10 @@ label() {
 rename() {
   local iname=${1:?img name req.}
   local oname=${2:?new name req.}
+  if [ -f ${IPATH}/${oname}.img -a -f ${IPATH}/${oname}.inf ] ; then
+      echo "${IPATH}/${oname}.img does allready exist." >&2
+  	return 252
+  fi
   if [ -f ${IPATH}/${iname}.img -a -f ${IPATH}/${iname}.inf ] ; then
     mv ${IPATH}/${iname}.img ${IPATH}/${oname}.img
     mv ${IPATH}/${iname}.inf ${IPATH}/${oname}.inf	
