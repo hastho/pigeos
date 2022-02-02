@@ -319,6 +319,7 @@ imgmgmt_delete() {
 }
 
 imgmgmt_rename() { 
+  local iname
   local selection
   local imgsel_list=()
   local imgsel_dir=$HOME/hdd_images/
@@ -332,7 +333,7 @@ imgmgmt_rename() {
 	  dial_err "${imgmgmt_mod_mounted}"
 	else
 	  iname=$(dial_input "Image name" "$imgmgmt_image_filename" "$selection")
-	  if [ ! -z "$iname" -a "x$selection" <> "x$iname" ]; then
+	  if [ ! -z "$iname" ]; then
 	    pigeos-image rename "$selection" "$iname" 2>/dev/null 1>&1
 	  fi
 	fi
