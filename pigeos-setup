@@ -315,6 +315,7 @@ Description=Start PPPD for the given TTY
 Type=simple
 EnvironmentFile=/etc/default/pppd-%i.conf
 PIDFile=/run/pppd%i.pid
+ExecStartPre=-/usr/bin/amixer -q sset PCM 5
 ExecStartPre=-/usr/bin/ogg123 -q -k1 -K16 $PIGEOS_PREFIX/share/pigeos/dialing.ogg
 ExecStartPre=/sbin/iptables -t nat -A POSTROUTING -s \$PPPD_NETWORK -j MASQUERADE
 ExecStartPre=/sbin/iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
