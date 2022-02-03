@@ -1,8 +1,8 @@
 #!/bin/bash
 # This helper script handles printer selection and
-# special features to extract the original docuemnt
+# special features to extract the original docuemnt name
 # from PS printer driver output to generate a unique
-# file name in the case the user wants to print to PDF
+# file name in the case the user wants to print to PDF file
 CONFIG=$HOME/.pigeos
 PDFDIR=$HOME/Shared/PDF
 LOGFILE=/tmp/pigeos-print.log
