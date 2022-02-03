@@ -148,11 +148,11 @@ imgsel_menu() {
   done
   # ask the user to choose one image
   selection=$(dial_menu "${imgsel_title}" "${imgsel_text}" "${imgsel_list[@]}")
-  if [ ! -z "$selection" ]; then
+  if [ -z "$selection+x" ]; then
     false # image selection aborted
   elif [ "$selection" == "NONE" ]; then
     sed -i "s#${imgsel_drv^^}_IMAGE=.*#${imgsel_drv^^}_IMAGE=NONE#" $(conf_get)
-  elif grep -q ".D._IMAGE=${selection}" $(conf_get); then
+  elif grep -q ".D._IMAGE=${imgsel_dir}${selection}.img" $(conf_get); then
     dial_err "$imgsel_mounted"
   else
     # load multi line image desc into a single variable
