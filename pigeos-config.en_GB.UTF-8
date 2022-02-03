@@ -40,6 +40,7 @@ basic_options=(\
 imgsel_title="FDD/HHD image mangement"
 imgsel_text="Please select an floppy or disk image to be mapped as DOS drives. \nPress ENTER for detailed information."
 imgsel_conf="Confirm selection or abbort?"
+imgsel_mounted="The selected image is allready mapped to an other DOS drive. \nPlase choose an other image."
 
 ### KeyboardSelection Menu #########################################################
 keybsel_title="Keyboard configuration"

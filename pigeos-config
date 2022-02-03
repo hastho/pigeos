@@ -9,7 +9,7 @@
 DEBUG=0
 SN=$(cat /sys/firmware/devicetree/base/serial-number | sed 's/\x0//')
 DIAL=$(which whiptail || which dialog)
-BTITLE="Pi/GEOS SETUP configuration tool v0.2 (S/N:$SN)"
+BTITLE="Pi/GEOS SETUP configuration tool v0.3 (S/N:$SN)"
 CONFIG=$HOME/.pigeos
 declare -A FONT=(\
   [tiny]=/usr/share/consolefonts/Uni2-TerminusBoldVGA14.psf.gz \
@@ -148,9 +148,13 @@ imgsel_menu() {
   done
   # ask the user to choose one image
   selection=$(dial_menu "${imgsel_title}" "${imgsel_text}" "${imgsel_list[@]}")
-  if [ "$selection" == "NONE" ]; then
+  if [ ! -z "$selection" ]; then
+    false # image selection aborted
+  elif [ "$selection" == "NONE" ]; then
     sed -i "s#${imgsel_drv^^}_IMAGE=.*#${imgsel_drv^^}_IMAGE=NONE#" $(conf_get)
-  elif [ ! -z "$selection" ]; then
+  elif grep -q ".D._IMAGE=${selection}" $(conf_get); then
+    dial_err "$imgsel_mounted"
+  else
     # load multi line image desc into a single variable
 	local imgsel_inf=""
 	while read line 

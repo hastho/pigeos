@@ -40,6 +40,7 @@ basic_options=(\
 imgsel_title="FDD/HHD Abbild Verwaltung"
 imgsel_text="Bitte wähle ein Disketten-bzw. Festplattenabbild. \nDrücke ENTER für detailierte Inforamtionen und um das Abbild auszuwählen."
 imgsel_conf="Auswahl bestätigen oder abbrechen?"
+imgsel_mounted="Das gewählte Abbild ist bereits einem DOS-Laufwerk zugeordnet. \nBitte ein anderes Abbild wählen oder die andere Zuordnung vorher aufheben."
 
 ### KeyboardSelection Menu #########################################################
 keybsel_title="Tastaturauswahl"
