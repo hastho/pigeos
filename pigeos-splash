@@ -38,14 +38,14 @@ update() {
   local mimg="$(basename ${HDC_IMAGE^^} .IMG)"
   local simg="$(basename ${HDD_IMAGE^^} .IMG)"
   local msg="\
-Pi/GEOS beta Rev 0.2 $(date '+%D')\n\
+Pi/GEOS beta Rev 0.3 $(stat --printf='%z' $0 | cut -d ' ' -f1 | date '+%D')\n\
 \n\
 ${cpu}, CPU at ${speed}MHz\n\
 Memory Test : 16384K OK\n\
 \n\
 Raspberry Pi Plug and Play PC/GEOS extension\n\
-Copyright \(C\) 2020-21, Thomas Hass\n\
-http://www.thobipix.de\n\
+Copyright \(C\) 2020-22, Thomas Hass\n\
+https://www.thobipix.de\n\
 \n\
 Initialize Plug and Play Options ...\n\
 Opt-01: $(lsb_release -ds)\n\
