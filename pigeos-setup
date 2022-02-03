@@ -267,6 +267,8 @@ install_dosbox_modem() {
   # a virtuel TTy where a PPPD can bind to
   echo -n "Creating modem service "
   install_dep_pkg iptables ppp socat vorbis-tools 
+  download_file $URL_DIALING_SOUND /tmp/dialing.ogg
+  sudo install -D /tmp/dialing.ogg 	$PIGEOS_PREFIX/share/pigeos/dialing.ogg
   sudo tee /etc/systemd/system/modem@.service >/dev/null <<MODEM_SRV
 [Unit]
 Description=Start DOSBox virtual modem on given TTY
@@ -313,7 +315,7 @@ Description=Start PPPD for the given TTY
 Type=simple
 EnvironmentFile=/etc/default/pppd-%i.conf
 PIDFile=/run/pppd%i.pid
-ExecStartPre=-/usr/bin/ogg123 -q -k1 -K4 /usr/local/share/sound/dialing.ogg
+ExecStartPre=-/usr/bin/ogg123 -q -k1 -K16 $PIGEOS_PREFIX/share/pigeos/dialing.ogg
 ExecStartPre=/sbin/iptables -t nat -A POSTROUTING -s \$PPPD_NETWORK -j MASQUERADE
 ExecStartPre=/sbin/iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
 ExecStartPre=/sbin/iptables -A PREROUTING -t raw -p tcp --dport 21 -j CT --helper ftp
