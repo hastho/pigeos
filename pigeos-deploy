@@ -78,8 +78,9 @@ img_build() {
 	sudo rpi-imager --cli $img_file_in $img_dev
 	# extend root file system
 	echo ", +512M" | sudo sfdisk -N 2 $img_dev
+	sudo partprobe $img_dev
+	sudo resize2fs $img_dev$img_root ; sync
 	sudo fsck.ext4 -f $img_dev$img_root
-	sudo resize2fs $img_dev$img_root 
 	# ingest Pi/GEOS files
 	sudo mount -t ext4 $img_dev$img_root 	/mnt/pigeos/root/
 	sudo mount -t vfat $img_dev$img_boot 	/mnt/pigeos/root/boot
@@ -101,7 +102,7 @@ img_extract() {
 	# clean free sectors for better comression result
 	sudo zerofree -v $img_dev$img_root
 	# calculate imgage size
-	img_last_sector=$(fdisk -l $img_dev | awk 'END{print $4/8}')
+	img_last_sector=$(fdisk -l $img_dev | awk 'END{print $3/8}')
 	dd if=$img_dev bs=4096 count=$img_last_sector status=progress \
 	  | xz --threads=0 > $img_file_out
 	sync
