@@ -62,7 +62,7 @@ Please wait, Pi/GEOS is booting up ..."
 
   sudo convert /usr/local/share/pigeos/splash_tpl.png \
    -font Px437-PhoenixEGA-8x16 -pointsize 28 -fill '#e7e7e7' -annotate +33+170 "$msg" \
-   -resize ${SCREEN_RESOLUTION:-1024x768} /usr/local/lib/pigeos/splash.png
+   -resize ${SCREEN_RESOLUTION%@*} /usr/local/lib/pigeos/splash.png
 }
 ### MAIN ###########################################################################
 [ -r ${CONFIG} ] && source $CONFIG
