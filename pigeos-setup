@@ -143,7 +143,7 @@ install_locales () {
   sed -i -e 's/^#\s*de_DE.UTF-8 UTF-8/de_DE.UTF-8 UTF-8/' /etc/locale.gen
   locale-gen
   update-locale --reset LANG=${1:-en_GB.UTF-8}
-  sed -i 's/KEYB=.*/KEYB=${2:-uk}' \
+  sed -i 's/KEYB=.*/KEYB=${2:-uk}/' \
     $PIGEOS_PREFIX/etc/$(basename $URL_CONFIG_SYSCFG)
 }
 
