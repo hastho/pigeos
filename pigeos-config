@@ -347,7 +347,7 @@ imgmgmt_delete() {
   # ask the user to choose one image
   selection=$(dial_menu "${imgsel_title}" "${imgsel_text}" "${imgsel_list[@]}")
   if [ ! -z "$selection" ]; then
-    if grep -q ".D._IMAGE=${selection}" $(conf_get); then
+    if grep -q ".D._IMAGE=${imgsel_dir}/${selection}" $(conf_get); then
 	  dial_err "${imgmgmt_del_mounted}"
 	else
 	  dial_yesno "${imgmgmt_del_confirm}" && rm ${imgsel_dir}/${selection}.i??
@@ -366,7 +366,7 @@ imgmgmt_rename() {
   # ask the user to choose one image
   selection=$(dial_menu "${imgsel_title}" "${imgsel_text}" "${imgsel_list[@]}")
   if [ ! -z "$selection" ]; then
-    if grep -q ".D._IMAGE=${selection}" $(conf_get); then
+    if grep -q ".D._IMAGE=${imgsel_dir}/${selection}" $(conf_get); then
 	  dial_err "${imgmgmt_mod_mounted}"
 	else
 	  iname=$(dial_input "Image name" "$imgmgmt_image_filename" "$selection")
