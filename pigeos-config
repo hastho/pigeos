@@ -40,9 +40,10 @@ conf_reset() {
 }
 
 ## UI functions ###########################################
-dial_info()  { $DIAL --backtitle "$BTITLE" --title "Information"  --msgbox   "$1" 8 50; }
-dial_err()   { $DIAL --backtitle "$BTITLE" --title "Error"        --msgbox   "$1" 8 50; }
-dial_yesno() { $DIAL --backtitle "$BTITLE" --title "Confirmation" --yesno    "$1" 8 50; }
+dial_info()  { $DIAL --backtitle "$BTITLE" --title "Information"  --infobox "$1" 8 50; }
+dial_msg()   { $DIAL --backtitle "$BTITLE" --title "Information"  --msgbox  "$1" 8 50; }
+dial_err()   { $DIAL --backtitle "$BTITLE" --title "Error"        --msgbox  "$1" 8 50; }
+dial_yesno() { $DIAL --backtitle "$BTITLE" --title "Confirmation" --yesno   "$1" 8 50; }
 
 dial_input() { 
   local sel=$($DIAL --backtitle "$BTTILE" --title "${1}" \
@@ -129,6 +130,7 @@ basic_menu() {
       Floppy*B*)	imgsel_menu fdb ;;
       Keyboard*)	keybrd_menu ;;
 	  Screen*)	  	screen_menu ;;
+	  Sound*)		sound_menu ;;
       *)		break
     esac
   done
@@ -192,6 +194,37 @@ screen_menu() {
     sed -i "s#SCREEN_RESOLUTION=.*#SCREEN_RESOLUTION=$selection#" $(conf_get)
   fi
 }
+
+sound_menu() {
+  local selection=${VOL_LEVEL:=80}
+  local idx
+  source $(conf_get); source $MENU_TEXT
+  while true; do
+	selection=$($DIAL --backtitle "$BTTILE" --title "Volume control" \
+      --ok-button 'Test' \
+	  --inputbox "$volumectl_range" 8 50 "$selection" \
+      3>&1 1>&2 2>&3)
+	if [[ "$selection" =~ ^[0-9]+$ ]]; then
+      # play a test sound
+	  dial_info "Sound check" "$volumetst_info"
+      # clip given value to the allowed range
+	  if [ $selection -lt 0 ]; then
+		selection=0
+	  elif [ $selection -gt 100 ]; then
+		selection=100
+	  fi
+	  idx=$(( $RANDOM % ${#volumetst_text[@]} ))
+	  espeak -s 160 -v $volumetst_lang "${volumetst_text[$idx]}" 1>/dev/null 2>&1
+	  if dial_yesno "Sound check" "$volumetst_conf"
+	  then
+	    grep -q "VOL_LEVEL" $(conf_get) \
+		  && sed -i "s#VOL_LEVEL=.*#VOL_LEVEL=$selection#" $(conf_get) \
+		  || echo "VOL_LEVEL=$selection" >>$(conf_get) 
+		break
+	  fi
+	fi
+  done
+}
 ## Advanced Menu ################################
 advanced_menu() { 
   local selection
@@ -239,7 +272,7 @@ advanced_sync_key_edit() {
 	  	|| echo 	   "RSLSYNC_KEY=${selection}" >> $(conf_get)
   	fi
   else
-  	dial_info "$advanced_sync_key_warn"
+  	dial_msg "$advanced_sync_key_warn"
   fi
 }
 
@@ -297,7 +330,7 @@ imgmgmt_create() {
 	# call external image utility to create sparse file image
 	pigeos-image create "$iname" "$isize" "$idesc" 2>/dev/null 1>&1
 	if [ $? -eq 0 ]; then
-	  dial_info "$imgmgmt_create_ok $HOME/hdd_images/$iname"; break
+	  dial_msg "$imgmgmt_create_ok $HOME/hdd_images/$iname"; break
 	else
 	  dial_yesno  "$imgmgmt_create_fail $HOME/hdd_images/$iname" && continue || break
 	fi
@@ -384,7 +417,7 @@ imgmgmt_download() {
     file_download "$url" /tmp/imgmgmt_new_image.tgz
 	tar xzSf /tmp/imgmgmt_new_image.tgz -C ~/hdd_images
 	if [ $? -eq 0 ]; then
-	  dial_info "$imgmgmt_unpack_suc"
+	  dial_msg "$imgmgmt_unpack_suc"
 	  rm /tmp/imgmgmt_new_image.tgz
 	else
 	  dial_err "$imgmgmt_unpack_err"
@@ -443,7 +476,7 @@ imgmgmt_import() {
   selection=$(dial_menu "${imgsel_title}" "${imgsel_text}" "${imgsel_list[@]}")
   if [ ! -z "$selection" ]; then
     file_extract /media/usb/${selection}.tgz $imgsel_dir
-    dial_info "$imgmgmt_unpack_suc"
+    dial_msg "$imgmgmt_unpack_suc"
   fi
 }
 

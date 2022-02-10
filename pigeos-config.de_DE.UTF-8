@@ -34,7 +34,8 @@ basic_options=(\
   "Floppy Drive A:"		"$(basename ${FDA_IMAGE^^} .IMG)" \
   "Floppy Drive B:"		"$(basename ${FDB_IMAGE^^} .IMG)" \
   "Keyboard mapping"	"${KEYB^^}" \
-  "Screen resolution"   "${SCREEN_RESOLUTION}")
+  "Screen resolution"   "${SCREEN_RESOLUTION}" \
+  "Sound volume"		"${VOL_LEVEL}%" )
 
 ### ImageSelection Menue ###########################################################
 imgsel_title="FDD/HHD Abbild Verwaltung"
@@ -84,8 +85,20 @@ screenres_options=(\
   "1280x768"	"1280x768  (HD   15:9 LCD-Monitore oder TVs)" \
   "1280x800"	"1280x800  (WXGA 16:10 LCD-Monitore" \
   "1280x1024"	"1280x1024 " )
-    
-### Advanced Menue #################################################################
+
+### VolumeControl Menu #########################################################
+volumectl_range="Lautstärke von 0 (stumm) bis 100 (max.)"
+volumetst_info="Führe Soundcheck durch. Bitte warten..."
+volumetst_conf="Einstellung übernehmen?"
+volumetst_lang="german"
+volumetst_text=(\
+"Was ist der Unterschied zwischen Amazon, Google, Microsoft und Jurassic Park? Bei dem einen fressen Ungeheuer alles was ihnen in den Weg kommt und das andere ist ein Film." \
+"Was hat Windows mit U-Booten gemeinsam? Kaum macht man ein Fenster auf, fangen die Probleme an." \
+"GEOS wird nie das meistinstallierte Betriebssystem sein, wenn man bedenkt, wie oft man Windows neu installieren muss!" \
+"Windows 95 kann alles besser, wegen der 32 Bit. Wenn ich 32 Bit getrunken habe, denke ich auch immer, ich könnte alles besser." \
+"Windows: Für die einen ist es ein Betriebssystem, für die anderen der größte Virus der Welt." )
+
+### Advanced Menue #############################################################
 advanced_title="Erweiterte Einstellungen"
 advanced_text="Anpassung erweiterte System- und Serviceeinstellungen."
 advanced_options=(\
