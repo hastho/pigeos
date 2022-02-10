@@ -45,7 +45,7 @@
 # SEE ALSO: pigeos-config, pigeos-loader
 #
 #####
-
+set -e
 # setup for usage and manual
 PROGNAME=$(type $0 | cut -d ' ' -f 3)
 PROGDIR=$(dirname $PROGNAME)
@@ -64,7 +64,7 @@ PIGEOS_HOME=$(grep "^$PIGEOS_USER:" /etc/passwd | cut -d: -f 6)
 # which dosbox binary should be launched?
 DOSBOX_BIN=$PIGEOS_PREFIX/bin/dosbox
 # global depencies 
-PKG_LIST="jq pv mtools"
+PKG_LIST="jq pv mtools espeak"
 # list of external files need to be installed by this script in net_install mode
 # TODO setup a APT repo for the customized version of DOSBox
 URL_DOSBOX_PKG="https://dl.dropbox.com/s/8zg8q5o2mgwoqgf/dosbox-pigeos-0.74.2_armhf.deb"
@@ -622,7 +622,7 @@ config_boot() {
                 "framebuffer_width=${screen_width}" \
 				"framebuffer_height=${screen_height}" \
 				"hdmi_cvt=${screen_mode}" "hdmi_group=2" \
-				"hdmi_mode=87" "hdmi_drive=2" \
+				"hdmi_mode=87" "hdmi_drive=2" "hdmi_force_hotplug=1"\
                 "dtparam=audio=on" "disable_splash=1" "boot_delay=0"\
 				"gpu_mem=64" "enable_uart=1" "hdmi_enable_4kp60=1"
   do
