@@ -130,7 +130,7 @@ install_dep_pkg() {
 	done
 }
 
-install_locales () {
+install_locales() {
   install_dep_pkg locales tzdata keyboard-configuration
   # linux keyb configurations to map with DOS keyb def.
   for lang in ${URL_CONFIG_KEYB[@]}; do
@@ -142,6 +142,9 @@ install_locales () {
   sed -i -e 's/^#\s*en_GB.UTF-8 UTF-8/en_GB.UTF-8 UTF-8/' /etc/locale.gen
   sed -i -e 's/^#\s*de_DE.UTF-8 UTF-8/de_DE.UTF-8 UTF-8/' /etc/locale.gen
   locale-gen
+}
+
+config_locales() {
   update-locale --reset LANG=${1:-en_GB.UTF-8}
   sed -i 's/KEYB=.*/KEYB=${2:-uk}/' \
     $PIGEOS_PREFIX/etc/$(basename $URL_CONFIG_SYSCFG)
@@ -658,7 +661,7 @@ setup() {
   # clear apt cache first and load latest pgk list
   sudo apt clean; sudo apt update --fix-missing
   # 1st stage: install executes all modules in the default order
-  install_locales $1 $2			|| return 1
+  install_locales				|| return 1
   install_dep_pkg $PKG_LIST 	|| return 2
   install_dosbox_pkg      	  	|| return 3
   install_pigeos_scripts  	  	|| return 4
@@ -672,6 +675,7 @@ setup() {
   install_rslsync				|| return 12
   install_cups	  	  	  	  	|| return 13
   install_midi					|| return 14
+  config_locales $1 $2			|| return 15
   # clear apt cache
   sudo apt clean
   # skip 2nd stage to allow for off-line installation and move over 
