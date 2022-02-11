@@ -214,6 +214,7 @@ sound_menu() {
 		selection=100
 	  fi
 	  idx=$(( $RANDOM % ${#volumetst_text[@]} ))
+	  amixer -M sset PCM "${selection}%"
 	  espeak -s 160 -v $volumetst_lang "${volumetst_text[$idx]}" 1>/dev/null 2>&1
 	  if dial_yesno "$volumetst_conf"
 	  then
