@@ -43,6 +43,8 @@ while :; do
 	else
 	  u_args="echo."
 	fi
+	# restore volume level
+	amixer -q -M sset PCM "${VOL_LEVEL:=80}%"
 	# match linux console keyb language with DOSBox keyboard settings
 	sudo setupcon --current-tty -k ${KEYB:-us} 1>>/tmp/loader.log 2>&1
 	# launch DOSBox
