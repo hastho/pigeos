@@ -204,6 +204,7 @@ sound_menu() {
       --ok-button 'Test' \
 	  --inputbox "$volumectl_range" 8 50 "$selection" \
       3>&1 1>&2 2>&3)
+	if [[ $? -ne 0 ]]; then break; fi
 	if [[ "$selection" =~ ^[0-9]+$ ]]; then
       # play a test sound
 	  dial_info "$volumetst_info"
@@ -214,7 +215,7 @@ sound_menu() {
 		selection=100
 	  fi
 	  idx=$(( $RANDOM % ${#volumetst_text[@]} ))
-	  amixer -M sset PCM "${selection}%"
+	  amixer -q -M sset PCM "${selection}%"
 	  espeak -s 160 -v $volumetst_lang "${volumetst_text[$idx]}" 1>/dev/null 2>&1
 	  if dial_yesno "$volumetst_conf"
 	  then
@@ -222,6 +223,9 @@ sound_menu() {
 		  && sed -i "s#VOL_LEVEL=.*#VOL_LEVEL=$selection#" $(conf_get) \
 		  || echo "VOL_LEVEL=$selection" >>$(conf_get) 
 		break
+	  else
+	    # set current vulome level back to the original value
+		amixer -q -M sset PCM "${VOL_LEVEL:=80}%"
 	  fi
 	fi
   done
