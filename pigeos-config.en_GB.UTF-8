@@ -7,24 +7,24 @@ no_button="No"
 ok_button="Select"
 cancel_button="Back"
 
-### Main Menue #############################################################
-main_title="Main Menue"
+### Main Menu #############################################################
+main_title="Main Menu"
 main_text="Select Pi/GEOS configuration section you would like to enter."
 main_options=(\
   "Basic"		"Basic DOS environment settings" \
-  "Advanced"	"Advanced system and serivce settings" \
+  "Advanced"	"Advanced system and service settings" \
   "System"		"Raspbian system setting (raspi-config)" \
   "Default"		"Reset to the default configuration" \
   "Hard Disk"	"Hard disk image management" \
   "Write"		"Write changes and reboot the system" \
   "Abort"		"Revert changes and return to GEOS" \
-  "Shutdown"    "Savely shutdown the system")
+  "Shutdown"    "Safely shutdown the system")
 main_reset_msg="Reset all settings to system defaults?" 
 main_abort_msg="Discard changes and exit SETUP?"
 main_shutdown_msg="Ready to shutdown the system?"
 main_save_msg="Changes have been saves, reconfiguring the system..."
 
-### Basic Menue ####################################################################
+### Basic Menu ####################################################################
 basic_title="Base configuration"
 basic_text="Modify basic DOS and environment settings."
 basic_options=(\
@@ -37,13 +37,13 @@ basic_options=(\
   "Screen resolution"   "${SCREEN_RESOLUTION}" \
   "Sound volume"		"${VOL_LEVEL}%" ))
 
-### ImageSelection Menue ###########################################################
-imgsel_title="FDD/HHD image mangement"
+### Image Selection Menu ###########################################################
+imgsel_title="FDD/HHD image management"
 imgsel_text="Please select an floppy or disk image to be mapped as DOS drives. \nPress ENTER for detailed information."
-imgsel_conf="Confirm selection or abbort?"
-imgsel_mounted="The selected image is allready mapped to an other DOS drive. \nPlase choose an other image."
+imgsel_conf="Confirm selection or abort?"
+imgsel_mounted="The selected image is already mapped to an other DOS drive. \nPlease choose an other image."
 
-### KeyboardSelection Menu #########################################################
+### Keyboard Selection Menu #########################################################
 keybsel_title="Keyboard configuration"
 keybsel_text="Please select the DOS keyboard map you want to use."
 keybsel_options=(\
@@ -71,11 +71,11 @@ keybsel_options=(\
   "us" "United States" \
   "yu" "Serbo-Croatian")
 
-### ScreenResolution Menu #########################################################
+### Screen Resolution Menu #########################################################
 screenres_title="Screen resolution"
-screenres_text="Please select the screen resolution of the used display device. \nHint: you need to set the GEOS dsiplay resolution to the same value for optimum results."
+screenres_text="Please select the screen resolution of the used display device. \nHint: you need to set the GEOS display resolution to the same value for optimum results."
 screenres_options=(\
-  "800x480" 	"800x480 (Raspberry 7\" touchscreen display)" \
+  "800x480" 	"800x480 (Raspberry 7\" touch screen display)" \
   "800x600" 	"800x600" \
   "800x600@75" 	"800x600 at 75 Hz refresh rate (for CRT displays)" \
   "1024x600"	"1024x600" \
@@ -85,14 +85,14 @@ screenres_options=(\
   "1280x768"	"1280x768" \
   "1280x800"	"1280x800" \
   "1280x1024"	"1280x1024" )
-### VolumeControl Menu #########################################################
+### Volume Control Menu #########################################################
 volumectl_range="Set volume level between 0 (mute) and 100 (max)"
 volumetst_info="Running sound check. Please wait..."
 volumetst_conf="Confirm settings and proceed?"
 volumetst_lang="english"
 volumetst_text=("Geeoss inside")
     
-### Advanced Menue #################################################################
+### Advanced Menu #################################################################
 advanced_title="Advanced configuration"
 advanced_text="Enable/disable and manage advanced system services."
 advanced_options=(\
@@ -101,17 +101,18 @@ advanced_options=(\
   "  Remote management "	"${disabled_enabled[$CUPS_ADMIN]} (http://$(hostname -I | cut -d\  -f1):631)" \
   "MIDI emulation "	    	"${disabled_enabled[$MIDI_SLOAD]}" \
   "ResilioSync service "	"${disabled_enabled[$RSLSYNC_SLOAD]}" \
-  "  Acces Key (rw) "		"${RSLSYNC_KEY}" \
+  "  Access Key (rw) "		"${RSLSYNC_KEY}" \
   "  Internet access "		"${disabled_enabled[$RSLSYNC_WAN]}" )
 advanced_serv_activate="Activate the selected function/server at system start?"
-advanced_sync_key_warn="The Resilio-Sync can't be changed."
+advanced_sync_deactivate="WARNING: if you disable the ResilioSync service all local copies of your FILES on drive S: will be REMOVED! Make sure you made a backup eg. on USB drive U:."
+advanced_sync_key_warn="The Resilio-Sync can't be changed while the service is active."
 advanced_sync_key_edit="Please enter an existing sync key, if you want to (re)connect to an existing Resilio share \nHint: If you leave this field blank a new access key will we generated which allows other systems to connect to your Pi/GEOS system."
 
 ### Printer Selection Menu #########################################################
 prnsel_title="Printer Selection"
-prnsel_text="Select 'AUTO' to allow Pi/GEOS to connect to the first available printer or force to use a certain printer. Select 'PDF' to create PDF documents on the shared drive (S:). \nHint: PDF printing requires ResilioSync service to be enbled."
+prnsel_text="Select 'AUTO' to allow Pi/GEOS to connect to the first available printer or force to use a certain printer. Select 'PDF' to create PDF documents on the shared drive (S:). \nHint: PDF printing requires ResilioSync service to be enabled."
 
-### ImageMgmt Menue ################################################################
+### ImageMgmt Menu ################################################################
 imgmgmt_title="FDD/HDD image management"
 imgmgmt_text="Add, create or delete disk images. \nChoose an action or press ESC to return to the main menu."
 imgmgmt_options=(\
@@ -120,20 +121,20 @@ imgmgmt_options=(\
   "Download image "   "Download an image from the Web" \
   "Edit image"		  "Edit image description" \
   "Export image "     "Backup/Export an image to an USB drive" \
-  "Import image "     "Import/Restore an image archive from USB drive" \
+  "Import image "     "Import/Restore an image archive from an USB drive" \
   "Rename image "     "Rename an image" )
-imgmgmt_del_confirm="Do you realy want to delete this image? All data will be lost!"
+imgmgmt_del_confirm="Do you really want to delete this image? All data will be lost!"
 imgmgmt_del_mounted="You can't delete a mounted image, please unassign it first!"
 imgmgmt_mod_mounted="You can't modify a mounted image, please unassign it first!"
 imgmgmt_download="Please enter an URL of an image archive stored on the Web (http(s)://)"
 imgmgmt_invalid_url="The given URL isn't valid."
-imgmgmt_unpack_err="An error ocurred while extracting the image archive."
-imgmgmt_unpack_suc="The image was installed succesfully. Please go to the Basic Configuration to activate it."
-imgmgmt_exp_err="An error ocurred during image export. Please verfy you inserted a vFAT formated USB drive."
+imgmgmt_unpack_err="An error occurred while extracting the image archive."
+imgmgmt_unpack_suc="The image was installed successfully. Please go to the Basic Configuration to activate it."
+imgmgmt_exp_err="An error occurred during image export. Please verify you inserted a vFAT formatted USB drive."
 imgmgmt_usb_not_present="No vFAT formatted USB drive was found. Unable to proceed."
 imgmgmt_image_size="Please enter the size in MiB for the image to be created."
 imgmgmt_image_file_name="Please enter a filename for the image. \nHINT: special characters are not allowed!"
 imgmgmt_image_descrition="Please enter a short description."
-imgmgmt_not_null="Image name and size must not emphty. Re-try?"
-imgmgmt_create_fail="An error ocurred during image creation. Re-try?"
+imgmgmt_not_null="Image name and size must not empty. Re-try?"
+imgmgmt_create_fail="An error occurred during image creation. Re-try?"
 imgmgmt_create_ok="The image has been successfully created as: "

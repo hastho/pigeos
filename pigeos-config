@@ -241,8 +241,8 @@ advanced_menu() {
   	  DOSBox*)  	prnsel_menu ;;
       Remote*)	 	service_activcation_menu "CUPS_ADMIN" ;;
       MIDI*)	    service_activcation_menu "MIDI_SLOAD" ;;
-	  ResilioSync*) service_activcation_menu "RSLSYNC_SLOAD" ;;
-	  Acces*Key*)	advanced_sync_key_edit ;;
+	  ResilioSync*) rslsync_menu "RSLSYNC_SLOAD" ;;
+	  Acces*Key*)	rslsync_key_edit ;;
 	  Internet*)	service_activcation_menu "RSLSYNC_WAN" ;;
       *)		    break
     esac
@@ -265,7 +265,16 @@ prnsel_menu() {
   fi
 }
 
-advanced_sync_key_edit() {
+rslsync_menu() {
+  local selection
+  # when disableing config and files will be removed -> warn the user
+  grep -q "RSLSYNC_SLOAD=1" $(conf_get) \
+    && dial_msg "$advanced_sync_deactivate"
+  service_activcation_menu "RSLSYNC_SLOAD"
+  fi
+}
+
+rslsync_key_edit() {
   local selection
   source $(conf_get)
   # the sync key can only set once but not changed later 

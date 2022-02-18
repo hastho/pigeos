@@ -9,12 +9,12 @@ cancel_button="Zurück"
 
 ### Main Menue ##################################################################
 main_title="Hauptmenü"
-main_text="Pi/GEOS Konfigurationsoption  wählen oder Raspberry Pi Konfigurations-Tool starten."
+main_text="Pi/GEOS Konfigurationsoption wählen oder Raspberry Pi Konfigurations-Tool starten."
 main_options=(\
   "Basic"		"Basiskonfiguration der DOS Umgebung" \
   "Advanced"	"Erweiterte System- und Serviceeinstellungen" \
   "System"		"Raspbian Systemeinstellungen (raspi-config)" \
-  "Default"		"Sytem auf Standardkonfiguration zurücksetzen" \
+  "Default"		"Sytem auf Standardeinstellungen zurücksetzen" \
   "Hard Disk "	"Festplattenabbilder verwalten" \
   "Write"		"Änderungen sichern und System neu starten" \
   "Abort"		"Änderungen verwerfen und zu GEOS zurückkehren" \
@@ -39,9 +39,9 @@ basic_options=(\
 
 ### ImageSelection Menue ###########################################################
 imgsel_title="FDD/HHD Abbild Verwaltung"
-imgsel_text="Bitte wähle ein Disketten-bzw. Festplattenabbild. \nDrücke ENTER für detailierte Inforamtionen und um das Abbild auszuwählen."
+imgsel_text="Bitte wähle ein Disketten- bzw. Festplattenabbild. \nDrücke ENTER für detailierte Informationen und um das Abbild auszuwählen."
 imgsel_conf="Auswahl bestätigen oder abbrechen?"
-imgsel_mounted="Das gewählte Abbild ist bereits einem DOS-Laufwerk zugeordnet. \nBitte ein anderes Abbild wählen oder die andere Zuordnung vorher aufheben."
+imgsel_mounted="Das gewählte Abbild ist bereits einem DOS-Laufwerk zugeordnet. \nBitte ein anderes Abbild wählen oder die bestehende Zuordnung vorher aufheben."
 
 ### KeyboardSelection Menu #########################################################
 keybsel_title="Tastaturauswahl"
@@ -75,7 +75,7 @@ keybsel_options=(\
 screenres_title="Bildschirmauflösung"
 screenres_text="Bildschirmauflösung für das angeschlossene Ausgabegerät auswählen. \nHinweis: Die GEOS-Bildschirmauflösung sollte für eine optimale Darstellung auf den selben Wert gesetzt werden."
 screenres_options=(\
-  "800x480" 	"800x480   (Raspberry 7\" touchscreen display)" \
+  "800x480" 	"800x480   (Raspberry 7\" Touchscreen Display)" \
   "800x600" 	"800x600   (SVGA)" \
   "800x600@75" 	"800x600   (75 Hz Bildwiederholrate für CRT Monitore)" \
   "1024x600"	"1024x600  " \
@@ -87,20 +87,20 @@ screenres_options=(\
   "1280x1024"	"1280x1024 " )
 
 ### VolumeControl Menu #########################################################
-volumectl_range="Lautstärke von 0 (stumm) bis 100 (max.)"
-volumetst_info="Führe Soundcheck durch. Bitte warten..."
+volumectl_range="Wert für Lautstärkepegel zwischen  0 (stumm) und 100 (max.) setzen"
+volumetst_info="Spiele Testsound. Bitte Lautstärke überprüfen..."
 volumetst_conf="Einstellung übernehmen?"
 volumetst_lang="german"
 volumetst_text=(\
 "Was ist der Unterschied zwischen Amazon, Google, Microsoft und Jurassic Park? Bei dem einen fressen Ungeheuer alles was ihnen in den Weg kommt und das andere ist ein Film." \
-"Was hat Windows mit U-Booten gemeinsam? Kaum macht man ein Fenster auf, fangen die Probleme an." \
+"Was hat Windows mit U Booten gemeinsam? Kaum macht man ein Fenster auf, fangen die Probleme an." \
 "GEOS wird nie das meistinstallierte Betriebssystem sein, wenn man bedenkt, wie oft man Windows neu installieren muss!" \
-"Windows 95 kann alles besser, wegen der 32 Bit. Wenn ich 32 Bit getrunken habe, denke ich auch immer, ich könnte alles besser." \
+"Windows 95 kann alles besser, wegen der 32 Bitt. Wenn ich 32 Bitt getrunken habe, denke ich auch immer, ich könnte alles besser." \
 "Windows: Für die einen ist es ein Betriebssystem, für die anderen der größte Virus der Welt." )
 
 ### Advanced Menue #############################################################
 advanced_title="Erweiterte Einstellungen"
-advanced_text="Anpassung erweiterte System- und Serviceeinstellungen."
+advanced_text="Anpassung erweiterter System- und Serviceeinstellungen."
 advanced_options=(\
   "CUPS Druckersystem "		"${disabled_enabled[$CUPS_SLOAD]}" \
   "  DOSBox-Drucker "		"${CUPS_DBPRN}" \
@@ -109,13 +109,15 @@ advanced_options=(\
   "ResilioSync Service "	"${disabled_enabled[$RSLSYNC_SLOAD]}" \
   "  Acces Key (rw) "		"${RSLSYNC_KEY}" \
   "  Internet Zugriff "		"${disabled_enabled[$RSLSYNC_WAN]}" )
-advanced_serv_activate="Gewählten Dienst/Funktion beim Systemstart aktivieren?"
-advanced_sync_key_warn="Der Resilio-Sync Zugriffsschlüssel kann nicht geändert werden."
-advanced_sync_key_edit="Gib einen vorhandenen Zugriffsschlüssel ein um das System mit einer existieren Resilio-Freigabe zu verbinden. \Hinweis: Bleibt das Feld leer, wird automatisch ein neuer Schlüssel generiert mit dem sich andere Systeme mit Pi/GEOS verbinden können."
+advanced_serv_activate="Gewählten Dienst/Funktion beim Systemstart (de)aktivieren?"
+advanced_sync_deactivate="WARNUNG: beim Deaktivieren des ResilioSync-Services werden alle lokalen Kopien der auf Laufwerk S: abgelegten DATEN GELÖSCHT! Bitte vorher unbedingt die Daten sichern z.b. auf USB-Laufwerk U:."
+advanced_sync_key_warn="Der ResilioSync Zugriffsschlüssel kann nicht geändert werden solange der Service aktiv ist."
+advanced_sync_key_edit="Bitte einen vorhandenen ResilioSync-Zugriffsschlüssel eingeben, um das System mit einer existieren Freigabe zu verbinden. \Hinweis: Bleibt das Feld leer, wird automatisch ein neuer Schlüssel generiert mit dem sich andere Systeme mit Pi/GEOS verbinden können."
+
 
 ### Printer Selection Menu #########################################################
 prnsel_title="Druckerauswahl"
-prnsel_text="Wähle 'AUTO' um automatisch den ersten erkannten Drucker zu nutzen \noder selektiere ein bestimmtes Modell. Wähle 'PDF' um die Druckausgabe in PDF Dokumente auf der Dokumentenfreigabe (S:) umzuleiten. \nHinweis: PDF-Druck erfodert die Aktivierung des ResilioSync Dienstes."
+prnsel_text="Wähle 'AUTO' um automatisch den ersten erkannten Drucker zu nutzen \noder selektiere ein bestimmtes Modell. Wähle 'PDF' um die Druckausgabe in PDF Dateien auf der Dokumentenfreigabe (S:) umzuleiten. \nHinweis: PDF-Druck erfodert die Aktivierung des ResilioSync Dienstes."
 
 ### ImageMgmt Menue ################################################################
 imgmgmt_title="FDD/HDD Abbild Verwaltungs"
@@ -133,13 +135,13 @@ imgmgmt_del_mounted="Das Abbild ist aktuell einem Lw zugewiesen, Löschen nicht 
 imgmgmt_mod_mounted="Das Abbild ist aktuell einem Lw zugewiesen, Bearbeiten nicht möglich!"
 imgmgmt_download="Bitte gib eine URL zum zu installierenden Abbild ein (http(s):// oder file://)"
 imgmgmt_invalid_url="Die angegebene URL ist ungültig."
-imgmgmt_unpack_err="Beim Entpacken des Abbildes ist ein Fehler aufgetreten."
-imgmgmt_unpack_suc="Abbild erfolgreich geladen. Bitte in Basiskonfigurations Menü um Abbild zu aktivieren."
-imgmgmt_exp_err="Das Abbild konnte nicht exportiert werden. Bitte sicherstellen, dass ein vFAT formatiertes USB-Lw angeschlossen wurde."
-imgmgmt_usb_not_present="Es wurde keine USB-Datenträger gefunden. Operation nicht möglich."
-imgmgmt_image_size="Bitte gib die Größe des zu erstellenden Abbildes im MiB an."
-imgmgmt_image_file_name="Bitte gib einen Dateiname für das neue Abbild ein.\nACHTUNG: Sonderzeichen sind nicht erlaub!"
-imgmgmt_image_descrition="Bitte gib eine kurze Beschreibung ein."
+imgmgmt_unpack_err="Beim Herunterladen oder Entpacken des Abbildes ist ein Fehler aufgetreten. \nBitte die Wifi/Netzwerkeinstllungen im System-Menü prüfen."
+imgmgmt_unpack_suc="Abbild erfolgreich geladen. Bitte ins Basic-Konfigurationsmenü wechseln um das Abbild zu aktivieren."
+imgmgmt_exp_err="Das Abbild konnte nicht exportiert werden. Bitte sicherstellen, dass ein vFAT formatiertes USB-Laufwerk angeschlossen wurde."
+imgmgmt_usb_not_present="Es wurde kein USB-Datenträger gefunden. Operation nicht möglich."
+imgmgmt_image_size="Bitte die Größe des zu erstellenden Abbildes in MiB angeben. \n vFAT unterstützt max. 2048 MiB."
+imgmgmt_image_file_name="Bitte einen Dateiname für das neue Abbild eingeben.\nACHTUNG: Bitte nur Buchstaben und Ziffern verwenden, Sonderzeichen sind nicht erlaub!"
+imgmgmt_image_descrition="Bitte eine kurze Beschreibung eingeben.\nHinweis: eine detaillierte Beschreibung kann über den Menüpunkt Editieren festgelegt werden."
 imgmgmt_not_null="Abbildgröße und Dateiname dürfen nicht leer sein. Eingabe wiederholen?"
-imgmgmt_create_fail="Erstellen des Abbildes ist fehlgeschlagen. Wiederholen?"
-imgmgmt_create_ok="Abbild wurde erfogreich erstellt unter: "
+imgmgmt_create_fail="Das Erstellen des Abbildes ist fehlgeschlagen. Wiederholen?"
+imgmgmt_create_ok="Das Abbild wurde erfogreich erstellt unter: "
