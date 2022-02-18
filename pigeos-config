@@ -271,7 +271,6 @@ rslsync_menu() {
   grep -q "RSLSYNC_SLOAD=1" $(conf_get) \
     && dial_msg "$advanced_sync_deactivate"
   service_activcation_menu "RSLSYNC_SLOAD"
-  fi
 }
 
 rslsync_key_edit() {
