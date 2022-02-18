@@ -559,11 +559,14 @@ RSLCFG
     # reload systemd config and activate the service
     sudo systemctl daemon-reload 2>$LOG_FILE 1>&2
     sudo systemctl --now ${disable_enable[$RSLSYNC_SLOAD]} rslsync@${PIGEOS_USER} 2>$LOG_FILE 1>&2
-  else
+  elif [ $RSLSYNC_SLOAD -eq 0 ]; then
   # remove any data ad config, if the user disabled the service
-    test -d $PIGEOS_HOME/Shared || rm -rf $PIGEOS_HOME/Shared
-    test -d $PIGEOS_HOME/.sync 	|| rm -rf $PIGEOS_HOME/.sync
-    sed  -i "s#RSLSYNC_KEY=.*#RSLSYNC_KEY=#" $PIGEOS_HOME/.pigeos
+    # double check that the rslsync service has been stoped properly
+	if [ "$(systemctl is-active rslsync@${PIGEOS_USER})" == "inactive" ]; then
+      test -d $PIGEOS_HOME/Shared || rm -rf $PIGEOS_HOME/Shared
+      test -d $PIGEOS_HOME/.sync  || rm -rf $PIGEOS_HOME/.sync
+      sed  -i "s#RSLSYNC_KEY=.*#RSLSYNC_KEY=#" $PIGEOS_HOME/.pigeos
+	fi
   fi
 }
 
