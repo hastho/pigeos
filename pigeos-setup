@@ -563,8 +563,8 @@ RSLCFG
   # remove any data ad config, if the user disabled the service
     # double check that the rslsync service has been stoped properly
 	if [ "$(systemctl is-active rslsync@${PIGEOS_USER})" == "inactive" ]; then
-      test -d $PIGEOS_HOME/Shared || rm -rf $PIGEOS_HOME/Shared
-      test -d $PIGEOS_HOME/.sync  || rm -rf $PIGEOS_HOME/.sync
+      test -d $PIGEOS_HOME/Shared && rm -rf $PIGEOS_HOME/Shared
+      test -d $PIGEOS_HOME/.sync  && rm -rf $PIGEOS_HOME/.sync
       sed  -i "s#RSLSYNC_KEY=.*#RSLSYNC_KEY=#" $PIGEOS_HOME/.pigeos
 	fi
   fi
