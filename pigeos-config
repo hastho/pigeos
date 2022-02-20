@@ -40,11 +40,22 @@ conf_reset() {
 }
 
 ## UI functions ###########################################
-dial_info()  { $DIAL --backtitle "$BTITLE" --title "Information"  --infobox "$1" 8 50; }
-dial_msg()   { $DIAL --backtitle "$BTITLE" --title "Information"  --msgbox  "$1" 8 50; }
-dial_err()   { $DIAL --backtitle "$BTITLE" --title "Error"        --msgbox  "$1" 8 50; }
-dial_yesno() { $DIAL --backtitle "$BTITLE" --title "Confirmation" --yesno   "$1" 8 50; }
-
+dial_info() {
+  $DIAL --backtitle "$BTITLE" --title "Information"  \
+        --infobox "$1" $((${#1} / 46 + 7)) 50
+}
+dial_msg()  {
+  $DIAL --backtitle "$BTITLE" --title "Information"  \
+        --msgobox "$1" $((${#1} / 46 + 7)) 50
+}
+dial_err()  {
+  $DIAL --backtitle "$BTITLE" --title "Error"  \
+        --msgbox "$1" $((${#1} / 46 + 7)) 50
+}
+dial_yesno() {
+  $DIAL --backtitle "$BTITLE" --title "Confirmation"  \
+        --yesno  "$1" $((${#1} / 46 + 7)) 50
+}
 dial_input() { 
   local sel=$($DIAL --backtitle "$BTTILE" --title "${1}" \
     --inputbox "$2" 8 50 "$3" \
