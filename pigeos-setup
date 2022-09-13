@@ -636,8 +636,8 @@ config_boot() {
   for option in "disable_overscan=1" "dtparam=i2c_arm=on" \
                 "framebuffer_width=${screen_width}" \
 				"framebuffer_height=${screen_height}" \
-				"hdmi_cvt=${screen_mode}" "hdmi_group=2" \
-				"hdmi_mode=87" "hdmi_drive=2" "hdmi_force_hotplug=1"\
+				"hdmi_group=2" "hdmi_mode=87" "hdmi_force_hotplug=1"\
+				"hdmi_cvt=${screen_mode}" \
                 "dtparam=audio=on" "disable_splash=1" "boot_delay=0"\
 				"gpu_mem=64" "enable_uart=1" "hdmi_enable_4kp60=1"
   do
@@ -652,7 +652,7 @@ config_boot() {
   done
   # disable 3d overlay drivers 
   sudo sed $BOOT_CONFIG -i -e "s/^dtoverlay=vc4-kms-v3d/#dtoverlay=vc4-kms-v3d/g"
-  sudo sed $BOOT_CONFIG -i -e "s/^dtoverlay=vc4-fkms-v3d/#dtoverlay=vc4-fkms-v3d/g"
+  sudo sed $BOOT_CONFIG -i -e "s/^#dtoverlay=vc4-fkms-v3d/dtoverlay=vc4-fkms-v3d/g"
   # route all audio to one sink (req. for Pi4)
   for option in  'quiet' 'splash' 'logo.nologo'\
                  'snd_bcm2835.enable_hdmi=1'\
