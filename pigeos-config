@@ -9,7 +9,7 @@
 DEBUG=0
 SN=$(cat /sys/firmware/devicetree/base/serial-number | sed 's/\x0//')
 DIAL=$(which whiptail || which dialog)
-BTITLE="Pi/GEOS SETUP configuration tool v0.4 (Pi S/N:$SN)"
+BTITLE="Pi/GEOS SETUP configuration tool v0.5 (Pi S/N:$SN)"
 CONFIG=$HOME/.pigeos
 declare -A FONT=(\
   [tiny]=/usr/share/consolefonts/Uni2-TerminusBoldVGA14.psf.gz \
