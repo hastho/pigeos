@@ -67,7 +67,7 @@ DOSBOX_BIN=$PIGEOS_PREFIX/bin/dosbox
 PKG_LIST="jq pv mtools espeak"
 # list of external files need to be installed by this script in net_install mode
 # TODO setup a APT repo for the customized version of DOSBox
-URL_DOSBOX_PKG="https://dl.dropbox.com/s/8zg8q5o2mgwoqgf/dosbox-pigeos-0.74.2_armhf.deb"
+URL_DOSBOX_PKG="https://thobipix.de/download/rpi/pkg/dosbox-pigeos-0.74.2_armhf.deb"
 # specific mapping file for certain languages to fix bad kbd mappings in GEOS
 URL_DOSBOX_LANG=(\
   "https://raw.githubusercontent.com/hastho/pigeos/master/defaults/mapper-0.74.map.gr" \
