@@ -42,7 +42,7 @@ PROGNAME=$(type $0 | cut -d ' ' -f 3)
 PROGDIR=$(dirname $PROGNAME)
 PROGNAME=$(basename $PROGNAME)
 
-img_file_in=~/Downloads/2022-01-28-raspios-buster-armhf-lite.img
+img_file_in=~/Downloads/2022-09-06-raspios-buster-armhf-lite.img.xz
 img_file_out=~/Downloads/$(date -Idate)-pigeos-buster-armhf-beta.img.xz
 # internal SD card to build to image on
 img_dev=/dev/mmcblk0
@@ -77,7 +77,7 @@ img_build() {
 	# write base image
 	sudo rpi-imager --cli $img_file_in $img_dev
 	# extend root file system
-	echo ", +512M" | sudo sfdisk -N 2 $img_dev
+	echo ", +1024M" | sudo sfdisk -N 2 $img_dev
 	sudo partprobe $img_dev
 	sudo resize2fs $img_dev$img_root ; sync
 	sudo fsck.ext4 -f $img_dev$img_root
@@ -91,7 +91,7 @@ img_build() {
 	sudo cp    -L /etc/resolv.conf			/mnt/pigeos/root/etc
 	sudo cp 	pigeos-setup 				/mnt/pigeos/root/usr/local/bin
 	sudo chroot 							/mnt/pigeos/root/ \
-	  /bin/bash -ic 'cd /tmp; pigeos-setup setup de_DE.UTF-8'
+	  /bin/bash -ic 'cd /tmp; pigeos-setup setup de_DE.UTF-8 gr'
 	  sync
 	sudo umount 							/mnt/pigeos/root/{dev/pts,dev,sys,proc,boot}
 	sudo umount $img_dev$img_root
