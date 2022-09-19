@@ -6,7 +6,9 @@
 #
 # STAGE:
 # 	img_erase	erase the deployment dev be overwriting it with zeros
+#	img_prepare	write raspbian-lite image and resize it
 #	img_build	build the image
+#	img_debug	mount the SD card to inspect the image
 #	img_extract	extract the image file from the build SD card
 #	ext_write	write the extracted image to an external card
 # 	help  	  	show advanced help (manual)
@@ -73,14 +75,16 @@ img_erase() {
 	dd if=/dev/zero of=$img_dev bs=1M status=progress
 }
 
-img_build() {
+img_prepare() {
 	# write base image
 	sudo rpi-imager --cli $img_file_in $img_dev
 	# extend root file system
-	echo ", +1024M" | sudo sfdisk -N 2 $img_dev
-	sudo partprobe $img_dev
-	sudo resize2fs $img_dev$img_root ; sync
-	sudo fsck.ext4 -f $img_dev$img_root
+	echo ", +512M" | sudo sfdisk -N 2 $img_dev
+	sudo fsck.ext4 -f 	$img_dev$img_root
+	sudo resize2fs 		$img_dev$img_root
+}
+
+img_build() {
 	# ingest Pi/GEOS files
 	sudo mount -t ext4 $img_dev$img_root 	/mnt/pigeos/root/
 	sudo mount -t vfat $img_dev$img_boot 	/mnt/pigeos/root/boot
