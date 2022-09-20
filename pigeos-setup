@@ -67,7 +67,7 @@ DOSBOX_BIN=$PIGEOS_PREFIX/bin/dosbox
 PKG_LIST="jq pv mtools espeak"
 # list of external files need to be installed by this script in net_install mode
 # TODO setup a APT repo for the customized version of DOSBox
-URL_SDL1_2_PKG="https://archive.raspberrypi.org/debian/pool/main/libs/libsdl1.2/libsdl1.2debian_1.2.15+dfsg2-4+rpt2_armhf.deb"
+URL_SDL1_2_PKG="https://thobipix.de/download/rpi/pkg/libsdl1.2debian_1.2.15+dfsg2-4+rpt2_armhf.deb"
 URL_DOSBOX_PKG="https://thobipix.de/download/rpi/pkg/dosbox-pigeos-0.74.2_armhf.deb"
 # specific mapping file for certain languages to fix bad kbd mappings in GEOS
 URL_DOSBOX_LANG=(\
@@ -655,9 +655,9 @@ config_boot() {
 	  sudo tee -a $BOOT_CONFIG <<<"${option}"
 	fi
   done
-  # disable 3d overlay drivers 
+  # disable OpenGL desktop drivers 
   sudo sed $BOOT_CONFIG -i -e "s/^dtoverlay=vc4-kms-v3d/#dtoverlay=vc4-kms-v3d/g"
-  sudo sed $BOOT_CONFIG -i -e "s/^#dtoverlay=vc4-fkms-v3d/dtoverlay=vc4-fkms-v3d/g"
+  sudo sed $BOOT_CONFIG -i -e "s/^dtoverlay=vc4-fkms-v3d/#dtoverlay=vc4-fkms-v3d/g"
   # route all audio to one sink (req. for Pi4)
   for option in  'quiet' 'splash' 'logo.nologo'\
                  'snd_bcm2835.enable_hdmi=1'\
