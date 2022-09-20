@@ -188,7 +188,7 @@ install_dosbox_pkg() {
   # ToDo build a official repository
   download_file "$URL_SDL1_2_PKG" /tmp/libsdl1.2debian.deb
   echo "libsdl1.2debian install" | sudo dpkg --set-selections
-  sudo dpgk -i /tmp/libsdl1.2debian.deb
+  sudo dpkg -i /tmp/libsdl1.2debian.deb
   echo "libsdl1.2debian hold" | sudo dpkg --set-selections
   download_file "$URL_DOSBOX_PKG" /tmp/dosbox.deb
   # remove package from blacklist
