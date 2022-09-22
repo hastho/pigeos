@@ -119,6 +119,11 @@ help() {
   exit 254
 }
 
+online() {
+  find /sys/class/net -mindepth 1 ! -name lo -exec cat {}/carrier \; 2>/dev/null \
+  | grep -q 1
+}
+
 download_file() {
   wget -q "$1" -O "$2"  || return 1
   return 0
@@ -693,22 +698,13 @@ setup() {
   config_locales $1 $2			|| return 15
   # clear apt cache
   sudo apt clean
-  # skip 2nd stage to allow for off-line installation and move over 
-  # to 3rd stage setup execution in system default config
-  sudo sed -i 's/CONTINUE_SETUP=.*/CONTINUE_SETUP=3/' \
+  # trigger 2nd stage setup process during 1st boot
+  sudo sed -i 's/CONTINUE_SETUP=.*/CONTINUE_SETUP=2/' \
   	$PIGEOS_PREFIX/etc/$(basename "$URL_CONFIG_SYSCFG")
 }
 
 install_stage2() {
-  # 2nd stage: try to update the entire system before proceeding
-  sudo apt clean; sudo apt update --fix-missing; sudo apt -y upgrade
-  # enable 3rd stage setup execution in system default config
-  sudo sed -i 's/CONTINUE_SETUP=.*/CONTINUE_SETUP=3/' \
-  	$PIGEOS_PREFIX/etc/$(basename "$URL_CONFIG_SYSCFG")
-}
-
-install_stage3() {
-  # 3rd stage: install configures core services using system default config
+  # 2nd stage: install configures core services using system default config
   . $PIGEOS_PREFIX/etc/$(basename "$URL_CONFIG_SYSCFG")
   config_splash_screen
   config_dosbox_pkg
@@ -723,12 +719,11 @@ install_stage3() {
 }
 
 update() {
-  # upd. apt sources first and try to fix missing packges
-  sudo apt update --fix-missing
+  online 						|| return 1
   # install latest Pi/GEOS files from Git master repo
-  install_dosbox_pkg      	  	|| return 2
-  install_pigeos_scripts  	  	|| return 3
-  install_pigeos_config   	  	|| return 4
+  install_pigeos_scripts  	  	&& echo 50
+  install_pigeos_config   	  	&& echo 100
+  return 0
 }
 
 configure() { 
