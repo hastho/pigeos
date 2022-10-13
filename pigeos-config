@@ -7,10 +7,13 @@
 #
 # see also: pigeos-loader, pigeos-setup
 DEBUG=0
+CONFIG=$HOME/.pigeos
 SN=$(cat /sys/firmware/devicetree/base/serial-number | sed 's/\x0//')
 DIAL=$(which whiptail || which dialog)
-BTITLE="Pi/GEOS SETUP configuration tool v0.5 (Pi S/N:$SN)"
-CONFIG=$HOME/.pigeos
+
+source ${CONFIG}
+BTITLE="Pi/GEOS SETUP configuration tool $PIGEOS_VER (Pi S/N:$SN)"
+
 declare -A FONT=(\
   [tiny]=/usr/share/consolefonts/Uni2-TerminusBoldVGA14.psf.gz \
   [small]=/usr/share/consolefonts/Uni2-TerminusBold20x10.psf.gz \
@@ -33,7 +36,7 @@ conf_reset() {
   if [ dial_yesno $main_reset_msg ]; then
   	echo ". /usr/local/etc/pigeos.conf" \
 	  > ${CONFIG}.new
-  	egrep -v 'DOSBOX_BIN|CONTINUE_SETUP|IMAGE_URL|.*[\\\)]$|^#.*' \
+  	egrep -v 'DOSBOX_BIN|CONTINUE_SETUP|PIGEOS_VER|PIGEOS_RPO|.*[\\\)]$|^#.*' \
 	  /usr/local/etc/pigeos.conf \
   	  >>${CONFIG}.new
   fi
@@ -417,14 +420,25 @@ imgmgmt_edit() {
 
 imgmgmt_download() {
   local selection
-  local url
+  local url="$PIGEOS_RPO"
   local regex='^(https?|ftp)://[-A-Za-z0-9\+&@#/%?=~_|!:,.;]*[-A-Za-z0-9\+&@#/%=~_|]$'
+  local irepo=()
+  local line
+  if [[ $url =~ $regex ]]; then	
+	while read line; do 
+	   irepo+=("$line")
+	done <<<"$(curl -s "$url" 2>null | jq -r '.img_list|.[]|.name, .url' 2>null)"
+	if [[ $((${#irepo[@]}/2)) -eq 0 ]]; then
+	  dial_err "Unable to retrieve repo data! Check you internet connection." && return 255
+	fi
+  else
+    dial_err "Image Repo: $imgmgmt_invalid_url Reinstall Pi/GEOS." && return 255
+  fi
   local ilist=()
-  local imidx=$((${#IMAGE_URL[@]}/2 -1)) 
-  [[ $imidx -le 0 ]] && set && exit 255
+  local imidx=$((${#irepo[@]}/2 -1)) 
   for i in $(seq 0 $imidx); do
     j=$((i*2))
-    ilist+=("$i" "${IMAGE_URL[$j]}")
+    ilist+=("$i" "${irepo[$j]}")
   done
   ilist+=("$((++i))" "Custom")
   selection=$(dial_menu "Image Download" "Select an image to download" "${ilist[@]}")
@@ -435,7 +449,7 @@ imgmgmt_download() {
 				  "https://dl.dropbox.com/s/4v6gm5z0ynyft4k/ensdemo402.tgz")
   elif [ "x$selection" != "x" ]; then
     j=$((selection*2+1))
-	url="${IMAGE_URL[$j]}"
+	url="${irepo[$j]}"
   fi
   if [[ $url =~ $regex ]]; then
     file_download "$url" /tmp/imgmgmt_new_image.tgz
@@ -511,11 +525,10 @@ if   [ -r ./pigeos-config.$LANG ]; then
 elif [ -r /usr/local/share/pigeos/pigeos-config.$LANG ]; then
   MENU_TEXT=/usr/local/share/pigeos/pigeos-config.$LANG
 else
-  dial_err "Unable to load language file!"
-  exit 254
+  # default to english, if nothing else matches
+  MENU_TEXT=/usr/local/share/pigeos/pigeos-config.en_US.UTF-8
 fi
 # switch console font to get a aprox. 25x80 char text screen resolution like in DOS
-source ${CONFIG}
 case $SCREEN_RESOLUTION in
   640x*)	setfont ${FONT[tiny]};;
   800x*)	setfont ${FONT[small]};;
