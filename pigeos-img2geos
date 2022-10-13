@@ -1,4 +1,41 @@
 #!/bin/bash
+# (c) 2020-22 T.Hass
+#
+# USAGE pigeos-convert
+#
+###
+#
+# NAME: Pi/GEOS CONVERT v0.2
+#
+# PURPOSE: Pi/GEOS document conversion service/utillity
+#
+# DESCRIPTION: This utility runs in the background and convrets files
+#   placed in an input folder IMG2GEOS into a file that can be handled
+#   by GEOS. File names are cut to meet the 8.3 DOS naming convention.
+#   The service has been designed to be used in conjunction with the
+#	file synchronization service. 
+#
+# images
+# 	Image files are converted into GIF87a format. As GEOS can't handle
+#   files large in size image width is reduced to ING2GEOS_MAX_WIDTH.
+#   Also the color depth is reduced by mapping all colors into a 216
+#   color plus 16 gray level palette. Direct mapping is used if the
+#   input image contains less distinct colors than defined by the
+#   IMG2GEOS_DITHER_TH value to retain a clean look (of eg. clip art)
+#   and also to achive good compression ratio. For other images
+#   (eg. photos) FloydSteinberg dithering is used.
+# Microsoft Word doc/docx
+# 	Some versions of GEOS can read files created with version of
+#   MS Word for DOS und WinWord 8 or older this tool can be used to
+#   convert docuents created with more recent versions into plain text
+#   DOS file format.
+# Microsoft Excel xlsx
+# 	Recent Excel documents will be convert into CSV files.
+# 	
+# SEE ALSO: pigeos-config, pigeos-rslsync
+#
+#####
+# depend. pkg.: inotify-tools, imagemagick, antiword, docx2txt, xlsx2csv
 IMG2GEOS_GPALETTE=/usr/local/share/pigeos/palette.tif
 IMG2GEOS_INPATH=$HOME/Shared/IMG2GEOS
 IMG2GEOS_OUTPATH=$HOME/Shared/IMG4GEOS
