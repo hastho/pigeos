@@ -1,5 +1,5 @@
 #!/bin/bash
-# (c) 2020-21 T.Hass
+# (c) 2020-22 T.Hass
 #
 # USAGE pigeos-setup [<command>] [<parameters>]
 #
@@ -16,7 +16,7 @@
 #
 ###
 #
-# NAME: Pi/GEOS SETUP v0.9
+# NAME: Pi/GEOS SETUP $PIGEOS_VER
 #
 # PURPOSE: Pi/GEOS installation und setup utillity
 #
@@ -67,13 +67,15 @@ DOSBOX_BIN=$PIGEOS_PREFIX/bin/dosbox
 PKG_LIST="jq pv mtools espeak"
 # list of external files need to be installed by this script in net_install mode
 # TODO setup a APT repo for the customized version of DOSBox
-URL_SDL1_2_PKG="https://thobipix.de/download/rpi/pkg/libsdl1.2debian_1.2.15+dfsg2-4+rpt2_armhf.deb"
 URL_DOSBOX_PKG="https://thobipix.de/download/rpi/pkg/dosbox-pigeos-0.74.2_armhf.deb"
 # specific mapping file for certain languages to fix bad kbd mappings in GEOS
 URL_DOSBOX_LANG=(\
   "https://raw.githubusercontent.com/hastho/pigeos/master/defaults/mapper-0.74.map.gr" \
 )
 URL_DOSBOX_CONFIG="https://raw.githubusercontent.com/hastho/pigeos/master/defaults/dosbox-0.74.conf"
+# IPX modules and MarS-NetWareEmulator for IPX based file and print services
+URL_IPXKMOD_SRC="https://github.com/pasis/ipx/archive/refs/heads/master.zip"
+URL_MARSNWE_PKG="https://thobipix.de/download/rpi/pkg/mars_nwe_0.99_armhf.deb"
 # a free for non-commercial use file sync tool
 URL_RSLSYNC_PKG="https://download-cdn.resilio.com/stable/linux-armhf/resilio-sync_armhf.tar.gz"
 # a classic modem style dialing sound
@@ -97,7 +99,7 @@ URL_CONFIG_KEYB=(\
 )
 URL_CONFIG_LANG=(\
   "https://raw.githubusercontent.com/hastho/pigeos/master/pigeos-config.de_DE.UTF-8" \
-  "https://raw.githubusercontent.com/hastho/pigeos/master/pigeos-config.en_GB.UTF-8" \
+  "https://raw.githubusercontent.com/hastho/pigeos/master/pigeos-config.en_US.UTF-8" \
 )
 LOG_FILE=/tmp/$(basename $0).log
 
@@ -145,14 +147,14 @@ install_locales() {
 	  /etc/default/$(basename "$lang")
   done
   # Pi/GEOS UI localization for pigeos-config
-  sed -i -e 's/^#\s*en_GB.UTF-8 UTF-8/en_GB.UTF-8 UTF-8/' /etc/locale.gen
+  sed -i -e 's/^#\s*en_GB.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen
   sed -i -e 's/^#\s*de_DE.UTF-8 UTF-8/de_DE.UTF-8 UTF-8/' /etc/locale.gen
   locale-gen
 }
 
 config_locales() {
-  update-locale --reset LANG=${1:-en_GB.UTF-8}
-  sed -i "s/KEYB=.*/KEYB=${2:-uk}/" \
+  update-locale --reset LANG=${1:-en_US.UTF-8}
+  sed -i "s/KEYB=.*/KEYB=${2:-us}/" \
     $PIGEOS_PREFIX/etc/$(basename $URL_CONFIG_SYSCFG)
 }
 
@@ -188,13 +190,9 @@ install_pigeos_config() {
 }
 
 install_dosbox_pkg() {
-  # dosbox-pigeos requires SDL-1.2 and libpacp for Ethernet emulation
-  install_dep_pkg libsdl-sound1.2 libsdl-net1.2 libpcap0.8
-  # ToDo build a official repository
-  download_file "$URL_SDL1_2_PKG" /tmp/libsdl1.2debian.deb
-  echo "libsdl1.2debian install" | sudo dpkg --set-selections
-  sudo dpkg -i /tmp/libsdl1.2debian.deb
-  echo "libsdl1.2debian hold" | sudo dpkg --set-selections
+  # dosbox-pigeos requires DISPMANX enabled SDL-1.2 and libpacp for Ethernet emulation
+  install_dep_pkg libsdl1.2debian=1.2.15+dfsg2-4+rpt2 libsdl-sound1.2 libsdl-net1.2 libpcap0.8
+  # TODO: create a deb repo to retrive it from
   download_file "$URL_DOSBOX_PKG" /tmp/dosbox.deb
   # remove package from blacklist
   echo "dosbox install" | sudo dpkg --set-selections
@@ -742,9 +740,7 @@ configure() {
 >$LOG_FILE
 if [ $# -ne 0 ]; then
   # exec the given module
-  $@
+  $@ && sudo reboot || echo "An error occurred, check the log messages."
 else
   usage
 fi
-echo "Finished! Wait 20s to reboot or press Ctrl+C to return to the shell."; sleep 20
-sudo reboot
