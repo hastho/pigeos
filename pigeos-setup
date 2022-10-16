@@ -149,13 +149,16 @@ install_locales() {
 }
 
 config_locales() {
-  local syslang=${1:-en_US.UTF-8}
-  local keylang=${2:-us}
-  if [ grep -q "$syslang" /etc/locale.gen ]; then
-    sudo sed -i -e 's/^#\s*${syslang} UTF-8/${syslang} UTF-8/' /etc/locale.gen
-    sudo locale-gen
-    sudo update-locale --reset LANG=${syslang}
-  fi
+  # DOS(Box) Keyboard language will determinate system language
+  local keylang=${1:-us}
+  local syslang=""
+  case $keylang in
+    gr) syslang="de_DE.UTF-8";;
+	*   syslang="en_US.UTF-8";;
+  esac
+  sudo sed -i -e "s/^#\s*${syslang} UTF-8/${syslang} UTF-8/" /etc/locale.gen
+  Sudo locale-gen
+  sudo update-locale --reset LANG=${syslang}
   sed -i "s/KEYB=.*/KEYB=${keylang}/" \
     $PIGEOS_PREFIX/etc/$(basename $URL_CONFIG_SYSCFG)
 }
@@ -695,7 +698,7 @@ setup() {
   install_rslsync				|| return 12
   install_cups	  	  	  	  	|| return 13
   install_midi					|| return 14
-  config_locales $1 $2			|| return 15
+  config_locales $1				|| return 15
   # clear apt cache
   sudo apt clean
   # trigger 2nd stage setup process during 1st boot
@@ -730,6 +733,7 @@ configure() {
   # (re)configure services using user config
   . $PIGEOS_HOME/.pigeos
   # echo percentage value to visualize progress in pigeos-config
+  config_locales $KEYB			&& echo 10
   config_dosbox_pkg				&& echo 20
   config_midi 					&& echo 40
   config_cups 					&& echo 60
