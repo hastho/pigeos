@@ -38,7 +38,7 @@ update() {
   local mimg="$(basename ${HDC_IMAGE^^} .IMG)"
   local simg="$(basename ${HDD_IMAGE^^} .IMG)"
   local msg="\
-Pi/GEOS ${PIGEOS_VER} $(stat --printf='%z' $0 | cut -d ' ' -f1 | date '+%D')\n\
+Pi/GEOS ${PIGEOS_VER} $(stat --printf='%y' $0 | cut -d ' ' -f1 | date '+%D')\n\
 \n\
 ${cpu}, CPU at ${speed}MHz\n\
 Memory Test : 16384K OK\n\
