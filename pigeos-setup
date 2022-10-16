@@ -146,15 +146,17 @@ install_locales() {
 	sudo install -D          /tmp/$(basename "$lang")\
 	  /etc/default/$(basename "$lang")
   done
-  # Pi/GEOS UI localization for pigeos-config
-  sed -i -e 's/^#\s*en_GB.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen
-  sed -i -e 's/^#\s*de_DE.UTF-8 UTF-8/de_DE.UTF-8 UTF-8/' /etc/locale.gen
-  locale-gen
 }
 
 config_locales() {
-  update-locale --reset LANG=${1:-en_US.UTF-8}
-  sed -i "s/KEYB=.*/KEYB=${2:-us}/" \
+  local syslang=${1:-en_US.UTF-8}
+  local keylang=${2:-us}
+  if [ grep -q "$syslang" /etc/locale.gen ]; then
+    sudo sed -i -e 's/^#\s*${syslang} UTF-8/${syslang} UTF-8/' /etc/locale.gen
+    sudo locale-gen
+    sudo update-locale --reset LANG=${syslang}
+  fi
+  sed -i "s/KEYB=.*/KEYB=${keylang}/" \
     $PIGEOS_PREFIX/etc/$(basename $URL_CONFIG_SYSCFG)
 }
 
