@@ -176,9 +176,15 @@ imgsel_menu() {
 	while read line 
 	  do imgsel_inf="${imgsel_inf}${line}\n"; done \
 	  <${imgsel_dir}/${selection}.inf
-    $DIAL --backtitle "$BTITLE" --title "Image Information" \
-	  --yesno "${imgsel_inf}\n\n${imgsel_conf}" \
-	  $(($(echo -e "$imgsel_inf" | wc -l)+10)) 76
+	local imgsel_inflc=$(echo -e "$imgsel_inf" | wc -l)
+	# make text scrollable if it is more the 10 lines
+	if [ $imgsel_inflc -le 10 ]; then
+      $DIAL --backtitle "$BTITLE" --title "Image Information" \
+	    --yesno "${imgsel_inf}\n\n${imgsel_conf}" $(($imgsel_inflc + 10)) 76
+	else
+	  $DIAL --backtitle "$BTITLE" --title "Image Information" \
+	    --yesno --scrolltext "${imgsel_inf}\n\n${imgsel_conf}" 20 76
+	fi
     if [ $? -eq 0 ]; then
       sed -i "s#${imgsel_drv^^}_IMAGE=.*#${imgsel_drv^^}_IMAGE=${imgsel_dir}${selection}.img#" $(conf_get)
     fi
