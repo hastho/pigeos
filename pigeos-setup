@@ -158,11 +158,15 @@ config_locales() {
 	*)  syslang="en_US.UTF-8"
 		;;
   esac
-  sudo sed -i -e "s/^#\s*${syslang} UTF-8/${syslang} UTF-8/" /etc/locale.gen >/dev/null
-  sudo locale-gen >/dev/null
-  sudo update-locale --reset LANG=${syslang} >/dev/null
-  sed -i "s/KEYB=.*/KEYB=${keylang}/" \
-    $PIGEOS_PREFIX/etc/$(basename $URL_CONFIG_SYSCFG)
+  # regeneration of locales takes some time, so do it only when it has to be changed
+  if [ "x$LANG" != "x$syslang" ]; then 
+    sudo sed -i -e "s/^#\s*${syslang} UTF-8/${syslang} UTF-8/" /etc/locale.gen >/dev/null
+    sudo locale-gen >/dev/null
+    sudo update-locale --reset LANG=${syslang} >/dev/null
+    # only really req. during build time
+    sudo sed -i "s/KEYB=.*/KEYB=${keylang}/" \
+      $PIGEOS_PREFIX/etc/$(basename $URL_CONFIG_SYSCFG)
+  fi
 }
 
 install_pigeos_scripts() {
