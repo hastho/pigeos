@@ -153,8 +153,10 @@ config_locales() {
   local keylang=${1:-us}
   local syslang=""
   case $keylang in
-    gr) syslang="de_DE.UTF-8";;
-	*   syslang="en_US.UTF-8";;
+    gr) syslang="de_DE.UTF-8"
+		;;
+	*)  syslang="en_US.UTF-8"
+		;;
   esac
   sudo sed -i -e "s/^#\s*${syslang} UTF-8/${syslang} UTF-8/" /etc/locale.gen
   Sudo locale-gen
