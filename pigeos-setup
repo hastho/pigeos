@@ -158,9 +158,9 @@ config_locales() {
 	*)  syslang="en_US.UTF-8"
 		;;
   esac
-  sudo sed -i -e "s/^#\s*${syslang} UTF-8/${syslang} UTF-8/" /etc/locale.gen
-  Sudo locale-gen
-  sudo update-locale --reset LANG=${syslang}
+  sudo sed -i -e "s/^#\s*${syslang} UTF-8/${syslang} UTF-8/" /etc/locale.gen >/dev/null
+  sudo locale-gen >/dev/null
+  sudo update-locale --reset LANG=${syslang} >/dev/null
   sed -i "s/KEYB=.*/KEYB=${keylang}/" \
     $PIGEOS_PREFIX/etc/$(basename $URL_CONFIG_SYSCFG)
 }
@@ -728,7 +728,9 @@ update() {
   # install latest Pi/GEOS files from Git master repo
   install_pigeos_scripts  	  	&& echo 50
   install_pigeos_config   	  	&& echo 100
-  return 0
+  # trigger 2nd stage setup process during next boot
+  sudo sed -i 's/CONTINUE_SETUP=.*/CONTINUE_SETUP=2/' \
+  	$PIGEOS_PREFIX/etc/$(basename "$URL_CONFIG_SYSCFG")
 }
 
 configure() { 
