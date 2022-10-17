@@ -45,19 +45,19 @@ conf_reset() {
 ## UI functions ###########################################
 dial_info() {
   $DIAL --backtitle "$BTITLE" --title "Information"  \
-        --infobox "$1" $((${#1} / 46 + 7)) 50
+        --infobox "$1" $((${#1} / 46 + 8)) 50
 }
 dial_msg()  {
   $DIAL --backtitle "$BTITLE" --title "Information"  \
-        --msgbox "$1" $((${#1} / 46 + 7)) 50
+        --msgbox "$1" $((${#1} / 46 + 8)) 50
 }
 dial_err()  {
   $DIAL --backtitle "$BTITLE" --title "Error"  \
-        --msgbox "$1" $((${#1} / 46 + 7)) 50
+        --msgbox "$1" $((${#1} / 46 + 8)) 50
 }
 dial_yesno() {
   $DIAL --backtitle "$BTITLE" --title "Confirmation"  \
-        --yesno  "$1" $((${#1} / 46 + 7)) 50
+        --yesno  "$1" $((${#1} / 46 + 8)) 50
 }
 dial_input() { 
   local sel=$($DIAL --backtitle "$BTTILE" --title "${1}" \
@@ -461,7 +461,7 @@ imgmgmt_download() {
     file_download "$url" /tmp/imgmgmt_new_image.tgz
 	tar xzSf /tmp/imgmgmt_new_image.tgz -C ~/hdd_images
 	if [ $? -eq 0 ]; then
-	  dial_msg "$imgmgmt_unpack_suc"
+	  #dial_msg "$imgmgmt_unpack_suc"
 	  rm /tmp/imgmgmt_new_image.tgz
 	else
 	  dial_err "$imgmgmt_unpack_err"
@@ -524,6 +524,46 @@ imgmgmt_import() {
   fi
 }
 
+config_wizard() {
+  source $(conf_get); source $MENU_TEXT
+  # this wizrad will only be executed, if no disk assigment has been made so far
+  [ `grep -e '[FH]D[ABCD]_IMAGE=NONE' $(conf_get) | wc -l` -eq 4 ] 	|| return 1
+  dial_yesno "$wizard_intro" 										|| return 2
+  # select keyboard language
+  keybrd_menu && source $(conf_get)
+  case KEYB in
+    gr) LANG=de_DE.UTF-8;;
+	*)	LANG=en_US.UTF-8;;
+  esac
+  # switch to new language
+  if [ -r /usr/local/share/pigeos/pigeos-config.$LANG ]; then
+    MENU_TEXT=/usr/local/share/pigeos/pigeos-config.$LANG
+  fi
+  # check for working internet connection
+  local retry_count=0
+  while [ $retry_count -le 10 ]; do
+   	echo $(($retry_count * 10)) | $DIAL --backtitle "$BTITLE" \
+	  --gauge "$wizard_net_wait" 8 50 0
+	curl "$PIGEOS_RPO" >/dev/null 2>&1 && break
+	sleep 5
+	retry_count=$(($retry_count + 1)) 
+  done
+  if [ $retry_count -gt 10 ]; then
+    dial_err "$wizard_net_error"
+	return 3
+  fi
+  # try to download an image and assign it to drive C:
+  imgmgmt_download
+  local imgsel_dir=$HOME/hdd_images
+  for f in ${imgsel_dir}/*.img; do 
+    # if no files are there f = '*', so it has to be validated
+	if [ -f $f ]; then
+	  sed -i "s#HDC_IMAGE=.*#HDC_IMAGE=${f}#" $(conf_get)
+	fi
+  done
+  dial_msg "$wizard_finished"
+}
+
 ### Main ###########################################################################
 # load menue language
 if   [ -r ./pigeos-config.$LANG ]; then
@@ -545,7 +585,7 @@ esac
 # changes made by the config tool are applied to a new file
 conf_new
 # launch menue
-main_menu; res=$?
+config_wizard || main_menu; res=$?
 if [ $res -eq 0 ]; then
   # save changes
   conf_save

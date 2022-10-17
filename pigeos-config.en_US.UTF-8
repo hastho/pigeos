@@ -129,7 +129,7 @@ imgmgmt_mod_mounted="You can't modify a mounted image, please unassign it first!
 imgmgmt_download="Please enter an URL of an image archive stored on the Web (http(s)://)"
 imgmgmt_invalid_url="The given URL isn't valid."
 imgmgmt_unpack_err="An error occurred while extracting the image archive."
-imgmgmt_unpack_suc="The image was installed successfully. Please go to the Basic Configuration to activate it."
+imgmgmt_unpack_suc="The image was installed successfully. It is now ready to be activated."
 imgmgmt_exp_err="An error occurred during image export. Please verify you inserted a vFAT formatted USB drive."
 imgmgmt_usb_not_present="No vFAT formatted USB drive was found. Unable to proceed."
 imgmgmt_image_size="Please enter the size in MiB for the image to be created."
@@ -138,3 +138,9 @@ imgmgmt_image_descrition="Please enter a short description."
 imgmgmt_not_null="Image name and size must not empty. Re-try?"
 imgmgmt_create_fail="An error occurred during image creation. Re-try?"
 imgmgmt_create_ok="The image has been successfully created as: "
+
+### Configuratino Wizard ################################################################
+wizard_intro="Welocome, Willkommen!\nSetup has detected that you don't have a valid system configuration. Would you like to be guided by this wizard to create an initial one now?"
+wizard_net_wait="Waitung for the network to come up..."
+wizard_net_error="Can't proceed as no network interface is configured now!\nPlease go into System setup menu (raspi-config) to configure your WIFI network or connect your Raspberry Pi computer to a wired network."
+wizard_finished="Congratulation! You have finshed the inital setup.\nThe system will reboot now and launch PC/GEOS after that. If you whish to furter customize your Pi/GEOS environment while in the DOS/GEOS enviroment press Ctrl+F9 to enter SETUP."

@@ -45,7 +45,7 @@ imgsel_mounted="Das gewählte Abbild ist bereits einem DOS-Laufwerk zugeordnet. 
 
 ### KeyboardSelection Menu #########################################################
 keybsel_title="Tastaturauswahl"
-keybsel_text="Tasturbelegung für DOS-Umgebung auswählen."
+keybsel_text="Systemsprache und Tasturbelegung für DOS-Umgebung auswählen."
 keybsel_options=(\
   "be" "Belgien" \
   "br" "Brasilien" \
@@ -136,7 +136,7 @@ imgmgmt_mod_mounted="Das Abbild ist aktuell einem Lw zugewiesen, Bearbeiten nich
 imgmgmt_download="Bitte gib eine URL zum zu installierenden Abbild ein (http(s):// oder file://)"
 imgmgmt_invalid_url="Die angegebene URL ist ungültig."
 imgmgmt_unpack_err="Beim Herunterladen oder Entpacken des Abbildes ist ein Fehler aufgetreten. \nBitte die Wifi/Netzwerkeinstllungen im System-Menü prüfen."
-imgmgmt_unpack_suc="Abbild erfolgreich geladen. Bitte ins Basic-Konfigurationsmenü wechseln um das Abbild zu aktivieren."
+imgmgmt_unpack_suc="Abbild erfolgreich geladen. Es kann jetzt aktiviert werden."
 imgmgmt_exp_err="Das Abbild konnte nicht exportiert werden. Bitte sicherstellen, dass ein vFAT formatiertes USB-Laufwerk angeschlossen wurde."
 imgmgmt_usb_not_present="Es wurde kein USB-Datenträger gefunden. Operation nicht möglich."
 imgmgmt_image_size="Bitte die Größe des zu erstellenden Abbildes in MiB angeben. \n vFAT unterstützt max. 2048 MiB."
@@ -145,3 +145,9 @@ imgmgmt_image_descrition="Bitte eine kurze Beschreibung eingeben.\nHinweis: eine
 imgmgmt_not_null="Abbildgröße und Dateiname dürfen nicht leer sein. Eingabe wiederholen?"
 imgmgmt_create_fail="Das Erstellen des Abbildes ist fehlgeschlagen. Wiederholen?"
 imgmgmt_create_ok="Das Abbild wurde erfogreich erstellt unter: "
+
+### Configuratino Wizard ################################################################
+wizard_intro="Welocome, Willkommen!\nSetup hat festgestellt, dass keine gültige Systemkonfiguration existiert. Möchten Sie diesen Assistenen nutzen, um die Erstkonfiguration durchzuführen?"
+wizard_net_wait="Warte auf den Aufbau der Netzwerkanbindung.."
+wizard_net_error="Der Assistent kann nicht fortfahren, da keine Netzwerkverbindung besteht!\nBitte wechseln Sie in das System-setupmenü (raspi-config), um die WLAN/WIFI-Einstellungen vorzunehmen oder verbinden Sie den Raspberry Pi mit einem Netzwerkkabel."
+wizard_finished="Gratulation! Sie haben die Ersteinrichtung abgeschlossen.\nDas System wird jetzt neu gestartet und dann GEOS laden. Wenn Sie die Pi/GEOS-Umgebung anpassen wollen, drücken Sie Strg+F9 in der DOS/GEOS Umgebung um SETUP aufzurufen."
