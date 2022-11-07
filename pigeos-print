@@ -21,7 +21,11 @@ get_doc_name() {
 	  	  	s/\x9f/\xc3\xbc/g;
 	  	  	s/\xa7/\xc3\x9f/g' \
   )
-  echo $(expr "$buffer" : '%%Title: \(.*\)')
+  if [ ! -z "$buffer" ]; then
+    echo $(expr "$buffer" : '%%Title: \(.*\)')
+  else
+    echo "unkown"
+  fi
 }
 get_doc_psize() {
   # search for the SetPageSize line in the PgaeSetup section
@@ -32,11 +36,11 @@ get_doc_psize() {
   if [ ! -z "$buffer" ]; then
     echo $buffer
   else
-    return 1
+    echo "5950x8420"
   fi
 }
 ### MAIN #######################################################################
-if [ !-r $1 ]; then
+if [ ! -r "${1-x}" ]; then
   echo "File $1 is not readable" &>>LOGFILE
   exit 1
 fi
