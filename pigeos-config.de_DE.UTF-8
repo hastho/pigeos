@@ -14,7 +14,7 @@ main_options=(\
   "Basic"		"Basiskonfiguration der DOS Umgebung" \
   "Advanced"	"Erweiterte System- und Serviceeinstellungen" \
   "System"		"Raspbian Systemeinstellungen (raspi-config)" \
-  "Default"		"Sytem auf Standardeinstellungen zurücksetzen" \
+  "Default"		"System auf Standardeinstellungen zurücksetzen" \
   "Hard Disk "	"Festplattenabbilder verwalten" \
   "Write"		"Änderungen sichern und System neu starten" \
   "Abort"		"Änderungen verwerfen und zu GEOS zurückkehren" \
@@ -95,7 +95,7 @@ volumetst_text=(\
 "Was ist der Unterschied zwischen Amazon, Google, Microsoft und Jurassic Park? Bei dem einen fressen Ungeheuer alles was ihnen in den Weg kommt und das andere ist ein Film." \
 "Was hat Windows mit U Booten gemeinsam? Kaum macht man ein Fenster auf, fangen die Probleme an." \
 "GEOS wird nie das meistinstallierte Betriebssystem sein, wenn man bedenkt, wie oft man Windows neu installieren muss!" \
-"Windows 95 kann alles besser, wegen der 32 Bitt. Wenn ich 32 Bitt getrunken habe, denke ich auch immer, ich könnte alles besser." \
+"Windows 95 kann alles besser, wegen der 32 Bit. Wenn ich 32 Bit getrunken habe, denke ich auch immer, ich könnte alles besser." \
 "Windows: Für die einen ist es ein Betriebssystem, für die anderen der größte Virus der Welt." )
 
 ### Advanced Menue #############################################################
@@ -125,12 +125,12 @@ imgmgmt_text="Hinzufügen, Erstellen oder Löschen von Festplattenabbildern. \nW
 imgmgmt_options=(\
   "Create image "     "Neues Abbild erstellen" \
   "Delete image "     "Abbild löschen" \
-  "Download image "   "Abbild aus dem Intenet laden" \
+  "Download image "   "Abbild aus dem Internet laden" \
   "Editiere image "   "Abbildbeschreibung editieren" \
   "Export image "     "Abbild auf USB-Lw sichern" \
   "Import image "     "Abbild von USB-Lw laden/wiederherstellen" \
   "Rename image "     "Abbild umbenennen" )
-imgmgmt_del_confirm="Gewähltes Abbild wirklich löschen? Alle Daten gehen verlogen!"
+imgmgmt_del_confirm="Gewähltes Abbild wirklich löschen? Alle Daten gehen verloren!"
 imgmgmt_del_mounted="Das Abbild ist aktuell einem Lw zugewiesen, Löschen nicht möglich!"
 imgmgmt_mod_mounted="Das Abbild ist aktuell einem Lw zugewiesen, Bearbeiten nicht möglich!"
 imgmgmt_download="Bitte gib eine URL zum zu installierenden Abbild ein (http(s):// oder file://)"
@@ -140,7 +140,7 @@ imgmgmt_unpack_suc="Abbild erfolgreich geladen. Es kann jetzt aktiviert werden."
 imgmgmt_exp_err="Das Abbild konnte nicht exportiert werden. Bitte sicherstellen, dass ein vFAT formatiertes USB-Laufwerk angeschlossen wurde."
 imgmgmt_usb_not_present="Es wurde kein USB-Datenträger gefunden. Operation nicht möglich."
 imgmgmt_image_size="Bitte die Größe des zu erstellenden Abbildes in MiB angeben. \n vFAT unterstützt max. 2048 MiB."
-imgmgmt_image_file_name="Bitte einen Dateiname für das neue Abbild eingeben.\nACHTUNG: Bitte nur Buchstaben und Ziffern verwenden, Sonderzeichen sind nicht erlaub!"
+imgmgmt_image_file_name="Bitte einen Dateinamen für das neue Abbild eingeben.\nACHTUNG: Bitte nur Buchstaben und Ziffern verwenden, Sonderzeichen sind nicht erlaubt!"
 imgmgmt_image_descrition="Bitte eine kurze Beschreibung eingeben.\nHinweis: eine detaillierte Beschreibung kann über den Menüpunkt Editieren festgelegt werden."
 imgmgmt_not_null="Abbildgröße und Dateiname dürfen nicht leer sein. Eingabe wiederholen?"
 imgmgmt_create_fail="Das Erstellen des Abbildes ist fehlgeschlagen. Wiederholen?"
