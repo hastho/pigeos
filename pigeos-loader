@@ -14,50 +14,36 @@ while :; do
   source $HOME/.pigeos
   # check for min configuration
   if [ -x ${DOSBOX_BIN} -a -w ${HDC_IMAGE} ] ; then
-      c_args="imgmount c ${HDC_IMAGE} -t hdd"
+    # create a session configuration 
+	  session_conf=$(dirname `$DOSBOX_BIN -printconf`)/dosbox-session.conf
+    echo "[autoexec]" >${session_conf}
+	  echo "imgmount c ${HDC_IMAGE} -t hdd" >>${session_conf}
     # mount other drives when an image present 
     if [ -w ${FDA_IMAGE} ] ; then
-      a_args="imgmount a ${HDD_IMAGE} -t floppy"
-    else
-      a_args="echo off"
+      echo "imgmount a ${HDD_IMAGE} -t floppy" >>${session_conf}
     fi
     if [ -w ${FDB_IMAGE} ] ; then
-      b_args="imgmount b ${HDD_IMAGE} -t floppy"
-    else
-      b_args="echo off"
+      echo "imgmount b ${HDD_IMAGE} -t floppy" >>${session_conf}
     fi
 	if [ -w ${HDD_IMAGE} ] ; then
-      d_args="imgmount d ${HDD_IMAGE} -t hdd"
+      echo "imgmount d ${HDD_IMAGE} -t hdd" >>${session_conf}
 	elif [ ${MOUNT_DOC} -eq 1 -a -d "$HOME/Documents" ] ; then
-      d_args="mount d $HOME/Documents"
-	else
-	  d_args="echo off"
+      echo "mount d $HOME/Documents" >>${session_conf}
 	fi
 	if [ ${RSLSYNC_SLOAD} -eq 1 -a -d "$HOME/Shared" ] ; then
-      s_args="mount s $HOME/Shared"
-	else
-	  s_args="echo off"
+      echo "mount s $HOME/Shared" >>${session_conf}
 	fi
     if [ ${MOUNT_USB} -eq 1 ] ; then
-      u_args="mount u /media/usb"
-	else
-	  u_args="echo."
+      echo "mount u /media/usb" >>${session_conf}
 	fi
+	echo "keyb ${KEYB:-us} 850" >>${session_conf}
+	echo "call c:\autoexec.bat" >>${session_conf}
 	# restore volume level
 	amixer -q -M sset PCM "${VOL_LEVEL:=80}%"
 	# match linux console keyb language with DOSBox keyboard settings
-	sudo setupcon --current-tty -k ${KEYB:-us} 1>>/tmp/loader.log 2>&1
+	sudo setupcon --current-tty -k ${KEYB:-us}
 	# launch DOSBox
-	$DOSBOX_BIN \
-	  -c "$a_args" \
-	  -c "$b_args" \
-  	  -c "$c_args" \
-	  -c "$d_args" \
-	  -c "$s_args" \
-	  -c "$u_args" \
-	  -c "keyb ${KEYB:-us} 850" \
-	  -c "call c:\autoexec.bat" \
-	1>>/tmp/loader.log 2>&1
+	startx $DOSBOX_BIN -userconf -conf ${session_conf} -- -dpms -quiet 
   fi
   # run SETUP-config if something went wrong
   pigeos-config

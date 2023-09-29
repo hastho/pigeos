@@ -64,7 +64,7 @@ PIGEOS_HOME=$(grep "^$PIGEOS_USER:" /etc/passwd | cut -d: -f 6)
 # which dosbox binary should be launched?
 DOSBOX_BIN=$PIGEOS_PREFIX/bin/dosbox
 # global depencies 
-PKG_LIST="jq pv mtools espeak"
+PKG_LIST="jq pv mtools espeak kbd fonts-terminus xinit"
 # list of external files need to be installed by this script in net_install mode
 # TODO setup a APT repo for the customized version of DOSBox
 URL_DOSBOX_PKG="https://thobipix.de/download/rpi/pkg/dosbox-pigeos-0.74.2_armhf.deb"
@@ -201,8 +201,8 @@ install_pigeos_config() {
 }
 
 install_dosbox_pkg() {
-  # dosbox-pigeos requires DISPMANX enabled SDL-1.2 and libpacp for Ethernet emulation
-  install_dep_pkg libsdl1.2debian=1.2.15+dfsg2-4+rpt2 libsdl-sound1.2 libsdl-net1.2 libpcap0.8
+  # dosbox-pigeos requires SDL-1.2 and libpacp for Ethernet emulation
+  install_dep_pkg libsdl1.2debian libsdl-sound1.2 libsdl-net1.2 libpcap0.8
   # TODO: create a deb repo to retrive it from
   download_file "$URL_DOSBOX_PKG" /tmp/dosbox.deb
   # remove package from blacklist
@@ -600,83 +600,25 @@ config_ssh() {
 config_boot() {
   # don't wait for the network
   sudo /usr/bin/raspi-config nonint do_boot_wait 1
-  # set the default framebuff resolution to 1024x768 as this gives
-  # a 4:3 image ration as it was commen in the old days (XGA ni) and
-  # furthermore most modern displays can handle this using HW scaling
-  if [ "x$SCREEN_RESOLUTION" == "x" ]; then
-  	SCREEN_RESOLUTION=1024x768
-  fi
-  # starting with beta 1 the desired video is more precisely defined
-  # to support non-standard Raspi-displays (eg. 1024x600 types) and
-  # old CRTs at 75 Hz V. frequency connected using a HDMI2VGA adapter 
-  case $SCREEN_RESOLUTION in
-    800x480)	screen_mode="800 480 60 6"
-			  	screen_width="800"
-				screen_height="480"
-				;;
-    800x600)	screen_mode="800 600 60 1"
-			  	screen_width="800"
-				screen_height="600"
-				;;
-    800x600@75)	screen_mode="800 600 75 1"
-			  	screen_width="800"
-				screen_height="600"
-				;;
-    1024x600)	screen_mode="1024 600 60 6"
-			  	screen_width="1024"
-				screen_height="600"
-				;;
-    1024x768)	screen_mode="1024 768 60 1"
-			  	screen_width="1024"
-				screen_height="768"
-				;;
-    1024x768@75)	screen_mode="1024 768 75 1"
-			  	screen_width="1024"
-				screen_height="768"
-				;;
-    1280x720)	screen_mode="1280 720 60 3"
-			  	screen_width="1280"
-				screen_height="720"
-				;;
-    1280x768)	screen_mode="1280 768 60 6"
-			  	screen_width="1280"
-				screen_height="768"
-				;;
-    1280x800)	screen_mode="1280 800 60 5"
-			  	screen_width="1280"
-				screen_height="800"
-				;;
-    1280x1024)	screen_mode="1280 1024 60 4"
-			  	screen_width="1280"
-				screen_height="1024"
-				;;
-  esac
+  
   # write parameter /boot/config.txt
   for option in "disable_overscan=1" "dtparam=i2c_arm=on" \
-                "framebuffer_width=${screen_width}" \
-				"framebuffer_height=${screen_height}" \
-				"hdmi_group=2" "hdmi_mode=87" "hdmi_force_hotplug=1"\
-				"hdmi_cvt=${screen_mode}" \
-                "dtparam=audio=on" "disable_splash=1" "boot_delay=0"\
-				"gpu_mem=64" "enable_uart=1" "hdmi_enable_4kp60=1"
+        "dtparam=audio=on" "disable_splash=1" "boot_delay=0"
   do
     grep -q "${option%=*}" $BOOT_CONFIG
-	if [ $? -eq 0 ]; then
-	  # option present -> alter the key=value pair
-	  sudo sed -i "s/.*${option%=*}.*/${option}/" $BOOT_CONFIG
-	else
-	  echo append this missing option
-	  sudo tee -a $BOOT_CONFIG <<<"${option}"
-	fi
+    if [ $? -eq 0 ]; then
+      # option present -> alter the key=value pair
+      sudo sed -i "s/.*${option%=*}.*/${option}/" $BOOT_CONFIG
+    else
+      echo append this missing option
+      sudo tee -a $BOOT_CONFIG <<<"${option}"
+    fi
   done
-  # disable OpenGL desktop drivers 
-  sudo sed $BOOT_CONFIG -i -e "s/^dtoverlay=vc4-kms-v3d/#dtoverlay=vc4-kms-v3d/g"
-  sudo sed $BOOT_CONFIG -i -e "s/^dtoverlay=vc4-fkms-v3d/#dtoverlay=vc4-fkms-v3d/g"
   # route all audio to one sink (req. for Pi4)
   for option in  'quiet' 'splash' 'logo.nologo'\
-                 'snd_bcm2835.enable_hdmi=1'\
-		         'snd_bcm2835.enable_headphones=1'\
-                 'snd_bcm2835.enable_compat_alsa=1'
+     'snd_bcm2835.enable_hdmi=1'\
+		 'snd_bcm2835.enable_headphones=1'\
+     'snd_bcm2835.enable_compat_alsa=1'
   do
     grep -q "${option%=*}" $BOOT_CMDLINE 
 	if [ $? -ne 0 ]; then
@@ -690,8 +632,8 @@ setup() {
   # clear apt cache first and load latest pgk list
   sudo apt clean; sudo apt update --fix-missing
   # 1st stage: install executes all modules in the default order
-  install_locales				|| return 1
-  install_dep_pkg $PKG_LIST 	|| return 2
+  install_locales				        || return 1
+  install_dep_pkg $PKG_LIST 	  || return 2
   install_dosbox_pkg      	  	|| return 3
   install_pigeos_scripts  	  	|| return 4
   install_pigeos_config   	  	|| return 5
@@ -699,12 +641,12 @@ setup() {
   install_splash_screen   	  	|| return 7
   install_dosbox_modem    	  	|| return 8
   install_dosbox_telnetd  	  	|| return 9
-  install_jed					|| return 10
+  install_jed					          || return 10
   install_usbmount     	  	  	|| return 11
-  install_rslsync				|| return 12
+  install_rslsync				        || return 12
   install_cups	  	  	  	  	|| return 13
-  install_midi					|| return 14
-  config_locales $1				|| return 15
+  install_midi					        || return 14
+  config_locales $1				      || return 15
   # clear apt cache
   sudo apt clean
   # trigger 2nd stage setup process during 1st boot
@@ -754,7 +696,7 @@ configure() {
 >$LOG_FILE
 if [ $# -ne 0 ]; then
   # exec the given module
-  $@ && sudo reboot || echo "An error occurred, check the log messages."
+  $@ # && sudo reboot || echo "An error occurred, check the log messages."
 else
   usage
 fi
