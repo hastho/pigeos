@@ -66,7 +66,7 @@ PIGEOS_HOME=$(grep "^$PIGEOS_USER:" /etc/passwd | cut -d: -f 6)
 # which dosbox binary should be launched?
 DOSBOX_BIN=$PIGEOS_PREFIX/bin/dosbox
 # global depencies 
-PKG_LIST="jq pv mtools espeak kbd fonts-terminus xinit"
+PKG_LIST="jq pv mtools espeak kbd xinit" # fonts-terminus missing in buster
 # list of external files need to be installed by this script in net_install mode
 # TODO setup a APT repo for the customized version of DOSBox
 URL_DOSBOX_PKG="https://thobipix.de/download/rpi/pkg/dosbox-pigeos-0.74.4_armhf.deb"
@@ -617,11 +617,11 @@ config_boot() {
     fi
   done
   # route all audio to one sink on Pi4 requ.options below
-  # but these crashed X11-dosbox on buleseye on Pi3?!
-  # 'snd_bcm2835.enable_hdmi=1'\
-  # 'snd_bcm2835.enable_headphones=1'\
-  # 'snd_bcm2835.enable_compat_alsa=1'
+  # but snd_bcm2835.* options crash X11-dosbox on buleseye
   for option in  'quiet' 'splash' 'logo.nologo'
+    'snd_bcm2835.enable_hdmi=1'\
+    'snd_bcm2835.enable_headphones=1'\
+    'snd_bcm2835.enable_compat_alsa=1'
   do
     grep -q "${option%=*}" $BOOT_CMDLINE 
 	if [ $? -ne 0 ]; then
