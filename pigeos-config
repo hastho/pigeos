@@ -575,16 +575,13 @@ else
   MENU_TEXT=/usr/local/share/pigeos/pigeos-config.en_US.UTF-8
 fi
 # switch console font to get a aprox. 25x80 char text screen resolution like in DOS
-if [ "x${SCREEN_RESOLUTION}" == "x"]; then
-  SCREEN_RESOLUTION=$(fbset -a | grep '^mode.*' \
+SCREEN_RESOLUTION=$(fbset -a | grep '^mode.*' \
   | sed 's/^mode\s\"\([0-9]*x[0-9]*\)\"$/\1/')
-fi
 case $SCREEN_RESOLUTION in
   640x*)	setfont ${FONT[tiny]};;
   800x*)	setfont ${FONT[small]};;
   1024x*)	setfont ${FONT[medium]};;
-  1280x*)	setfont ${FONT[large]};;
-  *)  	  setfont ${FONT[medium]};;
+  *)		setfont ${FONT[large]};;
 esac
 # changes made by the config tool are applied to a new file
 conf_new

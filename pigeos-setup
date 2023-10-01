@@ -1,5 +1,5 @@
 #!/bin/bash
-# (c) 2020-22 T.Hass
+# (c) 2020-23 T.Hass
 #
 # USAGE pigeos-setup [<command>] [<parameters>]
 #
@@ -53,6 +53,8 @@ PROGNAME=$(basename $PROGNAME)
 # essential raspi configuration files
 BOOT_CONFIG=/boot/config.txt
 BOOT_CMDLINE=/boot/cmdline.txt
+# wich branch to deploy
+PIGEOS_BRANCH="4-use-x11opengl-instead-of-dispmanx"
 # a per device unique string to edentify this in a network
 PIGEOS_SN=$(cat /sys/firmware/devicetree/base/serial-number | sed 's/\x0//')
 # base for Pi/GEOS system files and binaries
@@ -67,12 +69,12 @@ DOSBOX_BIN=$PIGEOS_PREFIX/bin/dosbox
 PKG_LIST="jq pv mtools espeak kbd fonts-terminus xinit"
 # list of external files need to be installed by this script in net_install mode
 # TODO setup a APT repo for the customized version of DOSBox
-URL_DOSBOX_PKG="https://thobipix.de/download/rpi/pkg/dosbox-pigeos-0.74.2_armhf.deb"
+URL_DOSBOX_PKG="https://thobipix.de/download/rpi/pkg/dosbox-pigeos-0.74.4_armhf.deb"
 # specific mapping file for certain languages to fix bad kbd mappings in GEOS
 URL_DOSBOX_LANG=(\
-  "https://raw.githubusercontent.com/hastho/pigeos/master/defaults/mapper-0.74.map.gr" \
+  "https://raw.githubusercontent.com/hastho/pigeos/$PIGEOS_BRANCH/defaults/mapper-0.74.map.gr" \
 )
-URL_DOSBOX_CONFIG="https://raw.githubusercontent.com/hastho/pigeos/master/defaults/dosbox-0.74.conf"
+URL_DOSBOX_CONFIG="https://raw.githubusercontent.com/hastho/pigeos/$PIGEOS_BRANCH/defaults/dosbox-0.74.conf"
 # IPX modules and MarS-NetWareEmulator for IPX based file and print services
 URL_IPXKMOD_SRC="https://github.com/pasis/ipx/archive/refs/heads/master.zip"
 URL_MARSNWE_PKG="https://thobipix.de/download/rpi/pkg/mars_nwe_0.99_armhf.deb"
@@ -82,24 +84,24 @@ URL_RSLSYNC_PKG="https://download-cdn.resilio.com/stable/linux-armhf/resilio-syn
 URL_DIALING_SOUND="https://upload.wikimedia.org/wikipedia/commons/3/33/Dial_up_modem_noises.ogg"
 # a font to be used in the BIOS splash screen and splash screen template
 URL_FONTS="https://int10h.org/oldschool-pc-fonts/download/oldschool_pc_font_pack_v1.01.zip"
-URL_SPLASH="https://raw.githubusercontent.com/hastho/pigeos/master/gfx/splash_tpl.png"
+URL_SPLASH="https://raw.githubusercontent.com/hastho/pigeos/$PIGEOS_BRANCH/gfx/splash_tpl.png"
 # pigeos configuration and helper scripts
-URL_SETUP_SCRIPT="https://raw.githubusercontent.com/hastho/pigeos/master/pigeos-setup"
-URL_IMAGE_SCRIPT="https://raw.githubusercontent.com/hastho/pigeos/master/pigeos-image"
-URL_PRINT_SCRIPT="https://raw.githubusercontent.com/hastho/pigeos/master/pigeos-print"
-URL_LOADER_SCRIPT="https://raw.githubusercontent.com/hastho/pigeos/master/pigeos-loader"
-URL_SPLASH_SCRIPT="https://raw.githubusercontent.com/hastho/pigeos/master/pigeos-splash"
+URL_SETUP_SCRIPT="https://raw.githubusercontent.com/hastho/pigeos/$PIGEOS_BRANCH/pigeos-setup"
+URL_IMAGE_SCRIPT="https://raw.githubusercontent.com/hastho/pigeos/$PIGEOS_BRANCH/pigeos-image"
+URL_PRINT_SCRIPT="https://raw.githubusercontent.com/hastho/pigeos/$PIGEOS_BRANCH/pigeos-print"
+URL_LOADER_SCRIPT="https://raw.githubusercontent.com/hastho/pigeos/$PIGEOS_BRANCH/pigeos-loader"
+URL_SPLASH_SCRIPT="https://raw.githubusercontent.com/hastho/pigeos/$PIGEOS_BRANCH/pigeos-splash"
 # Pi/GEOS configuration script, fixed values configuration file and language files
-URL_CONFIG_SCRIPT="https://raw.githubusercontent.com/hastho/pigeos/master/pigeos-config"
-URL_CONFIG_SYSCFG="https://raw.githubusercontent.com/hastho/pigeos/master/defaults/pigeos.conf"
+URL_CONFIG_SCRIPT="https://raw.githubusercontent.com/hastho/pigeos/$PIGEOS_BRANCH/pigeos-config"
+URL_CONFIG_SYSCFG="https://raw.githubusercontent.com/hastho/pigeos/$PIGEOS_BRANCH/defaults/pigeos.conf"
 # linux console keyboard configuration to match DOSBox mapper file above
 URL_CONFIG_KEYB=(\
-  "https://raw.githubusercontent.com/hastho/pigeos/master/defaults/keyboard.gr" \
-  "https://raw.githubusercontent.com/hastho/pigeos/master/defaults/keyboard.us" \
+  "https://raw.githubusercontent.com/hastho/pigeos/$PIGEOS_BRANCH/defaults/keyboard.gr" \
+  "https://raw.githubusercontent.com/hastho/pigeos/$PIGEOS_BRANCH/defaults/keyboard.us" \
 )
 URL_CONFIG_LANG=(\
-  "https://raw.githubusercontent.com/hastho/pigeos/master/pigeos-config.de_DE.UTF-8" \
-  "https://raw.githubusercontent.com/hastho/pigeos/master/pigeos-config.en_US.UTF-8" \
+  "https://raw.githubusercontent.com/hastho/pigeos/$PIGEOS_BRANCH/pigeos-config.de_DE.UTF-8" \
+  "https://raw.githubusercontent.com/hastho/pigeos/$PIGEOS_BRANCH/pigeos-config.en_US.UTF-8" \
 )
 LOG_FILE=/tmp/$(basename $0).log
 
@@ -266,11 +268,11 @@ Description=Pi/GEOS splash screen service
 DefaultDependencies=no
 
 [Service]
-ExecStart=/usr/bin/fbi -noverbose  /usr/local/lib/pigeos/splash.png
+ExecStart=/usr/bin/fbi -T 1 -a -noverbose  /usr/local/lib/pigeos/splash.png
 
-StandardInput=tty
-StandardOutput=tty
-
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=pigeos-splash
 
 [Install]
 WantedBy=multi-user.target
@@ -602,8 +604,8 @@ config_boot() {
   sudo /usr/bin/raspi-config nonint do_boot_wait 1
   
   # write parameter /boot/config.txt
-  for option in "disable_overscan=1" "dtparam=i2c_arm=on" \
-        "dtparam=audio=on" "disable_splash=1" "boot_delay=0"
+  for option in "disable_overscan=1" \
+    "dtparam=audio=on" "disable_splash=1"
   do
     grep -q "${option%=*}" $BOOT_CONFIG
     if [ $? -eq 0 ]; then
@@ -614,11 +616,12 @@ config_boot() {
       sudo tee -a $BOOT_CONFIG <<<"${option}"
     fi
   done
-  # route all audio to one sink (req. for Pi4)
-  for option in  'quiet' 'splash' 'logo.nologo'\
-     'snd_bcm2835.enable_hdmi=1'\
-		 'snd_bcm2835.enable_headphones=1'\
-     'snd_bcm2835.enable_compat_alsa=1'
+  # route all audio to one sink on Pi4 requ.options below
+  # but these crashed X11-dosbox on buleseye on Pi3?!
+  # 'snd_bcm2835.enable_hdmi=1'\
+  # 'snd_bcm2835.enable_headphones=1'\
+  # 'snd_bcm2835.enable_compat_alsa=1'
+  for option in  'quiet' 'splash' 'logo.nologo'
   do
     grep -q "${option%=*}" $BOOT_CMDLINE 
 	if [ $? -ne 0 ]; then
@@ -632,8 +635,8 @@ setup() {
   # clear apt cache first and load latest pgk list
   sudo apt clean; sudo apt update --fix-missing
   # 1st stage: install executes all modules in the default order
-  install_locales				        || return 1
-  install_dep_pkg $PKG_LIST 	  || return 2
+  install_locales				|| return 1
+  install_dep_pkg $PKG_LIST 	|| return 2
   install_dosbox_pkg      	  	|| return 3
   install_pigeos_scripts  	  	|| return 4
   install_pigeos_config   	  	|| return 5
@@ -641,12 +644,12 @@ setup() {
   install_splash_screen   	  	|| return 7
   install_dosbox_modem    	  	|| return 8
   install_dosbox_telnetd  	  	|| return 9
-  install_jed					          || return 10
+  install_jed					|| return 10
   install_usbmount     	  	  	|| return 11
-  install_rslsync				        || return 12
+  install_rslsync				|| return 12
   install_cups	  	  	  	  	|| return 13
-  install_midi					        || return 14
-  config_locales $1				      || return 15
+  install_midi					|| return 14
+  config_locales $1				|| return 15
   # clear apt cache
   sudo apt clean
   # trigger 2nd stage setup process during 1st boot
