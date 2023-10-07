@@ -73,6 +73,7 @@ help() {
 
 img_erase() {
 	dd if=/dev/zero of=$img_dev bs=1M status=progress
+	return 0
 }
 
 img_prepare() {

@@ -67,7 +67,8 @@ PIGEOS_HOME=$(grep "^$PIGEOS_USER:" /etc/passwd | cut -d: -f 6)
 # which dosbox binary should be launched?
 DOSBOX_BIN=$PIGEOS_PREFIX/bin/dosbox
 # global depencies 
-PKG_LIST="jq pv mtools espeak xinit" # fonts-terminus missing in buster?
+PKG_LIST="jq pv mtools espeak \
+  xinit x11-xserver-utils xserver-common xserver-xorg-video-fbdev" # fonts-terminus missing in buster?
 # list of external files need to be installed by this script in net_install mode
 # TODO setup a APT repo for the customized version of DOSBox
 URL_DOSBOX_PKG="https://thobipix.de/download/rpi/pkg/dosbox-pigeos-0.74.4_armhf.deb"
