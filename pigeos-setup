@@ -210,7 +210,11 @@ install_dosbox_pkg() {
 
 config_dosbox_pkg() {
   # reset the default (possible older) DOSBox configuration  
-  $DOSBOX_BIN -eraseconf -erasemapper
+  if [  -d ${PIGEOS_HOME}/.dosbox ]; then
+    $DOSBOX_BIN -eraseconf -erasemapper
+  else
+    mkdir  ${PIGEOS_HOME}/.dosbox
+  fi
   # create folder to store the disk images
   test  -d $PIGEOS_HOME/hdd_images || mkdir $PIGEOS_HOME/hdd_images
   test  -d $PIGEOS_HOME/fdd_images || mkdir $PIGEOS_HOME/fdd_images
@@ -727,7 +731,7 @@ configure() {
 >$LOG_FILE
 if [ $# -ne 0 ]; then
   # exec the given module
-  $@ # && sudo reboot || echo "An error occurred, check the log messages."
+  $@ && sudo reboot || echo "An error occurred, check the log messages."
 else
   usage
 fi
