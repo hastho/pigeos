@@ -608,7 +608,7 @@ TimeoutStartSec=0
 Restart=always
 ExecStartPre=-/usr/bin/docker stop %n
 ExecStartPre=-/usr/bin/docker rm %n
-ExecStartPre=/usr/bin/docker pull hastho/feedproxy
+ExecStartPre=-/usr/bin/docker pull hastho/feedproxy
 ExecStart=/usr/bin/docker run --rm --name %n --publish 8080:8080 hastho/feedproxy
 ExecStop=/usr/bin/docker stop %n
 
