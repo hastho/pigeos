@@ -54,6 +54,7 @@ PROGNAME=$(basename $PROGNAME)
 BOOT_CONFIG=/boot/config.txt
 BOOT_CMDLINE=/boot/cmdline.txt
 # wich branch to deploy
+PIGEOS_REPO="https://raw.githubusercontent.com/hastho/pigeos"
 PIGEOS_BRANCH="4-use-x11opengl-instead-of-dispmanx"
 # a per device unique string to edentify this in a network
 PIGEOS_SN=$(cat /sys/firmware/devicetree/base/serial-number | sed 's/\x0//')
@@ -66,42 +67,29 @@ PIGEOS_HOME=$(grep "^$PIGEOS_USER:" /etc/passwd | cut -d: -f 6)
 # which dosbox binary should be launched?
 DOSBOX_BIN=$PIGEOS_PREFIX/bin/dosbox
 # global depencies 
-PKG_LIST="jq pv mtools espeak kbd xinit" # fonts-terminus missing in buster
+PKG_LIST="jq pv mtools espeak xinit" # fonts-terminus missing in buster?
 # list of external files need to be installed by this script in net_install mode
 # TODO setup a APT repo for the customized version of DOSBox
 URL_DOSBOX_PKG="https://thobipix.de/download/rpi/pkg/dosbox-pigeos-0.74.4_armhf.deb"
-# specific mapping file for certain languages to fix bad kbd mappings in GEOS
-URL_DOSBOX_LANG=(\
-  "https://raw.githubusercontent.com/hastho/pigeos/$PIGEOS_BRANCH/defaults/mapper-0.74.map.gr" \
-)
-URL_DOSBOX_CONFIG="https://raw.githubusercontent.com/hastho/pigeos/$PIGEOS_BRANCH/defaults/dosbox-0.74.conf"
-# IPX modules and MarS-NetWareEmulator for IPX based file and print services
-URL_IPXKMOD_SRC="https://github.com/pasis/ipx/archive/refs/heads/master.zip"
-URL_MARSNWE_PKG="https://thobipix.de/download/rpi/pkg/mars_nwe_0.99_armhf.deb"
 # a free for non-commercial use file sync tool
 URL_RSLSYNC_PKG="https://download-cdn.resilio.com/stable/linux-armhf/resilio-sync_armhf.tar.gz"
 # a classic modem style dialing sound
 URL_DIALING_SOUND="https://upload.wikimedia.org/wikipedia/commons/3/33/Dial_up_modem_noises.ogg"
 # a font to be used in the BIOS splash screen and splash screen template
 URL_FONTS="https://int10h.org/oldschool-pc-fonts/download/oldschool_pc_font_pack_v1.01.zip"
-URL_SPLASH="https://raw.githubusercontent.com/hastho/pigeos/$PIGEOS_BRANCH/gfx/splash_tpl.png"
+URL_SPLASH="$PIGEOS_REPO/$PIGEOS_BRANCH/gfx/splash_tpl.png"
 # pigeos configuration and helper scripts
-URL_SETUP_SCRIPT="https://raw.githubusercontent.com/hastho/pigeos/$PIGEOS_BRANCH/pigeos-setup"
-URL_IMAGE_SCRIPT="https://raw.githubusercontent.com/hastho/pigeos/$PIGEOS_BRANCH/pigeos-image"
-URL_PRINT_SCRIPT="https://raw.githubusercontent.com/hastho/pigeos/$PIGEOS_BRANCH/pigeos-print"
-URL_LOADER_SCRIPT="https://raw.githubusercontent.com/hastho/pigeos/$PIGEOS_BRANCH/pigeos-loader"
-URL_SPLASH_SCRIPT="https://raw.githubusercontent.com/hastho/pigeos/$PIGEOS_BRANCH/pigeos-splash"
+URL_SETUP_SCRIPT="$PIGEOS_REPO/$PIGEOS_BRANCH/pigeos-setup"
+URL_IMAGE_SCRIPT="$PIGEOS_REPO/$PIGEOS_BRANCH/pigeos-image"
+URL_PRINT_SCRIPT="$PIGEOS_REPO/$PIGEOS_BRANCH/pigeos-print"
+URL_LOADER_SCRIPT="$PIGEOS_REPO/$PIGEOS_BRANCH/pigeos-loader"
+URL_SPLASH_SCRIPT="$PIGEOS_REPO/$PIGEOS_BRANCH/pigeos-splash"
 # Pi/GEOS configuration script, fixed values configuration file and language files
-URL_CONFIG_SCRIPT="https://raw.githubusercontent.com/hastho/pigeos/$PIGEOS_BRANCH/pigeos-config"
-URL_CONFIG_SYSCFG="https://raw.githubusercontent.com/hastho/pigeos/$PIGEOS_BRANCH/defaults/pigeos.conf"
-# linux console keyboard configuration to match DOSBox mapper file above
-URL_CONFIG_KEYB=(\
-  "https://raw.githubusercontent.com/hastho/pigeos/$PIGEOS_BRANCH/defaults/keyboard.gr" \
-  "https://raw.githubusercontent.com/hastho/pigeos/$PIGEOS_BRANCH/defaults/keyboard.us" \
-)
+URL_CONFIG_SCRIPT="$PIGEOS_REPO/$PIGEOS_BRANCH/pigeos-config"
+URL_CONFIG_SYSCFG="$PIGEOS_REPO/$PIGEOS_BRANCH/defaults/pigeos.conf"
 URL_CONFIG_LANG=(\
-  "https://raw.githubusercontent.com/hastho/pigeos/$PIGEOS_BRANCH/pigeos-config.de_DE.UTF-8" \
-  "https://raw.githubusercontent.com/hastho/pigeos/$PIGEOS_BRANCH/pigeos-config.en_US.UTF-8" \
+  "$PIGEOS_REPO/$PIGEOS_BRANCH/pigeos-config.de_DE.UTF-8" \
+  "$PIGEOS_REPO/$PIGEOS_BRANCH/pigeos-config.en_US.UTF-8" \
 )
 LOG_FILE=/tmp/$(basename $0).log
 
@@ -136,28 +124,26 @@ download_file() {
 install_dep_pkg() {
 	local retryc=3
     while [ $retryc -gt 0 ]; do
-		sudo apt-get -y install $* && retryc=0
+		sudo apt-get --no-install-recommends -y install $* && retryc=0
 	done
 }
 
 install_locales() {
-  install_dep_pkg locales tzdata keyboard-configuration
-  # linux keyb configurations to map with DOS keyb def.
-  for lang in ${URL_CONFIG_KEYB[@]}; do
-    download_file "$lang"    /tmp/$(basename "$lang")
-	sudo install -D          /tmp/$(basename "$lang")\
-	  /etc/default/$(basename "$lang")
-  done
+  install_dep_pkg locales tzdata kbd keyboard-configuration
 }
 
 config_locales() {
   # DOS(Box) Keyboard language will determinate system language
-  local keylang=${1:-us}
+  local doslang=${1:-us}
   local syslang=""
-  case $keylang in
+  case $doslang in
     gr) syslang="de_DE.UTF-8"
+		kbdlang="de"
+		kbdopts=""
 		;;
 	*)  syslang="en_US.UTF-8"
+		kbdlang="us"
+		kbdopts=""
 		;;
   esac
   # regeneration of locales takes some time, so do it only when it has to be changed
@@ -166,8 +152,15 @@ config_locales() {
     sudo locale-gen >/dev/null
     sudo update-locale --reset LANG=${syslang} >/dev/null
     # only really req. during build time
-    sudo sed -i "s/KEYB=.*/KEYB=${keylang}/" \
+    sudo sed -i "s/KEYB=.*/KEYB=${doslang}/" \
       $PIGEOS_PREFIX/etc/$(basename $URL_CONFIG_SYSCFG)
+	# upd keyboard configuration
+	sudo tee /etc/default/keyboard >/dev/null <<XKB_CONF 
+XKBMODEL="pc105"
+XKBLAYOUT="${kbdlang}"
+XKBVARIANT=""
+XKBOPTIONS="${kbdopts}"
+XKB_CONF
   fi
 }
 
@@ -211,30 +204,36 @@ install_dosbox_pkg() {
   echo "dosbox install" | sudo dpkg --set-selections
   sudo dpkg -i /tmp/dosbox.deb
   # blacklist dosbox package so it will not be replaced
-  # with the system default dosbox during any upgrades
+  # with the system default dosbox during any upgrade
   echo "dosbox hold" | sudo dpkg --set-selections
-  # install a custom DOSBox configuration
-  download_file "$URL_DOSBOX_CONFIG" /tmp/$(basename "$URL_DOSBOX_CONFIG")
-  install -D /tmp/$(basename "$URL_DOSBOX_CONFIG")\
-    $PIGEOS_HOME/.dosbox/$(basename "$URL_DOSBOX_CONFIG") 
-  # download locallized key maps
-  for lang in ${URL_DOSBOX_LANG[@]}; do
-    download_file "$lang"    /tmp/$(basename "$lang")
-	sudo install -D          /tmp/$(basename "$lang")\
-	  $PIGEOS_PREFIX/share/pigeos/$(basename "$lang")
-  done
-  # create folder to store the disk images
-  test -d $PIGEOS_HOME/hdd_images || mkdir $PIGEOS_HOME/hdd_images
-  test -d $PIGEOS_HOME/fdd_images || mkdir $PIGEOS_HOME/fdd_images
-  # change owner to Pi/GEOS user in case this script was exec. as root
-  chown -R ${PIGEOS_USER}.${PIGEOS_USER} \
-           ${PIGEOS_HOME}/{.dosbox,fdd_images,hdd_images}
 }
 
 config_dosbox_pkg() {
-  # link DOSBox mapper file matching the linux kbd-layout
-  ln -sf $PIGEOS_PREFIX/share/pigeos/mapper-0.74.map.$KEYB \
-         $PIGEOS_HOME/.dosbox/mapper-0.74.map
+  # reset the default (possible older) DOSBox configuration  
+  $DOSBOX_BIN -eraseconf -erasemapper
+  # create folder to store the disk images
+  test  -d $PIGEOS_HOME/hdd_images || mkdir $PIGEOS_HOME/hdd_images
+  test  -d $PIGEOS_HOME/fdd_images || mkdir $PIGEOS_HOME/fdd_images
+  # change owner to Pi/GEOS user in case this script was exec. as root
+  chown -R ${PIGEOS_USER}.${PIGEOS_USER} \
+           ${PIGEOS_HOME}/{.dosbox,fdd_images,hdd_images}
+  # set some defaults
+  sed -i 's/fullscreen=.*/fullscreen=true/' 	$($DOSBOX_BIN -printconf)
+  sed -i 's/output=.*/output=overlay/'			$($DOSBOX_BIN -printconf)
+  sed -i 's/usescancodes=.*/usescancodes=true/'	$($DOSBOX_BIN -printconf)
+  sed -i 's/core=.*/core=dynamic/'				$($DOSBOX_BIN -printconf)
+  sed -i 's/cycles=.*/cycles=max/'				$($DOSBOX_BIN -printconf)
+  sed -i 's/pcspeaker=.*/pcspeaker=false/'		$($DOSBOX_BIN -printconf)
+  sed -i 's/tmpdir=.*/tmpdir=\/tmp/'			$($DOSBOX_BIN -printconf)
+  sed -i 's/LPT1=.*/LPT1=pigeos-print %s/'		$($DOSBOX_BIN -printconf)
+  sed -i 's/ne2000=.*/ne2000=true/'				$($DOSBOX_BIN -printconf)
+  sed -i 's/realnic=.*/realnic=eth0/'			$($DOSBOX_BIN -printconf)
+  # genearate a random MAC address to prevent conflicts when running
+  # more than one instance of Pi/GEOS in a local network
+  macaddr=$(printf 'ac:de:%s:%s:%s:%s' \
+    `hexdump -n 4 -ve '1/1 "%.2x "' /dev/random`)
+  sed -i "s/macaddr=.*/macaddr=${macaddr}/"		$($DOSBOX_BIN -printconf)
+  return 0
 }
 
 install_splash_screen() {
@@ -266,16 +265,17 @@ install_splash_screen() {
 [Unit]
 Description=Pi/GEOS splash screen service
 DefaultDependencies=no
+After=local-fs.target
 
 [Service]
-ExecStart=/usr/bin/fbi -T 1 -a -noverbose  /usr/local/lib/pigeos/splash.png
+ExecStart=/usr/bin/fbi -d /dev/fb0 -a --noverbose /usr/local/lib/pigeos/splash.png
 
-StandardOutput=syslog
-StandardError=syslog
-SyslogIdentifier=pigeos-splash
+StandardInput=tty
+StandardOutput=null
+StandardError=null
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=sysinit.target
 SPLASH_SCR
 }
 
@@ -378,7 +378,7 @@ config_dosbox_modem() {
   sudo systemctl --now enable pppd@ttyN0.path
 
   # Configure DOSBox with modem connected on COM1
-  sed -i 's/serial1=.*/serial1=modem/' $($DOSBOX_BIN -printconf)
+  sed -i 's/serial1=.*/serial1=modem listenport:2023/' $($DOSBOX_BIN -printconf)
   return 0
 }
 
@@ -495,13 +495,11 @@ config_usbmount() {
 install_midi() {
   install_dep_pkg timgm6mb-soundfont timidity-daemon
   # remove the large 120 MB soundfont installed by default
-  sudo apt remove -y fluid-soundfont-gm
-  # remove it also all references from Timidity config
+  # Timidity config add the timGM6mb font instead
   sudo sed -i '/.*fluidr3.*/d' /etc/timidity/timidity.cfg
-  # add the timGM6mb font instead
   grep -qi timgm6mb.cfg /etc/timidity/timidity.cfg \
-  	|| echo "source /etc/timidity/timgm6mb.cfg" \
-	>> /etc/timidity/timidity.cfg
+  	|| sudo tee -a /etc/timidity/timidity.cfg >/dev/null \
+	<<<"source /etc/timidity/timgm6mb.cfg"
 }
 
 config_midi() {
@@ -591,6 +589,33 @@ RSLCFG
   fi
 }
 
+install_feedproxy()	{
+  echo "Install feedProxy.."
+  install_dep_pkg docker.io
+  sudo tee /etc/systemd/system/feedproxy.service >/dev/null <<FEED_PROXY
+[Unit]
+Description=feedProxy Container
+After=docker.service
+Requires=docker.service
+
+[Service]
+TimeoutStartSec=0
+Restart=always
+ExecStartPre=-/usr/bin/docker stop %n
+ExecStartPre=-/usr/bin/docker rm %n
+ExecStartPre=/usr/bin/docker pull hastho/feedproxy
+ExecStart=/usr/bin/docker run --rm --name %n --publish 8080:8080 hastho/feedproxy
+ExecStop=/usr/bin/docker stop %n
+
+[Install]
+WantedBy=multi-user.target
+FEED_PROXY
+}
+
+config_feedproxy() 	{
+  sudo systemctl --now ${disable_enable[$FEEDPROXY_SLOAD]} feedproxy 2>$LOG_FILE 1>&2
+}
+
 config_ssh() {
   sudo /usr/bin/raspi-config nonint do_ssh 0 2>$LOG_FILE 1>&2
   # SSH private key is req. for RSYNC/UNISON
@@ -618,7 +643,7 @@ config_boot() {
   done
   # route all audio to one sink on Pi4 requ.options below
   # but snd_bcm2835.* options crash X11-dosbox on buleseye
-  for option in  'quiet' 'splash' 'logo.nologo' \
+  for option in  'quiet' 'logo.nologo' \
     'snd_bcm2835.enable_hdmi=1'\
     'snd_bcm2835.enable_headphones=1'\
     'snd_bcm2835.enable_compat_alsa=1'
@@ -649,7 +674,7 @@ setup() {
   install_rslsync				|| return 12
   install_cups	  	  	  	  	|| return 13
   install_midi					|| return 14
-  config_locales $1				|| return 15
+  install_feedproxy				|| return 15
   # clear apt cache
   sudo apt clean
   # trigger 2nd stage setup process during 1st boot
@@ -660,12 +685,14 @@ setup() {
 install_stage2() {
   # 2nd stage: install configures core services using system default config
   . $PIGEOS_PREFIX/etc/$(basename "$URL_CONFIG_SYSCFG")
+  config_locales
   config_splash_screen
   config_dosbox_pkg
   config_dosbox_modem
   config_dosbox_telnetd
   config_usbmount
   config_midi
+  config_feedproxy
   config_boot
   # clear 2nd stage setup execution in system default config
   sudo sed -i 's/CONTINUE_SETUP=.*/CONTINUE_SETUP=0/' \
@@ -674,7 +701,7 @@ install_stage2() {
 
 update() {
   online 						|| return 1
-  # install latest Pi/GEOS files from Git master repo
+  # install latest Pi/GEOS files from Git repo
   install_pigeos_scripts  	  	&& echo 50
   install_pigeos_config   	  	&& echo 100
   # trigger 2nd stage setup process during next boot
@@ -687,7 +714,7 @@ configure() {
   . $PIGEOS_HOME/.pigeos
   # echo percentage value to visualize progress in pigeos-config
   config_locales $KEYB			&& echo 10
-  config_dosbox_pkg				&& echo 20
+  config_feedproxy				&& echo 20
   config_midi 					&& echo 40
   config_cups 					&& echo 60
   config_rslsync 				&& echo 80
