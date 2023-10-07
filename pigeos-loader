@@ -15,8 +15,9 @@ while :; do
   # check for min configuration
   if [ -x ${DOSBOX_BIN} -a -w ${HDC_IMAGE} ] ; then
     # create a session configuration 
-    echo "[autoexec]" >${session_conf}
-	  echo "imgmount c ${HDC_IMAGE} -t hdd" >>${session_conf}
+    session_conf=`dirname $($DOSBOX_BIN -printconf)`/dosbox-session.conf
+	echo "[autoexec]" >${session_conf}
+	echo "imgmount c ${HDC_IMAGE} -t hdd" >>${session_conf}
     # mount other drives when an image present 
     if [ -w ${FDA_IMAGE} ] ; then
       echo "imgmount a ${HDD_IMAGE} -t floppy" >>${session_conf}
