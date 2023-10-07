@@ -39,9 +39,10 @@ while :; do
 	echo "keyb ${KEYB:-us} 850" >>${session_conf}
 	echo "call c:\autoexec.bat" >>${session_conf}
 	# restore volume level
-	amixer -q -M sset PCM "${VOL_LEVEL:=80}%"
+	amixer -q -M sset PCM "${VOL_LEVEL:=80}%" 1>/dev/null 2>&1
 	# launch DOSBox
-	startx $DOSBOX_BIN -userconf -conf ${session_conf} -- -dpms -quiet 
+	startx $DOSBOX_BIN -userconf -conf ${session_conf} -- \
+	  -dpms -quiet 1>>/tmp/pigeos-loader.log 2>&1
   fi
   # run SETUP-config if something went wrong
   pigeos-config
