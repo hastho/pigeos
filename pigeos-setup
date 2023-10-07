@@ -67,8 +67,7 @@ PIGEOS_HOME=$(grep "^$PIGEOS_USER:" /etc/passwd | cut -d: -f 6)
 # which dosbox binary should be launched?
 DOSBOX_BIN=$PIGEOS_PREFIX/bin/dosbox
 # global depencies 
-PKG_LIST="jq pv mtools espeak \
-  xinit x11-xserver-utils xserver-common xserver-xorg-video-fbdev" # fonts-terminus missing in buster?
+PKG_LIST="jq pv mtools espeak xinit" # fonts-terminus missing in buster?
 # list of external files need to be installed by this script in net_install mode
 # TODO setup a APT repo for the customized version of DOSBox
 URL_DOSBOX_PKG="https://thobipix.de/download/rpi/pkg/dosbox-pigeos-0.74.4_armhf.deb"
@@ -125,7 +124,7 @@ download_file() {
 install_dep_pkg() {
 	local retryc=3
     while [ $retryc -gt 0 ]; do
-		sudo apt-get --no-install-recommends -y install $* && retryc=0
+		sudo apt-get -y install $* && retryc=0
 	done
 }
 
@@ -496,7 +495,8 @@ config_usbmount() {
 install_midi() {
   install_dep_pkg timgm6mb-soundfont timidity-daemon
   # remove the large 120 MB soundfont installed by default
-  # Timidity config add the timGM6mb font instead
+  # update Timidity config add the timGM6mb font instead
+  sudo apt remove -y fluid-soundfont-gm
   sudo sed -i '/.*fluidr3.*/d' /etc/timidity/timidity.cfg
   grep -qi timgm6mb.cfg /etc/timidity/timidity.cfg \
   	|| sudo tee -a /etc/timidity/timidity.cfg >/dev/null \
