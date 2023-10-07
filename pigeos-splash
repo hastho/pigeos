@@ -44,7 +44,7 @@ ${cpu}, CPU at ${speed}MHz\n\
 Memory Test : 16384K OK\n\
 \n\
 Raspberry Pi Plug and Play PC/GEOS extension\n\
-Copyright \(C\) 2020-22, Thomas Hass\n\
+Copyright \(C\) 2020-23, Thomas Hass\n\
 http://www.thobipix.de\n\
 \n\
 Initialize Plug and Play Options ...\n\
