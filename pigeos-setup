@@ -84,6 +84,7 @@ URL_IMAGE_SCRIPT="$PIGEOS_REPO/$PIGEOS_BRANCH/pigeos-image"
 URL_PRINT_SCRIPT="$PIGEOS_REPO/$PIGEOS_BRANCH/pigeos-print"
 URL_LOADER_SCRIPT="$PIGEOS_REPO/$PIGEOS_BRANCH/pigeos-loader"
 URL_SPLASH_SCRIPT="$PIGEOS_REPO/$PIGEOS_BRANCH/pigeos-splash"
+URL_PSDUP_SCRIPT="$PIGEOS_REPO/$PIGEOS_BRANCH/psduplex/psduplex"
 # Pi/GEOS configuration script, fixed values configuration file and language files
 URL_CONFIG_SCRIPT="$PIGEOS_REPO/$PIGEOS_BRANCH/pigeos-config"
 URL_CONFIG_SYSCFG="$PIGEOS_REPO/$PIGEOS_BRANCH/defaults/pigeos.conf"
@@ -443,6 +444,11 @@ LOGIN_PROF
 
 install_cups() {
   install_dep_pkg cups cups-browsed cups-client cups-bsd
+  # install psduplex script
+  download_file $URL_PSDUP_SCRIPT \
+    /tmp/psduplex 2>&1
+  sudo install -D /tmp/psduplex  \
+    $PIGEOS_PREFIX/bin/psduplex 2>&1
   # enable automatic print queue creation for AirPrint printer found
   sudo sed -i 's/^CreateIPPPrinterQueues.*/CreateIPPPrinterQueues Driverless/' \
     /etc/cups/cups-browsed.conf
