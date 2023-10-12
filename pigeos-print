@@ -188,11 +188,11 @@ else
   PSPRINT="lpr -T $(get_doc_name $1) -P $printer"
   # PSPRINT="nc -q 10 $printer 9100"
   # handle duplex printing
-  if get_doc_booklet $1 || get_doc_duplex $1; then
+  if get_doc_booklet $1 || get_doc_duplex $1 || test $CUPS_DUPENF -eq 1; then
     if   [ "x$CUPS_DUPMODE" == "xAUTO" ]; then
       # inject PS code to instruct the printer to switch into duplex mode
-	  cat $1 | $PSFILTER1 | $PSFILTER2 | psduplex -tumble | $PSPRINT &>>$LOGFILE
-    elif [ "x$CUPS_DUPMODE" == "xMANUAL" ]; then
+      cat $1 | $PSFILTER1 | $PSFILTER2 | psduplex -tumble | $PSPRINT &>>$LOGFILE
+    elif [ "x$CUPS_DUPMODE" == "xMANUAL" ]; then  
 	  # create two printjobs send with a delay to allow the user to re-inject paper
       # print odd pages first
       cat $1 | $PSFILTER1  | $PSFILTER2 | psselect -o | $PSPRINT &>>$LOGFILE
