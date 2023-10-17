@@ -63,7 +63,7 @@ dial_input() {
   local sel=$($DIAL --backtitle "$BTTILE" --title "${1}" \
     --inputbox "$2" 8 50 "$3" \
     3>&1 1>&2 2>&3)
-  [[ $? -eq 0 ]] && echo $sel || return 1
+  [[ -n $sel ]] && echo $sel || return 1
 }
 
 dial_menu()  {
@@ -163,9 +163,9 @@ imgsel_menu() {
   done
   # ask the user to choose one image
   selection=$(dial_menu "${imgsel_title}" "${imgsel_text}" "${imgsel_list[@]}")
-  if [ -z "$selection+x" ]; then
+  if [[ -z $selection ]]; then
     false # image selection aborted
-  elif [ "$selection" == "NONE" ]; then
+  elif [[ "$selection" == "NONE" ]]; then
     sed -i "s#${imgsel_drv^^}_IMAGE=.*#${imgsel_drv^^}_IMAGE=NONE#" $(conf_get)
   elif grep -q ".D._IMAGE=${imgsel_dir}${selection}.img" $(conf_get); then
     dial_err "$imgsel_mounted"
@@ -194,7 +194,7 @@ keybrd_menu() {
   local selection
   source $(conf_get); source $MENU_TEXT
   selection=$(dial_menu "${keybsel_title}" "${keybsel_text}" "${keybsel_options[@]}")
-  if [ "x$selection" != "x" ]; then
+  if [[ "x$selection" != "x" ]]; then
     # language settings where not present in early versions
     grep -q KEYB $(conf_get) || echo "KEYB=us" >>$(conf_get)
 	# set selected lang.
@@ -216,9 +216,9 @@ sound_menu() {
       # play a test sound
 	  dial_info "$volumetst_info"
       # clip given value to the allowed range
-	  if [ $selection -lt 0 ]; then
+	  if [[ $selection -lt 0 ]]; then
 		selection=0
-	  elif [ $selection -gt 100 ]; then
+	  elif [[ $selection -gt 100 ]]; then
 		selection=100
 	  fi
 	  idx=$(( $RANDOM % ${#volumetst_text[@]} ))
@@ -246,6 +246,8 @@ advanced_menu() {
     case "$selection" in
       CUPS*)		service_activcation_menu "CUPS_SLOAD" ;;
   	  DOSBox*)  	prnsel_menu ;;
+	  Duplex*)		dupsel_menu ;;
+	  Job*)			dupwait_menu ;;
       Remote*)	 	service_activcation_menu "CUPS_ADMIN" ;;
       MIDI*)	    service_activcation_menu "MIDI_SLOAD" ;;
 	  ResilioSync*) rslsync_menu "RSLSYNC_SLOAD" ;;
@@ -262,15 +264,42 @@ prnsel_menu() {
   local prnsel_list=("AUTO" "autodetect" "PDF" "PDF Export")
   # build the list of available printers
   for p in $(lpstat -a | cut -d ' ' -f 1); do 
-    [[ ! -z "$p" ]] && prnsel_list+=("$p" "${p//_/ }")
+    [[ -n $p ]] && prnsel_list+=("$p" "${p//_/ }")
   done
   # ask the user to choose a printer
   selection=$(dial_menu "${prnsel_title}" "${prnsel_text}" "${prnsel_list[@]}")
-  if [ ! -z "$selection" ]; then
+  if [[ -n $selection ]]; then
     grep -q CUPS_DBPRN $(conf_get) \
 	  && sed -i "s#CUPS_DBPRN=.*#CUPS_DBPRN=${selection}#" $(conf_get) \
 	  || echo "CUPS_DBPRN=${selection}" >> $(conf_get)
   fi
+}
+
+dupsel_menu() {
+  local selection
+  local dupsel_list=("AUTO" "automatic" "MANUAL" "manual mode")
+  selection=$(dial_menu "${dupsel_title}" "${dupsel_text}" "${dupsel_list[@]}")
+  if [[ -n $selection ]]; then
+	grep -q CUPS_DUPMODE $(conf_get) \
+	  && sed -i "s#CUPS_DUPMODE=.*#CUPS_DUPMODE=${selection}#" $(conf_get) \
+	  || echo "CUPS_DUPMODE=${selection}" >> $(conf_get)
+  fi
+}
+
+dupwait_menu() {
+  local wtime
+  while :; do
+    wtime=$(dial_input "${dupwait_title}" "${dupwait_text}" ${CUPS_DUPWAIT})
+	if [[ -n $wtime ]]; then
+	  break
+	elif [[ "$wtime" != "$(echo $wtime | tr -cd '[:digit:]')" ]]; then
+	  dial_yesno "Invalid value: $wtime Retry?" && continue || break
+	fi
+	grep -q CUPS_DUPWAIT $(conf_get) \
+	  && sed -i "s#CUPS_DUPWAIT=.*#CUPS_DUPWAIT=${wtime}#" $(conf_get) \
+	  || echo "CUPS_DUPWAIT=${wtime}" >> $(conf_get)
+	break
+  done
 }
 
 rslsync_menu() {
@@ -285,9 +314,9 @@ rslsync_key_edit() {
   local selection
   source $(conf_get)
   # the sync key can only set once but not changed later 
-  if [ "x$RSLSYNC_KEY" == "x" ]; then
+  if [[ -n $RSLSYNC_KEY ]]; then
     selection=$(dial_input "Input" "${advanced_sync_key_edit}" "$RSLSYNC_KEY" || echo ABORT)
-  	if [ "x$selection" != "xABORT" ]; then
+  	if [[ "x$selection" != "xABORT" ]]; then
       grep -q "RSLSYNC_KEY" $(conf_get) \
 	  	&& sed -i "s#RSLSYNC_KEY=.*#RSLSYNC_KEY=${selection}#" $(conf_get) \
 	  	|| echo 	   "RSLSYNC_KEY=${selection}" >> $(conf_get)
@@ -341,11 +370,11 @@ imgmgmt_create() {
 	iname=$(dial_input "Image name" "$imgmgmt_image_filename" "$iname")
 	idesc=$(dial_input "Image description" "$imgmgmt_image_descrition" "")
     # check none zero values and characters not allowed in file names
-    if [ "x$isize" == "x" -o "x$iname" == "x" ]; then
+    if [ "x$isize" = "x" -o "x$iname" = "x" ]; then
 	  dial_yesno "$imgmgmt_not_null" && continue || break
-	elif [ "$isize" != "$(echo $isize | tr -cd '[:digit:]')" ]; then
+	elif [[ "$isize" != "$(echo $isize | tr -cd '[:digit:]')" ]]; then
 	  dial_yesno "Invalid value: $isize Retry?" && continue || break
-	elif [ "$iname" != "$(echo $iname | tr -cd '[:alnum:]_-')" ]; then
+	elif [[ "$iname" != "$(echo $iname | tr -cd '[:alnum:]_-')" ]]; then
 	  dial_yesno "Invalid value: $iname Retry?" && continue || break
 	fi
 	# call external image utility to create sparse file image
@@ -367,7 +396,7 @@ imgmgmt_delete() {
     do imgsel_list+=("$(basename $f .inf)" "$(head -1 $f)"); done
   # ask the user to choose one image
   selection=$(dial_menu "${imgsel_title}" "${imgsel_text}" "${imgsel_list[@]}")
-  if [ ! -z "$selection" ]; then
+  if [[ -n $selection ]]; then
     if grep -q ".D._IMAGE=${imgsel_dir}${selection}.img" $(conf_get); then
 	  dial_err "${imgmgmt_del_mounted}"
 	else
@@ -386,7 +415,7 @@ imgmgmt_rename() {
     do imgsel_list+=("$(basename $f .inf)" "$(head -1 $f)"); done
   # ask the user to choose one image
   selection=$(dial_menu "${imgsel_title}" "${imgsel_text}" "${imgsel_list[@]}")
-  if [ ! -z "$selection" ]; then
+  if [[ -n $selection ]]; then
     if grep -q ".D._IMAGE=${imgsel_dir}${selection}.img" $(conf_get); then
 	  dial_err "${imgmgmt_mod_mounted}"
 	else
@@ -407,7 +436,7 @@ imgmgmt_edit() {
     do imgsel_list+=("$(basename $f .inf)" "$(head -1 $f)"); done
   # ask the user to choose one image
   selection=$(dial_menu "${imgsel_title}" "${imgsel_text}" "${imgsel_list[@]}")
-  if [ ! -z "$selection" ]; then
+  if [[ -n $selection ]]; then
     jed +3 ${imgsel_dir}/${selection}.inf
   fi
 }
@@ -436,7 +465,7 @@ imgmgmt_download() {
   done
   ilist+=("$((++i))" "Custom")
   selection=$(dial_menu "Image Download" "Select an image to download" "${ilist[@]}")
-  if [ $selection == $i ]; then
+  if [[ "$selection" == "$i" ]]; then
     # last option selected -> ask for a custom URL
     url=$(dial_input "Dounwload" \
                   "$imgmgmt_download" \

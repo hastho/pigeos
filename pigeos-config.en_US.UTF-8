@@ -83,6 +83,8 @@ advanced_text="Enable/disable and manage advanced system services."
 advanced_options=(\
   "CUPS printing system "	"${disabled_enabled[$CUPS_SLOAD]}" \
   "  DOSBox printer "		"${CUPS_DBPRN}" \
+  "  Duplex mode "			"${CUPS_DUPMODE}" \
+  "  Job wait time "		"${CUPS_DUPWAIT}" \
   "  Remote management "	"${disabled_enabled[$CUPS_ADMIN]} (http://$(hostname -I | cut -d\  -f1):631)" \
   "MIDI emulation "	    	"${disabled_enabled[$MIDI_SLOAD]}" \
   "ResilioSync service "	"${disabled_enabled[$RSLSYNC_SLOAD]}" \
@@ -97,6 +99,20 @@ advanced_sync_key_edit="Please enter an existing sync key, if you want to (re)co
 ### Printer Selection Menu #########################################################
 prnsel_title="Printer Selection"
 prnsel_text="Select 'AUTO' to allow Pi/GEOS to connect to the first available printer or force to use a certain printer. Select 'PDF' to create PDF documents on the shared drive (S:). \nHint: PDF printing requires ResilioSync service to be enabled."
+
+### Duplex Selection Menu
+#########################################################
+dupsel_title="Duplex mode"
+dupsel_text="Choose 'AUTO' if your printer supports automatic duplex printing. 
+Otherwise choose 'MANUAL'. In this case two print jobs are created and you need 
+to re-insert the paper after the first one has been finished."
+
+### Duplex Wait Menu
+#########################################################
+dupwait_title="Dupl job delay"
+dupwait_text="Set the amount of time in seconds to wait before sending the 2nd 
+print job in manual duplex mode. Default min.: 30\n
+Hint: It depends on the speed of your printer and the number of pages to print."
 
 ### ImageMgmt Menu ################################################################
 imgmgmt_title="FDD/HDD image management"

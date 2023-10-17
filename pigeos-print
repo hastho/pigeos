@@ -84,9 +84,21 @@ get_doc_name() {
 	  	s/\xa7/\xc3\x9f/g' \
   )
   if [ ! -z "$buffer" ]; then
-    echo $(expr "$buffer" : '.*%%Title: \(.*\).*')
+    echo $(expr "$buffer" : '.*%%Title: \(.*\).*'| sed 's/\s/_/g')
   else
     echo "unkown"
+  fi
+}
+get_doc_pcount() {
+  # the number of page copies requested by the user will get lost
+  # during the PS pre-processing, so we need to read it form input
+  buffer=$(strings $1 \
+    |grep '.*%%Requirements:\snumcopies.*'
+  )
+  if [ ! -z "$buffer" ]; then
+    echo $(expr "$buffer" : '.*numcopies(\([0-9]*\)).*')
+  else
+    echo 1
   fi
 }
 get_doc_psize() {
@@ -181,12 +193,11 @@ elif [ "x$printer" == "xPDF" ]; then
   gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite \
      -dCompatibilityLevel=1.1 -r72 -g"${page_size}" \
      -sOutputFile="${PDFDIR}/$(get_doc_name $1).pdf" - &>>$LOGFILE
-  #rm $1
+  rm $1
 # use a real printer
 else
   # command to print
-  PSPRINT="lpr -T $(get_doc_name $1) -P $printer"
-  # PSPRINT="nc -q 10 $printer 9100"
+  PSPRINT="lpr -# $(get_doc_pcount $1) -P $printer -J $(get_doc_name $1)"
   # handle duplex printing
   if get_doc_booklet $1 || get_doc_duplex $1 || test $CUPS_DUPENF -eq 1; then
     if   [ "x$CUPS_DUPMODE" == "xAUTO" ]; then
@@ -206,7 +217,6 @@ else
 	  echo "Error: CUPS_DUPLEX=[auto|manual] mode not set in config!" &>>$LOGFILE
     fi
   else # simplex printing
-    cat $1 | $PSFILTER1  | $PSFILTER2 | $PSPRINT &>>$LOGFILE
+    $PSPRINT $1 &>>$LOGFILE
   fi
-  #rm $1
 fi 
