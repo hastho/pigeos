@@ -551,14 +551,14 @@ RSLSYNC_SRV
 config_rslsync() {
   # stop service before updating its config
   sudo systemctl --now disable rslsync@${PIGEOS_USER} 2>$LOG_FILE 1>&2
-  if [ "x$RSLSYNC_KEY" == "x" -a $RSLSYNC_SLOAD -eq 1 ]; then
-  # generate sync key if service is enabled but no key given
-    RSLSYNC_KEY=$(rslsync --generate-secret)
-    grep -q "RSLSYNC_KEY" $PIGEOS_HOME/.pigeos \
-	  && sed -i "s#RSLSYNC_KEY=.*#RSLSYNC_KEY=${RSLSYNC_KEY}#" $PIGEOS_HOME/.pigeos \
-	  || echo  "RSLSYNC_KEY=${RSLSYNC_KEY}" >>$PIGEOS_HOME/.pigeos
-  fi
-  if [ $RSLSYNC_SLOAD -eq 1 ]; then  
+  if [ $RSLSYNC_SLOAD -eq 1 ]; then
+    if [[ -z $RSLSYNC_KEY ]]; then
+	  # generate sync key if service is enabled but no key given
+      RSLSYNC_KEY=$(rslsync --generate-secret)
+      grep -q "RSLSYNC_KEY" $PIGEOS_HOME/.pigeos \
+		&& sed -i "s#RSLSYNC_KEY=.*#RSLSYNC_KEY=${RSLSYNC_KEY}#" $PIGEOS_HOME/.pigeos \
+		|| echo  "RSLSYNC_KEY=${RSLSYNC_KEY}" >>$PIGEOS_HOME/.pigeos
+	fi  
     test -d $PIGEOS_HOME/Shared 	|| mkdir $PIGEOS_HOME/Shared
     test -d $PIGEOS_HOME/.sync 	|| mkdir $PIGEOS_HOME/.sync
     tee $PIGEOS_HOME/.sync/config.json >/dev/null <<RSLCFG
