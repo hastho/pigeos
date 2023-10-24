@@ -78,13 +78,15 @@ URL_DIALING_SOUND="https://upload.wikimedia.org/wikipedia/commons/3/33/Dial_up_m
 # a font to be used in the BIOS splash screen and splash screen template
 URL_FONTS="https://int10h.org/oldschool-pc-fonts/download/oldschool_pc_font_pack_v1.01.zip"
 URL_SPLASH="$PIGEOS_REPO/$PIGEOS_BRANCH/gfx/splash_tpl.png"
+URL_PALETTE="$PIGEOS_REPO/$PIGEOS_BRANCH/gfx/palette.tif"
 # pigeos configuration and helper scripts
 URL_SETUP_SCRIPT="$PIGEOS_REPO/$PIGEOS_BRANCH/pigeos-setup"
 URL_IMAGE_SCRIPT="$PIGEOS_REPO/$PIGEOS_BRANCH/pigeos-image"
 URL_PRINT_SCRIPT="$PIGEOS_REPO/$PIGEOS_BRANCH/pigeos-print"
 URL_LOADER_SCRIPT="$PIGEOS_REPO/$PIGEOS_BRANCH/pigeos-loader"
 URL_SPLASH_SCRIPT="$PIGEOS_REPO/$PIGEOS_BRANCH/pigeos-splash"
-URL_PSDUP_SCRIPT="$PIGEOS_REPO/$PIGEOS_BRANCH/psduplex/psduplex"
+URL_IMG2GEOS_SCRIPT="$PIGEOS_REPO/$PIGEOS_BRANCH/pigeos-img2geos"
+URL_PSDUPLEX_SCRIPT="$PIGEOS_REPO/$PIGEOS_BRANCH/psduplex/psduplex"
 # Pi/GEOS configuration script, fixed values configuration file and language files
 URL_CONFIG_SCRIPT="$PIGEOS_REPO/$PIGEOS_BRANCH/pigeos-config"
 URL_CONFIG_SYSCFG="$PIGEOS_REPO/$PIGEOS_BRANCH/defaults/pigeos.conf"
@@ -168,7 +170,8 @@ XKB_CONF
 install_pigeos_scripts() {
   for file_url in "$URL_IMAGE_SCRIPT" "$URL_LOADER_SCRIPT"\
                   "$URL_SPLASH_SCRIPT" "$URL_CONFIG_SCRIPT"\
-				  "$URL_PRINT_SCRIPT" "$URL_SETUP_SCRIPT"
+				  "$URL_PRINT_SCRIPT" "$URL_SETUP_SCRIPT"\
+				  "$URL_IMG2GEOS_SCRIPT"
   do
     download_file "$file_url" /tmp/$(basename "$file_url")
     sudo install -D /tmp/$(basename "$file_url") \
@@ -445,7 +448,7 @@ LOGIN_PROF
 install_cups() {
   install_dep_pkg cups cups-browsed cups-client cups-bsd
   # install psduplex script
-  download_file $URL_PSDUP_SCRIPT \
+  download_file $URL_PSDUPLEX_SCRIPT \
     /tmp/psduplex 2>&1
   sudo install -D /tmp/psduplex  \
     $PIGEOS_PREFIX/bin/psduplex 2>&1
@@ -597,6 +600,41 @@ RSLCFG
       test -d $PIGEOS_HOME/.sync  && rm -rf $PIGEOS_HOME/.sync
       sed  -i "s#RSLSYNC_KEY=.*#RSLSYNC_KEY=#" $PIGEOS_HOME/.pigeos
 	fi
+  fi
+}
+
+install_img2geos() {
+  install_dep_pkg inotify-tools imagemagick antiword docx2txt xlsx2csv
+  download_file $URL_PALETTE \
+    /tmp/paletta.tif 2>&1
+  sudo install -D /tmp/palette.tif \
+    $PIGEOS_PREFIX/share/pigeos/palette.tif
+  sudo tee /etc/systemd/system/img2geos@.service >/dev/null <<IMG2GEOS_SRV
+[Unit]
+Description=Start Pi/GEOS file conversion service
+After=network.target
+StartLimitIntervalSec=0
+StartLimitBurst=3000
+
+[Service]
+Restart=always
+RestartSec=3
+Type=simple
+User=%i
+Group=%i
+ExecStart=$PIGEOS_PREFIX/bin/pigeos-img2geos
+
+[Install]
+WantedBy=multi-user.target
+IMG2GEOS_SRV
+}
+
+config_img2geos() {
+  # service req. ResilioSync service to be active
+  if [ $IMG2GEOS_SLOAD -eq 1 -a $RSLSYNC_SLOAD -eq 1 ]; then
+    sudo systemctl --now enable img2geos@${PIGEOS_USER} 2>$LOG_FILE 1>&2
+  else
+    sudo systemctl --now disable img2geos@${PIGEOS_USER} 2>$LOG_FILE 1>&2
   fi
 }
 
