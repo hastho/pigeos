@@ -95,8 +95,9 @@ advanced_options=(\
   "ResilioSync Service "	"${disabled_enabled[$RSLSYNC_SLOAD]}" \
   "  Acces Key (rw) "		"${RSLSYNC_KEY}" \
   "  Internet Zugriff "		"${disabled_enabled[$RSLSYNC_WAN]}" \
-  "FeedProxy service "      "${disabled_enabled[$FEEDPROXY_SLOAD]} (${FEEDPROXY_IP:-unbekannt}:8080)" )
-advanced_serv_activate="Gewählten Dienst/Funktion beim Systemstart (de)aktivieren?"
+  "  Auto-Import Funktion "	"${disabled_enabled[$IMG2GEOS_SLOAD]}" \
+  "FeedProxy Service "      "${disabled_enabled[$FEEDPROXY_SLOAD]} (${FEEDPROXY_IP:-unbekannt}:8080)" )
+advanced_serv_activate="beim Systemstart aktivieren?"
 advanced_sync_deactivate="WARNUNG: beim Deaktivieren des ResilioSync-Services werden alle lokalen Kopien der auf Laufwerk S: abgelegten DATEN GELÖSCHT! Bitte vorher unbedingt die Daten sichern z.b. auf USB-Laufwerk U:."
 advanced_sync_key_warn="Der ResilioSync Zugriffsschlüssel kann nicht geändert werden solange der Service aktiv ist."
 advanced_sync_key_edit="Bitte einen vorhandenen ResilioSync-Zugriffsschlüssel eingeben, um das System mit einer existieren Freigabe zu verbinden. \nHinweis: Bleibt das Feld leer, wird automatisch ein neuer Schlüssel generiert mit dem sich andere Systeme mit Pi/GEOS verbinden können."

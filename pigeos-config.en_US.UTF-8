@@ -90,8 +90,9 @@ advanced_options=(\
   "ResilioSync service "	"${disabled_enabled[$RSLSYNC_SLOAD]}" \
   "  Access Key (rw) "		"${RSLSYNC_KEY}" \
   "  Internet access "		"${disabled_enabled[$RSLSYNC_WAN]}" \
+  "  Auto-Import function "	"${disabled_enabled[$IMG2GEOS_SLOAD]}" \
   "FeedProxy service "      "${disabled_enabled[$FEEDPROXY_SLOAD]} (${FEEDPROXY_IP:-unknown}:8080)" )
-advanced_serv_activate="Activate the selected function/server at system start?"
+advanced_serv_activate="activate at system start?"
 advanced_sync_deactivate="WARNING: if you disable the ResilioSync service all local copies of your FILES on drive S: will be REMOVED! Make sure you made a backup eg. on USB drive U:."
 advanced_sync_key_warn="The Resilio-Sync can't be changed while the service is active."
 advanced_sync_key_edit="Please enter an existing sync key, if you want to (re)connect to an existing Resilio share \nHint: If you leave this field blank a new access key will we generated which allows other systems to connect to your Pi/GEOS system."
@@ -103,16 +104,15 @@ prnsel_text="Select 'AUTO' to allow Pi/GEOS to connect to the first available pr
 ### Duplex Selection Menu
 #########################################################
 dupsel_title="Duplex mode"
-dupsel_text="Choose 'AUTO' if your printer supports automatic duplex printing. 
-Otherwise choose 'MANUAL'. In this case two print jobs are created and you need 
-to re-insert the paper after the first one has been finished."
+dupsel_text="Choose 'AUTO' if your printer supports automatic duplex printing. Otherwise choose 'MANUAL'. In this case two print jobs are created and you need to re-insert the paper after the first one has been finished.
+
+Hint: You need to set a suitable job delay that matches the speed of your printer and the number of pages you want to print."
 
 ### Duplex Wait Menu
 #########################################################
 dupwait_title="Dupl job delay"
 dupwait_text="Set the amount of time in seconds to wait before sending the 2nd 
-print job in manual duplex mode. Default min.: 30\n
-Hint: It depends on the speed of your printer and the number of pages to print."
+print job in manual duplex mode."
 
 ### ImageMgmt Menu ################################################################
 imgmgmt_title="FDD/HDD image management"

@@ -45,23 +45,23 @@ conf_reset() {
 ## UI functions ###########################################
 dial_info() {
   $DIAL --backtitle "$BTITLE" --title "Information"  \
-        --infobox "$1" $((${#1} / 46 + 8)) 50
+        --infobox "$1" $((${#1} / 46 + 6)) 50
 }
 dial_msg()  {
   $DIAL --backtitle "$BTITLE" --title "Information"  \
-        --msgbox "$1" $((${#1} / 46 + 8)) 50
+        --msgbox "$1" $((${#1} / 46 + 9)) 50
 }
 dial_err()  {
   $DIAL --backtitle "$BTITLE" --title "Error"  \
-        --msgbox "$1" $((${#1} / 46 + 8)) 50
+        --msgbox "$1" $((${#1} / 46 + 9)) 50
 }
 dial_yesno() {
   $DIAL --backtitle "$BTITLE" --title "Confirmation"  \
-        --yesno  "$1" $((${#1} / 46 + 8)) 50
+        --yesno  "$1" $((${#1} / 46 + 9)) 50
 }
 dial_input() { 
   local sel=$($DIAL --backtitle "$BTTILE" --title "${1}" \
-    --inputbox "$2" 8 50 "$3" \
+    --inputbox "$(echo -e \\n$2)" 9 50 "$3" \
     3>&1 1>&2 2>&3)
   [[ -n $sel ]] && echo $sel || return 1
 }
@@ -71,12 +71,12 @@ dial_menu()  {
   local text=$1; shift
   local items=("$@")
   local itemc=$((${#items[@]}/2))
-  if [ $itemc -gt 10 ]; then
-    itemc=10
+  if [ $itemc -gt 12 ]; then
+    itemc=12
   fi
   local sel=$($DIAL --backtitle "$BTITLE" --title "${title}" \
   	   --ok-button ${ok_button} --cancel-button ${cancel_button} \
-	   --menu "${text}" 20 76 $itemc "${items[@]}" \
+	   --menu "$(echo -e \\n${text})" 20 76 $itemc "${items[@]}" \
 	   3>&1 1>&2 2>&3)
   [[ $? -eq 0 ]] && echo $sel || return 1
 }
@@ -209,7 +209,7 @@ sound_menu() {
   while true; do
 	selection=$($DIAL --backtitle "$BTTILE" --title "PCM Volume" \
       --ok-button 'Test' \
-	  --inputbox "$volumectl_range" 8 50 "$selection" \
+	  --inputbox "$volumectl_range" 9 50 "$selection" \
       3>&1 1>&2 2>&3)
 	if [[ $? -ne 0 ]]; then break; fi
 	if [[ "$selection" =~ ^[0-9]+$ ]]; then
@@ -244,16 +244,17 @@ advanced_menu() {
     source $(conf_get); source $MENU_TEXT
 	selection=$(dial_menu "${advanced_title}" "${advanced_text}" "${advanced_options[@]}")
     case "$selection" in
-      CUPS*)		service_activcation_menu "CUPS_SLOAD" ;;
+      CUPS*)		service_activation_menu "CUPS_SLOAD" "${selection}" ;;
   	  DOSBox*)  	prnsel_menu ;;
 	  Duplex*)		dupsel_menu ;;
 	  Job*)			dupwait_menu ;;
-      Remote*)	 	service_activcation_menu "CUPS_ADMIN" ;;
-      MIDI*)	    service_activcation_menu "MIDI_SLOAD" ;;
-	  ResilioSync*) rslsync_menu "RSLSYNC_SLOAD" ;;
+      Remote*)	 	service_activation_menu "CUPS_ADMIN" "${selection}" ;;
+      MIDI*)	    service_activation_menu "MIDI_SLOAD" "${selection}" ;;
+	  ResilioSync*) rslsync_menu "RSLSYNC_SLOAD" "${selection}" ;;
 	  Acces*Key*)	rslsync_key_edit ;;
-	  Internet*)	service_activcation_menu "RSLSYNC_WAN" ;;
-	  FeedProxy*)   service_activcation_menu "FEEDPROXY_SLOAD" ;;
+	  Internet*)	service_activation_menu "RSLSYNC_WAN" "${selection}" ;;
+	  Auto-Import*)	service_activation_menu "IMG2GEOS_SLOAD" "${selection}" ;;
+	  FeedProxy*)   service_activation_menu "FEEDPROXY_SLOAD" "${selection}" ;;
       *)		    break
     esac
   done
@@ -307,7 +308,7 @@ rslsync_menu() {
   # when disableing config and files will be removed -> warn the user
   grep -q "RSLSYNC_SLOAD=1" $(conf_get) \
     && dial_msg "$advanced_sync_deactivate"
-  service_activcation_menu "RSLSYNC_SLOAD"
+  service_activation_menu "RSLSYNC_SLOAD" "ResilioSync"
 }
 
 rslsync_key_edit() {
@@ -326,10 +327,11 @@ rslsync_key_edit() {
   fi
 }
 
-service_activcation_menu() {
-  local service=$1
+service_activation_menu() {
+  local service="$1"
+  local sername="${2:-$1}"
   local selection
-  dial_yesno "$service $advanced_serv_activate"; selection=$?
+  dial_yesno "$sername $advanced_serv_activate"; selection=$?
   if [[ $selection -ne 255 ]]; then
 	grep -q "$service" $(conf_get) \
   	  && sed -i "s#${service}=.*#${service}=$(($selection==0?1:0))#" $(conf_get) \
