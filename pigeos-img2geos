@@ -36,11 +36,6 @@
 #
 #####
 # depend. pkg.: inotify-tools, imagemagick, antiword, docx2txt, xlsx2csv
-IMG2GEOS_GPALETTE=/usr/local/share/pigeos/palette.tif
-IMG2GEOS_INPATH=$HOME/Shared/IMG2GEOS
-IMG2GEOS_OUTPATH=$HOME/Shared/IMG4GEOS
-IMG2GEOS_DITHER_TH=32000
-ING2GEOS_MAX_WIDTH=800
 
 LOGFILE=/tmp/${0}.log
 
