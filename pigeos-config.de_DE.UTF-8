@@ -34,7 +34,6 @@ basic_options=(\
   "Floppy Drive A:"		"$(basename ${FDA_IMAGE^^} .IMG)" \
   "Floppy Drive B:"		"$(basename ${FDB_IMAGE^^} .IMG)" \
   "Keyboard mapping"	"${KEYB^^}" \
-  "Screen resolution"   "${SCREEN_RESOLUTION}" \
   "Sound volume"		"${VOL_LEVEL}%" )
 
 ### ImageSelection Menue ###########################################################
@@ -71,21 +70,6 @@ keybsel_options=(\
   "us" "Vereinigte Staaten" \
   "yu" "Serbien/Kroatien")
 
-### ScreenResolution Menu #########################################################
-screenres_title="Bildschirmauflösung"
-screenres_text="Bildschirmauflösung für das angeschlossene Ausgabegerät auswählen. \nHinweis: Die GEOS-Bildschirmauflösung sollte für eine optimale Darstellung auf den selben Wert gesetzt werden."
-screenres_options=(\
-  "800x480" 	"800x480   (Raspberry 7\" Touchscreen Display)" \
-  "800x600" 	"800x600   (SVGA)" \
-  "800x600@75" 	"800x600   (75 Hz Bildwiederholrate für CRT Monitore)" \
-  "1024x600"	"1024x600  " \
-  "1024x768"	"1024x768  (Standard XGA)" \
-  "1024x768@75"	"1024x768  (75 Hz Bildwiederholrate für CRT Monitore)" \
-  "1280x720"	"1280x720  (HD   16:9 TVs)" \
-  "1280x768"	"1280x768  (HD   15:9 LCD-Monitore oder TVs)" \
-  "1280x800"	"1280x800  (WXGA 16:10 LCD-Monitore" \
-  "1280x1024"	"1280x1024 " )
-
 ### VolumeControl Menu #########################################################
 volumectl_range="Wert für Lautstärkepegel zwischen  0 (stumm) und 100 (max.) setzen"
 volumetst_info="Spiele Testsound. Bitte Lautstärke überprüfen..."
@@ -104,21 +88,38 @@ advanced_text="Anpassung erweiterter System- und Serviceeinstellungen."
 advanced_options=(\
   "CUPS Druckersystem "		"${disabled_enabled[$CUPS_SLOAD]}" \
   "  DOSBox-Drucker "		"${CUPS_DBPRN}" \
+  "  Duplex-Modus "			"${CUPS_DUPMODE}" \
+  "  Jobverzögerung "		"${CUPS_DUPWAIT}" \
   "  Remote Verwalt. "		"${disabled_enabled[$CUPS_ADMIN]} (http://$(hostname -I | cut -d\  -f1):631)" \
   "MIDI Emulation "	    	"${disabled_enabled[$MIDI_SLOAD]}" \
   "ResilioSync Service "	"${disabled_enabled[$RSLSYNC_SLOAD]}" \
   "  Acces Key (rw) "		"${RSLSYNC_KEY}" \
-  "  Internet Zugriff "		"${disabled_enabled[$RSLSYNC_WAN]}" )
-advanced_serv_activate="Gewählten Dienst/Funktion beim Systemstart (de)aktivieren?"
+  "  Internet Zugriff "		"${disabled_enabled[$RSLSYNC_WAN]}" \
+  "  Auto-Import Funktion "	"${disabled_enabled[$IMG2GEOS_SLOAD]}" \
+  "FeedProxy Service "      "${disabled_enabled[$FEEDPROXY_SLOAD]} (${FEEDPROXY_IP:-unbekannt}:8080)" )
+advanced_serv_activate="beim Systemstart aktivieren?"
 advanced_sync_deactivate="WARNUNG: beim Deaktivieren des ResilioSync-Services werden alle lokalen Kopien der auf Laufwerk S: abgelegten DATEN GELÖSCHT! Bitte vorher unbedingt die Daten sichern z.b. auf USB-Laufwerk U:."
 advanced_sync_key_warn="Der ResilioSync Zugriffsschlüssel kann nicht geändert werden solange der Service aktiv ist."
-advanced_sync_key_edit="Bitte einen vorhandenen ResilioSync-Zugriffsschlüssel eingeben, um das System mit einer existieren Freigabe zu verbinden. \Hinweis: Bleibt das Feld leer, wird automatisch ein neuer Schlüssel generiert mit dem sich andere Systeme mit Pi/GEOS verbinden können."
+advanced_sync_key_edit="Bitte einen vorhandenen ResilioSync-Zugriffsschlüssel eingeben, um das System mit einer existieren Freigabe zu verbinden. \nHinweis: Bleibt das Feld leer, wird automatisch ein neuer Schlüssel generiert mit dem sich andere Systeme mit Pi/GEOS verbinden können."
 
 
 ### Printer Selection Menu #########################################################
 prnsel_title="Druckerauswahl"
 prnsel_text="Wähle 'AUTO' um automatisch den ersten erkannten Drucker zu nutzen \noder selektiere ein bestimmtes Modell. Wähle 'PDF' um die Druckausgabe in PDF Dateien auf der Dokumentenfreigabe (S:) umzuleiten. \nHinweis: PDF-Druck erfodert die Aktivierung des ResilioSync Dienstes."
 
+### Duplex Selection Menu
+#########################################################
+dupsel_title="Duplexmodus"
+dupsel_text="Wähle 'AUTO', wenn Dein Drucker einen automatischen Dupluxdruck d.h. das Bedrucken der Papiervorder- und Rückseite unterstützt. 
+Die Option 'MANUAL' generiert 2 Jobs, die mit Verzögerungs gedruckt werden. Nach dem Drucken der Vorderseiten im 1. Job muss das Papier menuell erneut eingelegt werden.
+
+Hinweis: Abhängig von der Druckgeschwndigkeit und der Anzahl max. zu druckender Seiten, ist unter 'Jobverzögerungs' eine hinreichend grosse Wartezeit einzustellen."
+
+### Duplex Wait Menu
+#########################################################
+dupwait_title="Jobverzögerung"
+dupwait_text="Wähle die Verzögerung in Sekunden zwischen dem Druck der Vorder- und Rückseite."
+ 
 ### ImageMgmt Menue ################################################################
 imgmgmt_title="FDD/HDD Abbild Verwaltungs"
 imgmgmt_text="Hinzufügen, Erstellen oder Löschen von Festplattenabbildern. \nWähle eine Aktion oder drücke ESC um zum Hauptmenü zurückzukehren."

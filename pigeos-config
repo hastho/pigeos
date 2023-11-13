@@ -45,25 +45,25 @@ conf_reset() {
 ## UI functions ###########################################
 dial_info() {
   $DIAL --backtitle "$BTITLE" --title "Information"  \
-        --infobox "$1" $((${#1} / 46 + 8)) 50
+        --infobox "$1" $((${#1} / 46 + 6)) 50
 }
 dial_msg()  {
   $DIAL --backtitle "$BTITLE" --title "Information"  \
-        --msgbox "$1" $((${#1} / 46 + 8)) 50
+        --msgbox "$1" $((${#1} / 46 + 9)) 50
 }
 dial_err()  {
   $DIAL --backtitle "$BTITLE" --title "Error"  \
-        --msgbox "$1" $((${#1} / 46 + 8)) 50
+        --msgbox "$1" $((${#1} / 46 + 9)) 50
 }
 dial_yesno() {
   $DIAL --backtitle "$BTITLE" --title "Confirmation"  \
-        --yesno  "$1" $((${#1} / 46 + 8)) 50
+        --yesno  "$1" $((${#1} / 46 + 9)) 50
 }
 dial_input() { 
   local sel=$($DIAL --backtitle "$BTTILE" --title "${1}" \
-    --inputbox "$2" 8 50 "$3" \
+    --inputbox "$(echo -e \\n$2)" 9 50 "$3" \
     3>&1 1>&2 2>&3)
-  [[ $? -eq 0 ]] && echo $sel || return 1
+  [[ -n $sel ]] && echo $sel || return 1
 }
 
 dial_menu()  {
@@ -71,12 +71,12 @@ dial_menu()  {
   local text=$1; shift
   local items=("$@")
   local itemc=$((${#items[@]}/2))
-  if [ $itemc -gt 10 ]; then
-    itemc=10
+  if [ $itemc -gt 12 ]; then
+    itemc=12
   fi
   local sel=$($DIAL --backtitle "$BTITLE" --title "${title}" \
   	   --ok-button ${ok_button} --cancel-button ${cancel_button} \
-	   --menu "${text}" 20 76 $itemc "${items[@]}" \
+	   --menu "$(echo -e \\n${text})" 20 76 $itemc "${items[@]}" \
 	   3>&1 1>&2 2>&3)
   [[ $? -eq 0 ]] && echo $sel || return 1
 }
@@ -143,7 +143,6 @@ basic_menu() {
       Floppy*A*)	imgsel_menu fda ;;
       Floppy*B*)	imgsel_menu fdb ;;
       Keyboard*)	keybrd_menu ;;
-	  Screen*)	  	screen_menu ;;
 	  Sound*)		sound_menu ;;
       *)		break
     esac
@@ -164,9 +163,9 @@ imgsel_menu() {
   done
   # ask the user to choose one image
   selection=$(dial_menu "${imgsel_title}" "${imgsel_text}" "${imgsel_list[@]}")
-  if [ -z "$selection+x" ]; then
+  if [ "x$selection" = "x" ]]; then
     false # image selection aborted
-  elif [ "$selection" == "NONE" ]; then
+  elif [ "$selection" = "NONE" ]; then
     sed -i "s#${imgsel_drv^^}_IMAGE=.*#${imgsel_drv^^}_IMAGE=NONE#" $(conf_get)
   elif grep -q ".D._IMAGE=${imgsel_dir}${selection}.img" $(conf_get); then
     dial_err "$imgsel_mounted"
@@ -195,23 +194,11 @@ keybrd_menu() {
   local selection
   source $(conf_get); source $MENU_TEXT
   selection=$(dial_menu "${keybsel_title}" "${keybsel_text}" "${keybsel_options[@]}")
-  if [ "x$selection" != "x" ]; then
+  if [[ -n $selection ]]; then
     # language settings where not present in early versions
     grep -q KEYB $(conf_get) || echo "KEYB=us" >>$(conf_get)
 	# set selected lang.
     sed -i "s#KEYB=.*#KEYB=$selection#" $(conf_get)
-  fi
-}
-
-screen_menu() {
-  local selection
-  source $(conf_get); source $MENU_TEXT
-  selection=$(dial_menu "${screenres_title}" "${screenres_text}" "${screenres_options[@]}")
-  if [ "x$selection" != "x" ]; then
-    # screenres settings where not present in early versions
-    grep -q SCREEN_RESOLUTION $(conf_get) || echo "SCREEN_RESOLUTION=1024x768" >>$(conf_get)
-	# set selected lang.
-    sed -i "s#SCREEN_RESOLUTION=.*#SCREEN_RESOLUTION=$selection#" $(conf_get)
   fi
 }
 
@@ -222,16 +209,16 @@ sound_menu() {
   while true; do
 	selection=$($DIAL --backtitle "$BTTILE" --title "PCM Volume" \
       --ok-button 'Test' \
-	  --inputbox "$volumectl_range" 8 50 "$selection" \
+	  --inputbox "$volumectl_range" 9 50 "$selection" \
       3>&1 1>&2 2>&3)
 	if [[ $? -ne 0 ]]; then break; fi
 	if [[ "$selection" =~ ^[0-9]+$ ]]; then
       # play a test sound
 	  dial_info "$volumetst_info"
       # clip given value to the allowed range
-	  if [ $selection -lt 0 ]; then
+	  if [[ $selection -lt 0 ]]; then
 		selection=0
-	  elif [ $selection -gt 100 ]; then
+	  elif [[ $selection -gt 100 ]]; then
 		selection=100
 	  fi
 	  idx=$(( $RANDOM % ${#volumetst_text[@]} ))
@@ -257,13 +244,17 @@ advanced_menu() {
     source $(conf_get); source $MENU_TEXT
 	selection=$(dial_menu "${advanced_title}" "${advanced_text}" "${advanced_options[@]}")
     case "$selection" in
-      CUPS*)		service_activcation_menu "CUPS_SLOAD" ;;
+      CUPS*)		service_activation_menu "CUPS_SLOAD" "${selection}" ;;
   	  DOSBox*)  	prnsel_menu ;;
-      Remote*)	 	service_activcation_menu "CUPS_ADMIN" ;;
-      MIDI*)	    service_activcation_menu "MIDI_SLOAD" ;;
-	  ResilioSync*) rslsync_menu "RSLSYNC_SLOAD" ;;
+	  Duplex*)		dupsel_menu ;;
+	  Job*)			dupwait_menu ;;
+      Remote*)	 	service_activation_menu "CUPS_ADMIN" "${selection}" ;;
+      MIDI*)	    service_activation_menu "MIDI_SLOAD" "${selection}" ;;
+	  ResilioSync*) rslsync_menu "RSLSYNC_SLOAD" "${selection}" ;;
 	  Acces*Key*)	rslsync_key_edit ;;
-	  Internet*)	service_activcation_menu "RSLSYNC_WAN" ;;
+	  Internet*)	service_activation_menu "RSLSYNC_WAN" "${selection}" ;;
+	  Auto-Import*)	service_activation_menu "IMG2GEOS_SLOAD" "${selection}" ;;
+	  FeedProxy*)   service_activation_menu "FEEDPROXY_SLOAD" "${selection}" ;;
       *)		    break
     esac
   done
@@ -274,15 +265,42 @@ prnsel_menu() {
   local prnsel_list=("AUTO" "autodetect" "PDF" "PDF Export")
   # build the list of available printers
   for p in $(lpstat -a | cut -d ' ' -f 1); do 
-    [[ ! -z "$p" ]] && prnsel_list+=("$p" "${p//_/ }")
+    [[ -n $p ]] && prnsel_list+=("$p" "${p//_/ }")
   done
   # ask the user to choose a printer
   selection=$(dial_menu "${prnsel_title}" "${prnsel_text}" "${prnsel_list[@]}")
-  if [ ! -z "$selection" ]; then
+  if [[ -n $selection ]]; then
     grep -q CUPS_DBPRN $(conf_get) \
 	  && sed -i "s#CUPS_DBPRN=.*#CUPS_DBPRN=${selection}#" $(conf_get) \
 	  || echo "CUPS_DBPRN=${selection}" >> $(conf_get)
   fi
+}
+
+dupsel_menu() {
+  local selection
+  local dupsel_list=("AUTO" "automatic" "MANUAL" "manual mode")
+  selection=$(dial_menu "${dupsel_title}" "${dupsel_text}" "${dupsel_list[@]}")
+  if [[ -n $selection ]]; then
+	grep -q CUPS_DUPMODE $(conf_get) \
+	  && sed -i "s#CUPS_DUPMODE=.*#CUPS_DUPMODE=${selection}#" $(conf_get) \
+	  || echo "CUPS_DUPMODE=${selection}" >> $(conf_get)
+  fi
+}
+
+dupwait_menu() {
+  local wtime
+  while :; do
+    wtime=$(dial_input "${dupwait_title}" "${dupwait_text}" ${CUPS_DUPWAIT})
+	if [[ -z $wtime ]]; then
+	  break
+	elif [[ "$wtime" != "$(echo $wtime | tr -cd '[:digit:]')" ]]; then
+	  dial_yesno "Invalid value: $wtime Retry?" && continue || break
+	fi
+	grep -q CUPS_DUPWAIT $(conf_get) \
+	  && sed -i "s#CUPS_DUPWAIT=.*#CUPS_DUPWAIT=${wtime}#" $(conf_get) \
+	  || echo "CUPS_DUPWAIT=${wtime}" >> $(conf_get)
+	break
+  done
 }
 
 rslsync_menu() {
@@ -290,16 +308,16 @@ rslsync_menu() {
   # when disableing config and files will be removed -> warn the user
   grep -q "RSLSYNC_SLOAD=1" $(conf_get) \
     && dial_msg "$advanced_sync_deactivate"
-  service_activcation_menu "RSLSYNC_SLOAD"
+  service_activation_menu "RSLSYNC_SLOAD" "ResilioSync"
 }
 
 rslsync_key_edit() {
   local selection
   source $(conf_get)
   # the sync key can only set once but not changed later 
-  if [ "x$RSLSYNC_KEY" == "x" ]; then
-    selection=$(dial_input "Input" "${advanced_sync_key_edit}" "$RSLSYNC_KEY" || echo ABORT)
-  	if [ "x$selection" != "xABORT" ]; then
+  if [[ -z $RSLSYNC_KEY ]]; then
+    selection=$(dial_input "Input" "${advanced_sync_key_edit}" "$RSLSYNC_KEY")
+  	if [[ -n $selection ]]; then
       grep -q "RSLSYNC_KEY" $(conf_get) \
 	  	&& sed -i "s#RSLSYNC_KEY=.*#RSLSYNC_KEY=${selection}#" $(conf_get) \
 	  	|| echo 	   "RSLSYNC_KEY=${selection}" >> $(conf_get)
@@ -309,11 +327,12 @@ rslsync_key_edit() {
   fi
 }
 
-service_activcation_menu() {
-  local service=$1
+service_activation_menu() {
+  local service="$1"
+  local sername="${2:-$1}"
   local selection
-  dial_yesno "$service $advanced_serv_activate"; selection=$?
-  if [ $selection -ne 255 ]; then
+  dial_yesno "$sername $advanced_serv_activate"; selection=$?
+  if [[ $selection -ne 255 ]]; then
 	grep -q "$service" $(conf_get) \
   	  && sed -i "s#${service}=.*#${service}=$(($selection==0?1:0))#" $(conf_get) \
 	  || echo 	  "${service}=$(($selection==0?1:0))" >> $(conf_get)
@@ -353,11 +372,11 @@ imgmgmt_create() {
 	iname=$(dial_input "Image name" "$imgmgmt_image_filename" "$iname")
 	idesc=$(dial_input "Image description" "$imgmgmt_image_descrition" "")
     # check none zero values and characters not allowed in file names
-    if [ "x$isize" == "x" -o "x$iname" == "x" ]; then
+    if [ "x$isize" = "x" -o "x$iname" = "x" ]; then
 	  dial_yesno "$imgmgmt_not_null" && continue || break
-	elif [ "$isize" != "$(echo $isize | tr -cd '[:digit:]')" ]; then
+	elif [[ "$isize" != "$(echo $isize | tr -cd '[:digit:]')" ]]; then
 	  dial_yesno "Invalid value: $isize Retry?" && continue || break
-	elif [ "$iname" != "$(echo $iname | tr -cd '[:alnum:]_-')" ]; then
+	elif [[ "$iname" != "$(echo $iname | tr -cd '[:alnum:]_-')" ]]; then
 	  dial_yesno "Invalid value: $iname Retry?" && continue || break
 	fi
 	# call external image utility to create sparse file image
@@ -379,7 +398,7 @@ imgmgmt_delete() {
     do imgsel_list+=("$(basename $f .inf)" "$(head -1 $f)"); done
   # ask the user to choose one image
   selection=$(dial_menu "${imgsel_title}" "${imgsel_text}" "${imgsel_list[@]}")
-  if [ ! -z "$selection" ]; then
+  if [[ -n $selection ]]; then
     if grep -q ".D._IMAGE=${imgsel_dir}${selection}.img" $(conf_get); then
 	  dial_err "${imgmgmt_del_mounted}"
 	else
@@ -398,12 +417,12 @@ imgmgmt_rename() {
     do imgsel_list+=("$(basename $f .inf)" "$(head -1 $f)"); done
   # ask the user to choose one image
   selection=$(dial_menu "${imgsel_title}" "${imgsel_text}" "${imgsel_list[@]}")
-  if [ ! -z "$selection" ]; then
+  if [[ -n $selection ]]; then
     if grep -q ".D._IMAGE=${imgsel_dir}${selection}.img" $(conf_get); then
 	  dial_err "${imgmgmt_mod_mounted}"
 	else
 	  iname=$(dial_input "Image name" "$imgmgmt_image_filename" "$selection")
-	  if [ ! -z "$iname" ]; then
+	  if [[ -n $iname ]]; then
 	    pigeos-image rename "$selection" "$iname" 2>/dev/null 1>&1
 	  fi
 	fi
@@ -419,7 +438,7 @@ imgmgmt_edit() {
     do imgsel_list+=("$(basename $f .inf)" "$(head -1 $f)"); done
   # ask the user to choose one image
   selection=$(dial_menu "${imgsel_title}" "${imgsel_text}" "${imgsel_list[@]}")
-  if [ ! -z "$selection" ]; then
+  if [[ -n $selection ]]; then
     jed +3 ${imgsel_dir}/${selection}.inf
   fi
 }
@@ -448,12 +467,12 @@ imgmgmt_download() {
   done
   ilist+=("$((++i))" "Custom")
   selection=$(dial_menu "Image Download" "Select an image to download" "${ilist[@]}")
-  if [ $selection == $i ]; then
+  if [[ "$selection" == "$i" ]]; then
     # last option selected -> ask for a custom URL
     url=$(dial_input "Dounwload" \
                   "$imgmgmt_download" \
 				  "https://dl.dropbox.com/s/4v6gm5z0ynyft4k/ensdemo402.tgz")
-  elif [ "x$selection" != "x" ]; then
+  elif [[ -n $selection ]]; then
     j=$((selection*2+1))
 	url="${irepo[$j]}"
   fi
@@ -486,7 +505,7 @@ imgmgmt_export() {
     do imgsel_list+=("$(basename $f .inf)" "$(head -1 $f)"); done
   # ask the user to choose one image
   selection=$(dial_menu "${imgsel_title}" "${imgsel_text}" "${imgsel_list[@]}")
-  if [ ! -z "$selection" ]; then
+  if [[ -n $selection ]]; then
     file_archive /media/usb/${selection}.tgz ${imgsel_dir}/${selection}.i??
   fi
 }
@@ -518,7 +537,7 @@ imgmgmt_import() {
   done 
   # ask the user to choose one image
   selection=$(dial_menu "${imgsel_title}" "${imgsel_text}" "${imgsel_list[@]}")
-  if [ ! -z "$selection" ]; then
+  if [[ -n $selection ]]; then
     file_extract /media/usb/${selection}.tgz $imgsel_dir
     dial_msg "$imgmgmt_unpack_suc"
   fi
@@ -575,12 +594,13 @@ else
   MENU_TEXT=/usr/local/share/pigeos/pigeos-config.en_US.UTF-8
 fi
 # switch console font to get a aprox. 25x80 char text screen resolution like in DOS
+SCREEN_RESOLUTION=$(fbset -a | grep '^mode.*' \
+  | sed 's/^mode\s\"\([0-9]*x[0-9]*\)\"$/\1/')
 case $SCREEN_RESOLUTION in
   640x*)	setfont ${FONT[tiny]};;
   800x*)	setfont ${FONT[small]};;
   1024x*)	setfont ${FONT[medium]};;
-  1280x*)	setfont ${FONT[large]};;
-  *)  	  	setfont ${FONT[medium]};;
+  *)		setfont ${FONT[large]};;
 esac
 # changes made by the config tool are applied to a new file
 conf_new

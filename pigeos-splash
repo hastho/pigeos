@@ -44,7 +44,7 @@ ${cpu}, CPU at ${speed}MHz\n\
 Memory Test : 16384K OK\n\
 \n\
 Raspberry Pi Plug and Play PC/GEOS extension\n\
-Copyright \(C\) 2020-22, Thomas Hass\n\
+Copyright \(C\) 2020-23, Thomas Hass\n\
 http://www.thobipix.de\n\
 \n\
 Initialize Plug and Play Options ...\n\
@@ -62,7 +62,7 @@ Please wait, Pi/GEOS is booting up ..."
 
   sudo convert /usr/local/share/pigeos/splash_tpl.png \
    -font Px437-PhoenixEGA-8x16 -pointsize 28 -fill '#e7e7e7' -annotate +33+170 "$msg" \
-   -resize ${SCREEN_RESOLUTION%@*} /usr/local/lib/pigeos/splash.png
+   /usr/local/lib/pigeos/splash.png
 }
 ### MAIN ###########################################################################
 [ -r ${CONFIG} ] && source $CONFIG

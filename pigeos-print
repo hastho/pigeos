@@ -1,51 +1,151 @@
 #!/bin/bash
-# This helper script handles printer selection and
-# special features to extract the original docuemnt name
-# from PS printer driver output to generate a unique
-# file name in the case the user wants to print to PDF file
+# (c) 2020-23 T.Hass
+#
+# USAGE pigeos-print [-P <printer>] [-d] [-m AUTO|MANUAL] <file>
+#
+# OPTIONS:
+#   <file>       RAW or Postscript file to print
+#   -P <printer> printer to use
+#   -d           enforce duplex mode for all documents
+#   -m <mode>    duplex mode supported by <printer>
+#
+###
+#
+# NAME: Pi/GEOS PRINT $PIGEOS_VER
+#
+# PURPOSE: pre-process printer output from DOSBox and send it to a printer
+#
+# This helper script handles printer selection and special features to extract
+# the original docuemnt name # from PS printer driver output to generate a 
+# unique # file name in the case the user wants to print into a PDF file. It
+# also supports pre-processing of printjobs to create booklet or two-on-one
+# page output und duplex printing either using PS printers which support this
+# automatically (mode AUTO) or by printing odd pages first and even pages as
+# second print job (mode MANUAL) after CUPS_DUPWAIT number of seconds.
+#
+# It reads default configuration options from $HOME/.pigeos config file:
+#   CUPS_DBPRN=<name>	printer <name> to send output to with special names:
+#				AUTO	means to automatically use the first availble printer
+#				PDF		create a pdf file in $HOME/Share/PDF (drive S:\PDF)
+#	CUPS_DUPENF=0|1		enforce duplex mode for all documents (see -d)
+#	CUPS_DUPMODE=AUTO|MANUAL
+#	CUPS_DUPWAIT=<seconds>
+#
+# To enable booklet or two-on-one page printing it looks for some special tags
+# in the prined GEOS document itself. These are:
+#	~~BOOKLET~~			re-orders pages and prints two on one sheet of paper
+#						WITHOUT SCALING so your document has to be half the
+#						page size (e.g. A5) than the paper you want to print
+#						on (e.g. A4) which allows high quality prints.
+#						This enforced DUPLEX mode on physical printers!
+#	~~TWOPAGE~~			SCALES DOWN 2 pages of the documents (+70%) to fit on
+#						one seet of paper. Can be combined with DUPLEX.
+#	~~DUPLEX~~			Enforce duplex printing on real printers.
+#
+# NOTE: These options only works if 'GohstScript Software RIP' drive is used 
+# within GEOS! Choose white as text color to hide the tags from beeing printed.
+# 	
+# SEE ALSO: pigeos-config
+#
+#####
+#set -e
+# setup for usage and manual
+PROGNAME=$(type $0 | cut -d ' ' -f 3)
+PROGDIR=$(dirname $PROGNAME)
+PROGNAME=$(basename $PROGNAME)
+# application defaults
 CONFIG=$HOME/.pigeos
 PDFDIR=$HOME/Shared/PDF
 LOGFILE=/tmp/pigeos-print.log
 
+usage() {
+  echo "" >&2
+  echo "$PROGNAME:" "$@" >&2
+  sed -n '/^###/q; /^#/!q; s/^#//; s/^ //; 4,$p' "$PROGDIR/$PROGNAME" >&2
+  exit 254
+}
+help() {
+  echo "" >&2
+  echo "$PROGNAME:" "$@" >&2
+  sed -n '/^#####/q; /^#/!q; s/^#*//; s/^ //; 4,$p' "$PROGDIR/$PROGNAME" >&2
+  exit 254
+}
 get_doc_type() { file -b --mime-type $1; }
 get_doc_name() {
   # extract title and map GEOS german umlauts to UTF-8
-  buffer=$(cat $1 \
-  	| sed -e 's/\r//' \
-  	| grep -a '%%Title:.*' \
+  buffer=$(strings $1 \
+  	| grep '.*%%Title:.*' \
   	| sed  's/\x80/\xc3\x84/g; 
-	  	  	s/\x8a/\xc3\xa4/g;
-	  	  	s/\x85/\xc3\x96/g;
-	  	  	s/\x9a/\xc3\xb6/g;
-	  	  	s/\x86/\xc3\x9c/g;
-	  	  	s/\x9f/\xc3\xbc/g;
-	  	  	s/\xa7/\xc3\x9f/g' \
+	  	s/\x8a/\xc3\xa4/g;
+	  	s/\x85/\xc3\x96/g;
+	  	s/\x9a/\xc3\xb6/g;
+	  	s/\x86/\xc3\x9c/g;
+	  	s/\x9f/\xc3\xbc/g;
+	  	s/\xa7/\xc3\x9f/g' \
   )
   if [ ! -z "$buffer" ]; then
-    echo $(expr "$buffer" : '%%Title: \(.*\)')
+    echo $(expr "$buffer" : '.*%%Title: \(.*\).*'| sed 's/\s/_/g')
   else
     echo "unkown"
+  fi
+}
+get_doc_pcount() {
+  # the number of page copies requested by the user will get lost
+  # during the PS pre-processing, so we need to read it form input
+  buffer=$(strings $1 \
+    |grep '.*%%Requirements:\snumcopies.*'
+  )
+  if [ ! -z "$buffer" ]; then
+    echo $(expr "$buffer" : '.*numcopies(\([0-9]*\)).*')
+  else
+    echo 1
   fi
 }
 get_doc_psize() {
   # search for the SetPageSize line in the PgaeSetup section
   buffer=$(awk '/%%BeginPageSetup/	{f=1;next} \
                 /%%.*/				{f=0;next} \
-	            /.*SPS/ && f		{printf("%dx%d\n", $1*10, $2*10);exit}' $1 \
+	            /.*SPS/ && f		{printf("%dx%d\n", $1, $2);exit}' $1 \
   )
   if [ ! -z "$buffer" ]; then
     echo $buffer
   else
-    echo "5950x8420"
+    echo "595x842" # assume A4
   fi
 }
+get_doc_booklet() { grep -q '~~BOOKLET~~' $1; }
+get_doc_duplex()  { grep -q '~~DUPLEX~~'  $1; }
+get_doc_twopage() { grep -q '~~TWOPAGE~~' $1; }
 ### MAIN #######################################################################
+. $CONFIG
+while getopts "dhP:m:" OPTION; do
+    case "${OPTION}" in
+        d)	CUPS_DUPENF=1
+			;;
+		h)	usage
+			;;
+		P)	CUPS_DBPRN=${OPTARG}
+            ;;
+        m)	CUPS_DUPMODE=${OPTARG}
+            if [ ! \( "x$CUPS_DUPMODE" == "xAUTO" -o \
+			 		  "x$CUPS_DUPMODE" == "xMANUAL" \) ]
+			then
+				usage
+			fi
+            ;;
+        *)
+            usage
+            ;;
+    esac
+done
+shift $((OPTIND-1))
+
 if [ ! -r "${1-x}" ]; then
-  echo "File $1 is not readable" &>>LOGFILE
+  echo "File $1 is not readable"
   exit 1
 fi
-. $CONFIG
-# AUTO -> select 1st form all available printers
+
+### printer detection: AUTO -> select 1st form all available printers
 if [ "x$CUPS_DBPRN" == "xAUTO" ]; then
   printer=$(lpstat -a | cut -d ' ' -f 1)
 else
@@ -53,18 +153,70 @@ else
   printer=`(lpstat -a | cut -d ' ' -f 1; echo PDF) | grep $CUPS_DBPRN`
 fi
 echo "Using printer '$printer' to print '$1'" >>$LOGFILE
+
+### preparation 
+# extract page size information from PS input
+page_size=$(get_doc_psize $1)
+page_width=${page_size%x*}
+page_height=${page_size#*x}
+
+# prepare filter CMD depending options set by document tag or config
+if get_doc_booklet $1; then
+  # double the page size for the output pipe
+  page_size=$((page_height))x$((page_width*2))
+  page_width=${page_size%x*}
+  page_height=${page_size#*x}
+  # re-order pages and place two pages next to each other
+  PSFILTER1="psbook"
+  PSFILTER2="pstops -w${page_width} -h${page_height} 2:0L(1w,0)+1L(1w,0.5h)"
+elif get_doc_twopage $1; then
+  # scale down input page and place them next to each other
+  PSFILTER1="pstops -w${page_width} -h${page_height} 2:0L@.7(1w,0)+1L@.7(1w,0.5h)"
+  PSFILTER2="cat"
+else
+  # dummy filter
+  PSFILTER1="cat"
+  PSFILTER1="cat"
+fi
+
+### printing
 if [ "x$printer" == "x" ]; then
-  	  	  	  	  	    	  	  	  	  	  	  	  	     exit 2
+  echo -e "Error: no priner found" >>$LOGFILE             ;  exit 2
+# PDF
 elif [ "x$printer" == "xPDF" ]; then
   # try to create PDF out dir if not present
   [[ -d $PDFDIR ]] || mkdir -p $PDFDIR    	  	  	  	  || exit 3
   # validate printout is in Postscript format
   [[ "$(get_doc_type $1)" == "application/postscript" ]]  || exit 4
   # convert to PDF
+  cat $1 | $PSFILTER1 | $PSFILTER2 | \
   gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite \
-     -dCompatibilityLevel=1.1 -g"$(get_doc_psize $1)" \
-	 -sOutputFile="${PDFDIR}/$(get_doc_name $1).pdf" "$1" &>>$LOGFILE
+     -dCompatibilityLevel=1.1 -r72 -g"${page_size}" \
+     -sOutputFile="${PDFDIR}/$(get_doc_name $1).pdf" - &>>$LOGFILE
   rm $1
+# use a real printer
 else
-  lpr -T "$(get_doc_name $1)" -P $printer $1 &>>$LOGFILE
-fi
+  # command to print
+  PSPRINT="lpr -# $(get_doc_pcount $1) -P $printer -J $(get_doc_name $1)"
+  # handle duplex printing
+  if get_doc_booklet $1 || get_doc_duplex $1 || test $CUPS_DUPENF -eq 1; then
+    if   [ "x$CUPS_DUPMODE" == "xAUTO" ]; then
+      # inject PS code to instruct the printer to switch into duplex mode
+      cat $1 | $PSFILTER1 | $PSFILTER2 | psduplex -tumble | $PSPRINT &>>$LOGFILE
+    elif [ "x$CUPS_DUPMODE" == "xMANUAL" ]; then  
+	  # create two printjobs send with a delay to allow the user to re-inject paper
+      # print odd pages first
+      cat $1 | $PSFILTER1  | $PSFILTER2 | psselect -o | $PSPRINT &>>$LOGFILE
+	  sleep_timer=${CUPS_DUPWAIT:-30}
+	  while [ $sleep_timer -gt 1 ]; do 
+	    echo -ne "\007"; sleep_timer=$((sleep_timer/2)); sleep $sleep_timer
+	  done
+	  # print even pages in reverse order
+	  cat $1 | $PSFILTER1  | $PSFILTER2 | psselect -e -r | $PSPRINT &>>$LOGFILE
+	else 
+	  echo "Error: CUPS_DUPLEX=[auto|manual] mode not set in config!" &>>$LOGFILE
+    fi
+  else # simplex printing
+    $PSPRINT $1 &>>$LOGFILE
+  fi
+fi 

@@ -34,7 +34,6 @@ basic_options=(\
   "Floppy Drive A:"		"$(basename ${FDA_IMAGE^^} .IMG)" \
   "Floppy Drive B:"		"$(basename ${FDB_IMAGE^^} .IMG)" \
   "Keyboard mapping"	"${KEYB^^}"  \
-  "Screen resolution"   "${SCREEN_RESOLUTION}" \
   "Sound volume"		"${VOL_LEVEL}%" )
 
 ### Image Selection Menu ###########################################################
@@ -71,20 +70,6 @@ keybsel_options=(\
   "us" "United States" \
   "yu" "Serbo-Croatian")
 
-### Screen Resolution Menu #########################################################
-screenres_title="Screen resolution"
-screenres_text="Please select the screen resolution of the used display device. \nHint: you need to set the GEOS display resolution to the same value for optimum results."
-screenres_options=(\
-  "800x480" 	"800x480 (Raspberry 7\" touch screen display)" \
-  "800x600" 	"800x600" \
-  "800x600@75" 	"800x600 at 75 Hz refresh rate (for CRT displays)" \
-  "1024x600"	"1024x600" \
-  "1024x768"	"1024x768 (Standard for LCD type displays)" \
-  "1024x768@75"	"1024x768 at 75 Hz refresh rate (for CRT displays)" \
-  "1280x720"	"1280x720 (HDready 16:9 LCD type displays)" \
-  "1280x768"	"1280x768" \
-  "1280x800"	"1280x800" \
-  "1280x1024"	"1280x1024" )
 ### Volume Control Menu #########################################################
 volumectl_range="Set volume level between 0 (mute) and 100 (max)"
 volumetst_info="Running sound check. Please wait..."
@@ -98,12 +83,16 @@ advanced_text="Enable/disable and manage advanced system services."
 advanced_options=(\
   "CUPS printing system "	"${disabled_enabled[$CUPS_SLOAD]}" \
   "  DOSBox printer "		"${CUPS_DBPRN}" \
+  "  Duplex mode "			"${CUPS_DUPMODE}" \
+  "  Job wait time "		"${CUPS_DUPWAIT}" \
   "  Remote management "	"${disabled_enabled[$CUPS_ADMIN]} (http://$(hostname -I | cut -d\  -f1):631)" \
   "MIDI emulation "	    	"${disabled_enabled[$MIDI_SLOAD]}" \
   "ResilioSync service "	"${disabled_enabled[$RSLSYNC_SLOAD]}" \
   "  Access Key (rw) "		"${RSLSYNC_KEY}" \
-  "  Internet access "		"${disabled_enabled[$RSLSYNC_WAN]}" )
-advanced_serv_activate="Activate the selected function/server at system start?"
+  "  Internet access "		"${disabled_enabled[$RSLSYNC_WAN]}" \
+  "  Auto-Import function "	"${disabled_enabled[$IMG2GEOS_SLOAD]}" \
+  "FeedProxy service "      "${disabled_enabled[$FEEDPROXY_SLOAD]} (${FEEDPROXY_IP:-unknown}:8080)" )
+advanced_serv_activate="activate at system start?"
 advanced_sync_deactivate="WARNING: if you disable the ResilioSync service all local copies of your FILES on drive S: will be REMOVED! Make sure you made a backup eg. on USB drive U:."
 advanced_sync_key_warn="The Resilio-Sync can't be changed while the service is active."
 advanced_sync_key_edit="Please enter an existing sync key, if you want to (re)connect to an existing Resilio share \nHint: If you leave this field blank a new access key will we generated which allows other systems to connect to your Pi/GEOS system."
@@ -111,6 +100,19 @@ advanced_sync_key_edit="Please enter an existing sync key, if you want to (re)co
 ### Printer Selection Menu #########################################################
 prnsel_title="Printer Selection"
 prnsel_text="Select 'AUTO' to allow Pi/GEOS to connect to the first available printer or force to use a certain printer. Select 'PDF' to create PDF documents on the shared drive (S:). \nHint: PDF printing requires ResilioSync service to be enabled."
+
+### Duplex Selection Menu
+#########################################################
+dupsel_title="Duplex mode"
+dupsel_text="Choose 'AUTO' if your printer supports automatic duplex printing. Otherwise choose 'MANUAL'. In this case two print jobs are created and you need to re-insert the paper after the first one has been finished.
+
+Hint: You need to set a suitable job delay that matches the speed of your printer and the number of pages you want to print."
+
+### Duplex Wait Menu
+#########################################################
+dupwait_title="Dupl job delay"
+dupwait_text="Set the amount of time in seconds to wait before sending the 2nd 
+print job in manual duplex mode."
 
 ### ImageMgmt Menu ################################################################
 imgmgmt_title="FDD/HDD image management"
