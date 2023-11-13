@@ -1,11 +1,11 @@
 #!/bin/bash
-# (c) 2020-22 T.Hass
+# (c) 2020-23 T.Hass
 #
-# USAGE pigeos-convert
+# USAGE pigeos-img2geos
 #
 ###
 #
-# NAME: Pi/GEOS CONVERT v0.2
+# NAME: Pi/GEOS Image to GEOS v0.2
 #
 # PURPOSE: Pi/GEOS document conversion service/utillity
 #
@@ -36,8 +36,8 @@
 #
 #####
 # depend. pkg.: inotify-tools, imagemagick, antiword, docx2txt, xlsx2csv
-
-LOGFILE=/tmp/${0}.log
+CONFIG=$HOME/.pigeos
+LOGFILE=/tmp/pigeos-img2geos.log
 
 # req. for locking
 set -C
@@ -106,6 +106,8 @@ __xlsx2csv() {
   [[ ${PIPESTATUS[0]} -eq 0 ]] && rm "${IMG2GEOS_INPATH}/$docfile"
 }
 
+### Main ###
+source ${CONFIG}
 # create folder, if not present
 test -d $IMG2GEOS_INPATH 	|| mkdir -p $IMG2GEOS_INPATH
 test -d $IMG2GEOS_OUTPATH 	|| mkdir -p $IMG2GEOS_OUTPATH
@@ -113,8 +115,8 @@ test -d $IMG2GEOS_OUTPATH 	|| mkdir -p $IMG2GEOS_OUTPATH
 # try to lock the input folder, after rslsync has hopefully synced
 # lock files from other remote peers...
 while sleep 10; do
-  echo >$IMG2GEOS_INPATH/${0}.lock 2>/dev/null || continue
-  trap "rm $IMG2GEOS_INPATH/${0}.lock" EXIT
+  echo >$IMG2GEOS_INPATH/pigeos-img2geos.lock 2>/dev/null || continue
+  trap "rm $IMG2GEOS_INPATH/pigeos-img2geos.lock" EXIT
   break
 done
 
