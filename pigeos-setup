@@ -55,7 +55,7 @@ BOOT_CONFIG=/boot/config.txt
 BOOT_CMDLINE=/boot/cmdline.txt
 # wich branch to deploy
 PIGEOS_REPO="https://raw.githubusercontent.com/hastho/pigeos"
-PIGEOS_BRANCH="4-use-x11opengl-instead-of-dispmanx"
+PIGEOS_BRANCH="master"
 # a per device unique string to edentify this in a network
 PIGEOS_SN=$(cat /sys/firmware/devicetree/base/serial-number | sed 's/\x0//')
 # base for Pi/GEOS system files and binaries
@@ -506,14 +506,7 @@ config_usbmount() {
 }
 
 install_midi() {
-  install_dep_pkg timgm6mb-soundfont timidity-daemon
-  # remove the large 120 MB soundfont installed by default
-  # update Timidity config add the timGM6mb font instead
-  sudo apt remove -y fluid-soundfont-gm
-  sudo sed -i '/.*fluidr3.*/d' /etc/timidity/timidity.cfg
-  grep -qi timgm6mb.cfg /etc/timidity/timidity.cfg \
-  	|| sudo tee -a /etc/timidity/timidity.cfg >/dev/null \
-	<<<"source /etc/timidity/timgm6mb.cfg"
+  install_dep_pkg timidity-daemon
 }
 
 config_midi() {

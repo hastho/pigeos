@@ -27,8 +27,6 @@ while :; do
     fi
 	if [ -w ${HDD_IMAGE} ] ; then
       echo "imgmount d ${HDD_IMAGE} -t hdd" >>${session_conf}
-	elif [ ${MOUNT_DOC} -eq 1 -a -d "$HOME/Documents" ] ; then
-      echo "mount d $HOME/Documents" >>${session_conf}
 	fi
 	if [ ${RSLSYNC_SLOAD} -eq 1 -a -d "$HOME/Shared" ] ; then
       echo "mount s $HOME/Shared" >>${session_conf}
