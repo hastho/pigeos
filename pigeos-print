@@ -176,7 +176,7 @@ elif get_doc_twopage $1; then
 else
   # dummy filter
   PSFILTER1="cat"
-  PSFILTER1="cat"
+  PSFILTER2="cat"
 fi
 
 ### printing
@@ -196,13 +196,20 @@ elif [ "x$printer" == "xPDF" ]; then
   rm $1
 # use a real printer
 else
-  # command to print
-  PSPRINT="lpr -# $(get_doc_pcount $1) -P $printer -J $(get_doc_name $1)"
+  # command to print 
+  if [ $CUPS_MCPYFIX -eq 1 ]; then
+    # create multiple jobs, if Ghostscript strips page count from PS input
+    PSPRINT="lpr -# $(get_doc_pcount $1) -P $printer -J $(get_doc_name $1)"
+  else
+    PSPRINT="lpr -P $printer -J $(get_doc_name $1)"
+  fi
   # handle duplex printing
   if get_doc_booklet $1 || get_doc_duplex $1 || test $CUPS_DUPENF -eq 1; then
-    if   [ "x$CUPS_DUPMODE" == "xAUTO" ]; then
+    if   [ "x$CUPS_DUPMODE" == "xAUTO" -a $CUPS_DUPTUMBLE -eq 1 ]; then
       # inject PS code to instruct the printer to switch into duplex mode
       cat $1 | $PSFILTER1 | $PSFILTER2 | psduplex -tumble | $PSPRINT &>>$LOGFILE
+	elif [ "x$CUPS_DUPMODE" == "xAUTO" -a $CUPS_DUPTUMBLE -eq 0 ]; then
+	  cat $1 | $PSFILTER1 | $PSFILTER2 | psduplex | $PSPRINT &>>$LOGFILE
     elif [ "x$CUPS_DUPMODE" == "xMANUAL" ]; then  
 	  # create two printjobs send with a delay to allow the user to re-inject paper
       # print odd pages first

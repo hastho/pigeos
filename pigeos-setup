@@ -446,7 +446,7 @@ LOGIN_PROF
 }
 
 install_cups() {
-  install_dep_pkg cups cups-browsed cups-client cups-bsd
+  install_dep_pkg cups cups-browsed cups-client cups-bsd psutils
   # install psduplex script
   download_file $URL_PSDUPLEX_SCRIPT \
     /tmp/psduplex 2>&1
