@@ -39,9 +39,6 @@
 CONFIG=$HOME/.pigeos
 LOGFILE=/tmp/pigeos-img2geos.log
 
-# req. for locking
-set -C
-
 __unix2geosname() {
   local bname="${1%.*}" 
   # create an uppercase DOS file name for the source image
@@ -76,7 +73,7 @@ __img2geos() {
 	        -resize $ING2GEOS_MAX_WIDTH\> -filter Cubic \
 			"${IMG2GEOS_INPATH}/$img" "GIF87:${IMG2GEOS_OUTPATH}/$igname"
   fi
-  [[ $? -eq 0 ]] && rm "${IMG2GEOS_INPATH}/$img"
+  rm "${IMG2GEOS_INPATH}/$img"
 }
 
 __antiword() {
@@ -85,7 +82,7 @@ __antiword() {
   antiword "${IMG2GEOS_INPATH}/$docfile" \
   | iconv -s -t CP850 \
   | sed 's/$/\r/g' > ${IMG2GEOS_OUTPATH}/$gdocname
-  [[ ${PIPESTATUS[0]} -eq 0 ]] && rm "${IMG2GEOS_INPATH}/$docfile"
+  rm "${IMG2GEOS_INPATH}/$docfile"
 }
 
 __docx2txt() {
@@ -94,7 +91,7 @@ __docx2txt() {
   docx2txt ${IMG2GEOS_INPATH}/$docfile - \
   | iconv -s -t CP850 \
   | sed 's/$/\r/g' > ${IMG2GEOS_OUTPATH}/$gdocname
-  [[ ${PIPESTATUS[0]} -eq 0 ]] && rm "${IMG2GEOS_INPATH}/$docfile"
+  rm "${IMG2GEOS_INPATH}/$docfile"
 }
 
 __xlsx2csv() {
@@ -103,7 +100,7 @@ __xlsx2csv() {
   xlsx2csv ${IMG2GEOS_INPATH}/$docfile \
   | iconv -s -t CP850 \
   | sed 's/$/\r/g' > ${IMG2GEOS_OUTPATH}/$gdocname
-  [[ ${PIPESTATUS[0]} -eq 0 ]] && rm "${IMG2GEOS_INPATH}/$docfile"
+  rm "${IMG2GEOS_INPATH}/$docfile"
 }
 
 ### Main ###
@@ -111,14 +108,6 @@ source ${CONFIG}
 # create folder, if not present
 test -d $IMG2GEOS_INPATH 	|| mkdir -p $IMG2GEOS_INPATH
 test -d $IMG2GEOS_OUTPATH 	|| mkdir -p $IMG2GEOS_OUTPATH
-
-# try to lock the input folder, after rslsync has hopefully synced
-# lock files from other remote peers...
-while sleep 10; do
-  echo >$IMG2GEOS_INPATH/pigeos-img2geos.lock 2>/dev/null || continue
-  trap "rm $IMG2GEOS_INPATH/pigeos-img2geos.lock" EXIT
-  break
-done
 
 # first check for existing files than watch for newly copied or created files
 (
