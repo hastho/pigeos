@@ -197,18 +197,19 @@ elif [ "x$printer" == "xPDF" ]; then
 # use a real printer
 else
   # command to print 
-  if [ $CUPS_MCPYFIX -eq 1 ]; then
-    # create multiple jobs, if Ghostscript strips page count from PS input
+  if [ "x$CUPS_DUPMODE" == "xMANUAL" ]; then
+    # create multiple jobs, as Ghostscript strips page count from PS input
     PSPRINT="lpr -# $(get_doc_pcount $1) -P $printer -J $(get_doc_name $1)"
   else
+    # automatic duplex printing only works with PS passthrough (RAW) w/o GS
     PSPRINT="lpr -P $printer -J $(get_doc_name $1)"
   fi
   # handle duplex printing
   if get_doc_booklet $1 || get_doc_duplex $1 || test $CUPS_DUPENF -eq 1; then
-    if   [ "x$CUPS_DUPMODE" == "xAUTO" -a $CUPS_DUPTUMBLE -eq 1 ]; then
+    if   [ "x$CUPS_DUPMODE" == "xTUMBLE" ]; then
       # inject PS code to instruct the printer to switch into duplex mode
       cat $1 | $PSFILTER1 | $PSFILTER2 | psduplex -tumble | $PSPRINT &>>$LOGFILE
-	elif [ "x$CUPS_DUPMODE" == "xAUTO" -a $CUPS_DUPTUMBLE -eq 0 ]; then
+	elif [ "x$CUPS_DUPMODE" == "xNOTUMBLE" ]; then
 	  cat $1 | $PSFILTER1 | $PSFILTER2 | psduplex | $PSPRINT &>>$LOGFILE
     elif [ "x$CUPS_DUPMODE" == "xMANUAL" ]; then  
 	  # create two printjobs send with a delay to allow the user to re-inject paper
@@ -221,7 +222,7 @@ else
 	  # print even pages in reverse order
 	  cat $1 | $PSFILTER1  | $PSFILTER2 | psselect -e -r | $PSPRINT &>>$LOGFILE
 	else 
-	  echo "Error: CUPS_DUPLEX=[auto|manual] mode not set in config!" &>>$LOGFILE
+	  echo "Error: CUPS_DUPLEX=[manual|tumble|notumble] mode not set in config!" &>>$LOGFILE
     fi
   else # simplex printing
     $PSPRINT $1 &>>$LOGFILE

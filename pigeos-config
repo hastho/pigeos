@@ -278,8 +278,7 @@ prnsel_menu() {
 
 dupsel_menu() {
   local selection
-  local dupsel_list=("AUTO" "automatic" "MANUAL" "manual mode")
-  selection=$(dial_menu "${dupsel_title}" "${dupsel_text}" "${dupsel_list[@]}")
+  selection=$(dial_menu "${dupsel_title}" "${dupsel_text}" "${dupsel_options[@]}")
   if [[ -n $selection ]]; then
 	grep -q CUPS_DUPMODE $(conf_get) \
 	  && sed -i "s#CUPS_DUPMODE=.*#CUPS_DUPMODE=${selection}#" $(conf_get) \

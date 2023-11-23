@@ -104,8 +104,11 @@ prnsel_text="Select 'AUTO' to allow Pi/GEOS to connect to the first available pr
 ### Duplex Selection Menu
 #########################################################
 dupsel_title="Duplex mode"
-dupsel_text="Choose 'AUTO' if your printer supports automatic duplex printing. Otherwise choose 'MANUAL'. In this case two print jobs are created and you need to re-insert the paper after the first one has been finished.
-
+dupsel_options=(\
+  "MANUAL"		"Manual duplex print" \
+  "TUMBLE"		"Automatic duplex with tumble" \
+  "NOTUMBLE"	"Automatic duplex without tumble" )
+dupsel_text="Choose 'TUMBLE' or 'NOTUMBLE' if your printer supports automatic duplex printing. Otherwise choose 'MANUAL'. In this case two print jobs are created and you need to re-insert the paper after the first one has been finished.
 Hint: You need to set a suitable job delay that matches the speed of your printer and the number of pages you want to print."
 
 ### Duplex Wait Menu

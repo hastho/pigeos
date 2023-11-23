@@ -110,7 +110,11 @@ prnsel_text="Wähle 'AUTO' um automatisch den ersten erkannten Drucker zu nutzen
 ### Duplex Selection Menu
 #########################################################
 dupsel_title="Duplexmodus"
-dupsel_text="Wähle 'AUTO', wenn Dein Drucker einen automatischen Dupluxdruck d.h. das Bedrucken der Papiervorder- und Rückseite unterstützt. 
+dupsel_options=(\
+  "MANUAL"		"Manuelles Wenden für 2. Druckjob" \
+  "TUMBLE"		"Automatisches Wenden an der lange Seite" \
+  "NOTUMBLE"	"Automatisches Wenden an der kurzen Seite" )
+dupsel_text="Wähle 'TUMBLE' bzw. 'NOTUMBLE', wenn Dein Drucker einen automatischen Dupluxdruck d.h. das Bedrucken der Papiervorder- und Rückseite unterstützt. 
 Die Option 'MANUAL' generiert 2 Jobs, die mit Verzögerungs gedruckt werden. Nach dem Drucken der Vorderseiten im 1. Job muss das Papier menuell erneut eingelegt werden.
 
 Hinweis: Abhängig von der Druckgeschwndigkeit und der Anzahl max. zu druckender Seiten, ist unter 'Jobverzögerungs' eine hinreichend grosse Wartezeit einzustellen."
