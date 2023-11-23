@@ -716,7 +716,8 @@ setup() {
   install_rslsync				|| return 12
   install_cups	  	  	  	  	|| return 13
   install_midi					|| return 14
-  install_feedproxy				|| return 15
+  install_img2geos				|| return 15
+  install_feedproxy				|| return 16
   # clear apt cache
   sudo apt clean
   # trigger 2nd stage setup process during 1st boot
@@ -760,6 +761,7 @@ configure() {
   config_midi 					&& echo 40
   config_cups 					&& echo 60
   config_rslsync 				&& echo 80
+  config_img2geos				&& echo 90
   config_boot					&& echo 100
   exit 0
 }
