@@ -154,5 +154,5 @@ imgmgmt_create_ok="Das Abbild wurde erfogreich erstellt unter: "
 ### Configuratino Wizard ################################################################
 wizard_intro="Welocome, Willkommen!\nSetup hat festgestellt, dass keine gültige Systemkonfiguration existiert. Möchten Sie diesen Assistenen nutzen, um die Erstkonfiguration durchzuführen?"
 wizard_net_wait="Warte auf den Aufbau der Netzwerkanbindung.."
-wizard_net_error="Der Assistent kann nicht fortfahren, da keine Netzwerkverbindung besteht!\nBitte wechseln Sie in das System-setupmenü (raspi-config), um die WLAN/WIFI-Einstellungen vorzunehmen oder verbinden Sie den Raspberry Pi mit einem Netzwerkkabel."
+wizard_net_error="Der Assistent konnte keine Netzwerkverbindung herstellen, daher wird jetzt das mitgelieferte FreeGEOS für Sie aktiviert."
 wizard_finished="Gratulation! Sie haben die Ersteinrichtung abgeschlossen.\nDas System wird jetzt neu gestartet und dann GEOS laden. Wenn Sie die Pi/GEOS-Umgebung anpassen wollen, drücken Sie Strg+F9 in der DOS/GEOS Umgebung um SETUP aufzurufen."
