@@ -18,8 +18,8 @@ disable_overscan=1
 
 # uncomment to force a console size. By default it will be display's size minus
 # overscan.
-framebuffer_width=1024
-framebuffer_height=768
+#framebuffer_width=1024
+#framebuffer_height=768
 
 # uncomment if hdmi display is not detected and composite is being output
 #hdmi_force_hotplug=1
