@@ -4,7 +4,7 @@
 # USAGE pigeos-image [<command>] [<parameters>]
 #
 # COMMANDS:
-# 	create <size> <image name> <image description>
+# 	create <image name> <size> <image description>
 #				creates a disk image of the given size in the default
 #				image localtion as well as an inf-file where the given
 #				description is stored as the first line
