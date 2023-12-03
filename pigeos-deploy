@@ -56,6 +56,8 @@ ext_boot=1
 ext_root=2
 ext_conf=defaults/config.txt
 ext_1str=$HOME/Downloads/firstrun.sh
+# bundled GEOS image to include for off-line installation
+bdl_geos_img=~/Downloads/ensprev60d.tgz
 
 usage() {
   echo "" >&2
@@ -94,9 +96,11 @@ img_build() {
 	sudo mount -B /dev						/mnt/pigeos/root/dev
 	sudo mount -B /dev/pts					/mnt/pigeos/root/dev/pts
 	sudo cp    -L /etc/resolv.conf			/mnt/pigeos/root/etc
+	sudo mkdir -p							/mnt/pigeos/root/usr/local/share/pigeos
+	sudo cp     $bdl_geos_img				/mnt/pigeos/root/usr/local/share/pigeos/ensbudle.tgz
 	sudo cp 	pigeos-setup 				/mnt/pigeos/root/usr/local/bin
 	sudo chroot 							/mnt/pigeos/root/ \
-	  /bin/bash -ic 'cd /tmp; pigeos-setup setup de_DE.UTF-8 gr'
+	  /bin/bash -ic 'cd /tmp; pigeos-setup setup gr'
 	  sync
 	sudo umount 							/mnt/pigeos/root/{dev/pts,dev,sys,proc,boot}
 	sudo umount $img_dev$img_root
