@@ -119,11 +119,11 @@ img_extract() {
 
 ext_write() {
 	sudo rpi-imager --cli $img_file_out $ext_dev
-	sudo mount -t vfat $ext_dev$ext_boot 	/mnt/pigeos
-	sudo cp		$ext_conf					/mnt/pigeos
-	sudo cp		$ext_1str					/mnt/pigeos
-	sync
-	sudo umount	$ext_dev$ext_boot
+#	sudo mount -t vfat $ext_dev$ext_boot 	/mnt/pigeos
+#	sudo cp		$ext_conf					/mnt/pigeos
+#	sudo cp		$ext_1str					/mnt/pigeos
+#	sync
+#	sudo umount	$ext_dev$ext_boot
 }
 
 img_debug() {
