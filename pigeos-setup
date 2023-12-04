@@ -702,7 +702,7 @@ setup() {
   # clear apt cache first and load latest pgk list
   sudo apt clean; sudo apt update --fix-missing
   # 1st stage: install executes all modules in the default order
-  install_locales $1			|| return 1
+  install_locales				|| return 1
   install_dep_pkg $PKG_LIST 	|| return 2
   install_dosbox_pkg      	  	|| return 3
   install_pigeos_scripts  	  	|| return 4
@@ -720,6 +720,9 @@ setup() {
   install_feedproxy				|| return 16
   # clear apt cache
   sudo apt clean
+  # store default language set by pigeos-deploy
+  sudo sed -i "s/KEYB=.*/KEYB=${1:-us}/" \
+    $PIGEOS_PREFIX/etc/$(basename $URL_CONFIG_SYSCFG)
   # trigger 2nd stage setup process during 1st boot
   sudo sed -i 's/CONTINUE_SETUP=.*/CONTINUE_SETUP=2/' \
   	$PIGEOS_PREFIX/etc/$(basename "$URL_CONFIG_SYSCFG")
