@@ -17,16 +17,22 @@ while :; do
     # create a session configuration 
     session_conf=`dirname $($DOSBOX_BIN -printconf)`/dosbox-session.conf
 	echo "[autoexec]" >${session_conf}
-	echo "imgmount c ${HDC_IMAGE} -t hdd" >>${session_conf}
+	if   [ -f ${HDC_IMAGE} ] ; then
+	  echo "imgmount c ${HDC_IMAGE} -t hdd" >>${session_conf}
+	elif [ -d ${HDC_IMAGE} ] ; then
+	  echo "mount c ${HDC_IMAGE}" 			>>${session_conf}
+	fi
     # mount other drives when an image present 
-    if [ -w ${FDA_IMAGE} ] ; then
+    if   [ -w ${FDA_IMAGE} -a -f ${FDA_IMAGE}] ; then
       echo "imgmount a ${HDD_IMAGE} -t floppy" >>${session_conf}
     fi
-    if [ -w ${FDB_IMAGE} ] ; then
+    if   [ -w ${FDB_IMAGE} -a -f ${FDB_IMAGE}] ; then
       echo "imgmount b ${HDD_IMAGE} -t floppy" >>${session_conf}
     fi
-	if [ -w ${HDD_IMAGE} ] ; then
+	if   [ -w ${HDD_IMAGE} -a -f ${HDD_IMAGE} ] ; then
       echo "imgmount d ${HDD_IMAGE} -t hdd" >>${session_conf}
+	elif [ -w ${HDD_IMAGE} -a -d ${HDD_IMAGE} ] ; then
+	  echo "mount d ${HDD_IMAGE}"			>>${session_conf}
 	fi
 	if [ ${RSLSYNC_SLOAD} -eq 1 -a -d "$HOME/Shared" ] ; then
       echo "mount s $HOME/Shared" >>${session_conf}
@@ -39,8 +45,9 @@ while :; do
 	# restore volume level
 	amixer -q -M sset PCM "${VOL_LEVEL:=80}%" 1>/dev/null 2>&1
 	# launch DOSBox
-	startx $DOSBOX_BIN -userconf -conf ${session_conf} -- \
-	  -dpms -quiet 1>>/tmp/pigeos-loader.log 2>&1
+	$DOSBOX_BIN -userconf -conf ${session_conf}
+#	startx $DOSBOX_BIN -userconf -conf ${session_conf} -- \
+#	  -dpms -quiet 1>>/tmp/pigeos-loader.log 2>&1
   fi
   # run SETUP-config if something went wrong
   pigeos-config

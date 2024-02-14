@@ -96,10 +96,9 @@ file_archive() {
   while shift; do
     [ -f "$1" ] && src+=("$(basename $1)")
   done
-  # compute number of allocated blocks to handle sparse files
-  local size=$(stat -c%b ${src[@]} \
-    | awk 'BEGIN{sum=0}{sum=sum+$1*512}END{print sum}')
-  (tar cSf - -C $pth ${src[@]} | pv -n -s${size} | gzip >${arc}) 2>&1 \
+  local size=$(du -sb ${src[@]} \
+    | awk 'BEGIN{sum=0}{sum=sum+$1}END{print sum}')
+  (tar cf - -C $pth ${src[@]} | pv -n -s${size} | gzip >${arc}) 2>&1 \
     | $DIAL --backtitle "$BTITLE" --gauge "Archiving: ${arc}" 8 50 0
 }
 
@@ -107,7 +106,7 @@ file_extract() {
   local arc="$1"
   local dst="$2"
   if [ -f $arc -a -d $dst ]; then
-    tar xzSf $arc -C $dst 2>/dev/null 1>&2
+    tar xzf $arc -C $dst 2>/dev/null 1>&2
   fi
 }
 
@@ -161,13 +160,13 @@ imgsel_menu() {
 	  imgsel_list+=("$(basename $f .inf)" "$(head -1 $f)")
 	fi
   done
-  # ask the user to choose one image
+  # ask the user to choose an image
   selection=$(dial_menu "${imgsel_title}" "${imgsel_text}" "${imgsel_list[@]}")
   if [ "x$selection" = "x" ]]; then
     false # image selection aborted
   elif [ "$selection" = "NONE" ]; then
     sed -i "s#${imgsel_drv^^}_IMAGE=.*#${imgsel_drv^^}_IMAGE=NONE#" $(conf_get)
-  elif grep -q ".D._IMAGE=${imgsel_dir}${selection}.img" $(conf_get); then
+  elif grep -q ".D._IMAGE=${imgsel_dir}${selection}.im." $(conf_get); then
     dial_err "$imgsel_mounted"
   else
     # load multi line image desc into a single variable
@@ -185,7 +184,8 @@ imgsel_menu() {
 	    --yesno --scrolltext "${imgsel_inf}\n\n${imgsel_conf}" 20 76
 	fi
     if [ $? -eq 0 ]; then
-      sed -i "s#${imgsel_drv^^}_IMAGE=.*#${imgsel_drv^^}_IMAGE=${imgsel_dir}${selection}.img#" $(conf_get)
+      sed -i "s#${imgsel_drv^^}_IMAGE=.*#${imgsel_drv^^}_IMAGE=${imgsel_dir}${selection}.img#"
+ $(conf_get)
     fi
   fi
 }
@@ -362,24 +362,18 @@ imgmgmt_menu() {
 }
 
 imgmgmt_create() { 
-  local isize
   local iname
   local idesc
-  # ask for image name, size and a short description
+  # ask for image name and a short description
   while :; do
-    isize=$(dial_input "Image size" "$imgmgmt_image_size" 512)
 	iname=$(dial_input "Image name" "$imgmgmt_image_filename" "$iname")
 	idesc=$(dial_input "Image description" "$imgmgmt_image_descrition" "")
     # check none zero values and characters not allowed in file names
-    if [ "x$isize" = "x" -o "x$iname" = "x" ]; then
-	  dial_yesno "$imgmgmt_not_null" && continue || break
-	elif [[ "$isize" != "$(echo $isize | tr -cd '[:digit:]')" ]]; then
-	  dial_yesno "Invalid value: $isize Retry?" && continue || break
-	elif [[ "$iname" != "$(echo $iname | tr -cd '[:alnum:]_-')" ]]; then
+	if [[ "$iname" != "$(echo $iname | tr -cd '[:alnum:]_-')" ]]; then
 	  dial_yesno "Invalid value: $iname Retry?" && continue || break
 	fi
-	# call external image utility to create sparse file image
-	pigeos-image create "$iname" "$isize" "$idesc" 2>/dev/null 1>&1
+    mkdir $HOME/hdd_images/${iname}.img && \
+	  echo "${idesc}" > $HOME/hdd_images/${iname}.inf
 	if [ $? -eq 0 ]; then
 	  dial_msg "$imgmgmt_create_ok $HOME/hdd_images/$iname"; break
 	else
@@ -401,7 +395,7 @@ imgmgmt_delete() {
     if grep -q ".D._IMAGE=${imgsel_dir}${selection}.img" $(conf_get); then
 	  dial_err "${imgmgmt_del_mounted}"
 	else
-	  dial_yesno "${imgmgmt_del_confirm}" && rm ${imgsel_dir}/${selection}.i??
+	  dial_yesno "${imgmgmt_del_confirm}" && rm -r ${imgsel_dir}/${selection}.i??
 	fi
   fi
 }
@@ -422,7 +416,16 @@ imgmgmt_rename() {
 	else
 	  iname=$(dial_input "Image name" "$imgmgmt_image_filename" "$selection")
 	  if [[ -n $iname ]]; then
-	    pigeos-image rename "$selection" "$iname" 2>/dev/null 1>&1
+	    if [ -f ${imgsel_dir}/${selection}.inf -a \
+		     -f ${imgsel_dir}/${selection}.img ]
+		then
+		  pigeos-image rename "$selection" "$iname" 2>/dev/null 1>&1
+	    elif [ -f ${imgsel_dir}/${selection}.inf -a \
+		       -d ${imgsel_dir}/${selection}.img ]
+		then
+		  mv ${imgsel_dir}/${selection}.inf ${imgsel_dir}/${iname}.inf
+		  mv ${imgsel_dir}/${selection}.imd ${imgsel_dir}/${iname}.img
+		fi
 	  fi
 	fi
   fi
@@ -477,7 +480,7 @@ imgmgmt_download() {
   fi
   if [[ $url =~ $regex ]]; then
     file_download "$url" /tmp/imgmgmt_new_image.tgz
-	tar xzSf /tmp/imgmgmt_new_image.tgz -C ~/hdd_images
+	tar xzf /tmp/imgmgmt_new_image.tgz -C ~/hdd_images
 	if [ $? -eq 0 ]; then
 	  #dial_msg "$imgmgmt_unpack_suc"
 	  rm /tmp/imgmgmt_new_image.tgz
