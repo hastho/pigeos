@@ -44,10 +44,13 @@ while :; do
 	echo "call c:\autoexec.bat" >>${session_conf}
 	# restore volume level
 	amixer -q -M sset PCM "${VOL_LEVEL:=80}%" 1>/dev/null 2>&1
-	# launch DOSBox
-	$DOSBOX_BIN -userconf -conf ${session_conf}
-#	startx $DOSBOX_BIN -userconf -conf ${session_conf} -- \
-#	  -dpms -quiet 1>>/tmp/pigeos-loader.log 2>&1
+	# detect if X11 is allready running or not and launch DOSBox
+	if xset q >/dev/null 2>&1 ; then
+	  $DOSBOX_BIN -userconf -conf ${session_conf}
+	else
+  	  startx $DOSBOX_BIN -userconf -conf ${session_conf} -- \
+	    -dpms -quiet 1>>/tmp/pigeos-loader.log 2>&1
+	fi
   fi
   # run SETUP-config if something went wrong
   pigeos-config
