@@ -23,10 +23,10 @@ while :; do
 	  echo "mount c ${HDC_IMAGE}" 			>>${session_conf}
 	fi
     # mount other drives when an image present 
-    if   [ -w ${FDA_IMAGE} -a -f ${FDA_IMAGE}] ; then
+    if   [ -w ${FDA_IMAGE} -a -f ${FDA_IMAGE} ] ; then
       echo "imgmount a ${HDD_IMAGE} -t floppy" >>${session_conf}
     fi
-    if   [ -w ${FDB_IMAGE} -a -f ${FDB_IMAGE}] ; then
+    if   [ -w ${FDB_IMAGE} -a -f ${FDB_IMAGE} ] ; then
       echo "imgmount b ${HDD_IMAGE} -t floppy" >>${session_conf}
     fi
 	if   [ -w ${HDD_IMAGE} -a -f ${HDD_IMAGE} ] ; then
