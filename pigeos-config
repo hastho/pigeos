@@ -569,7 +569,7 @@ config_wizard() {
 	sleep 5
 	retry_count=$(($retry_count + 1)) 
   done
-  if [ $retry_count -gt 10 ]; then
+  if [ $retry_count -gt 5 ]; then
     dial_err "$wizard_net_error"
 	file_extract /usr/local/share/pigeos/ensbudle.tgz $imgsel_dir 
   else
