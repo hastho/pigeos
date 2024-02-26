@@ -175,7 +175,6 @@ imgsel_menu() {
 	  do imgsel_inf="${imgsel_inf}${line}\n"; done \
 	  <${imgsel_dir}/${selection}.inf
 	local imgsel_inflc=$(echo -e "$imgsel_inf" | wc -l)
-sleep 20
 	# make text scrollable if it is more the 10 lines
 	if [ $imgsel_inflc -le 10 ]; then
       $DIAL --backtitle "$BTITLE" --title "Image Information" \
@@ -559,13 +558,12 @@ config_wizard() {
 	*)	LANG=en_US.UTF-8;;
   esac
   # switch to new language
-  if [ -r /usr/local/share/pigeos/pigeos-config.$LANG ]; then
-    MENU_TEXT=/usr/local/share/pigeos/pigeos-config.$LANG
-  fi
+  MENU_TEXT=/usr/local/share/pigeos/pigeos-config.$LANG
+  source $MENU_TEXT
   # check for working internet connection
   local retry_count=0
-  while [ $retry_count -le 10 ]; do
-   	echo $(($retry_count * 10)) | $DIAL --backtitle "$BTITLE" \
+  while [ $retry_count -le 5 ]; do
+   	echo $(($retry_count * 20)) | $DIAL --backtitle "$BTITLE" \
 	  --gauge "$wizard_net_wait" 8 50 0
 	curl "$PIGEOS_RPO" >/dev/null 2>&1 && break
 	sleep 5

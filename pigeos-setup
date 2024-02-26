@@ -715,9 +715,7 @@ setup() {
   install_usbmount     	  	  	|| return 11
   install_rslsync				|| return 12
   install_cups	  	  	  	  	|| return 13
-  install_midi					|| return 14
-  install_img2geos				|| return 15
-  install_feedproxy				|| return 16
+  install_img2geos				|| return 14
   # clear apt cache
   sudo apt clean
   # store default language set by pigeos-deploy
@@ -737,8 +735,6 @@ install_stage2() {
   config_dosbox_modem
   config_dosbox_telnetd
   config_usbmount
-  config_midi
-  config_feedproxy
   config_boot
   # clear 2nd stage setup execution in system default config
   sudo sed -i 's/CONTINUE_SETUP=.*/CONTINUE_SETUP=0/' \
@@ -759,12 +755,10 @@ configure() {
   # (re)configure services using user config
   . $PIGEOS_HOME/.pigeos
   # echo percentage value to visualize progress in pigeos-config
-  config_locales $KEYB			&& echo 10
-  config_feedproxy				&& echo 20
-  config_midi 					&& echo 40
-  config_cups 					&& echo 60
-  config_rslsync 				&& echo 80
-  config_img2geos				&& echo 90
+  config_locales $KEYB			&& echo 20
+  config_cups 					&& echo 40
+  config_rslsync 				&& echo 60
+  config_img2geos				&& echo 80
   config_boot					&& echo 100
   exit 0
 }

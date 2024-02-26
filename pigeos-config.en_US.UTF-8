@@ -86,12 +86,10 @@ advanced_options=(\
   "  Duplex mode "			"${CUPS_DUPMODE}" \
   "  Job wait time "		"${CUPS_DUPWAIT}" \
   "  Remote management "	"${disabled_enabled[$CUPS_ADMIN]} (http://$(hostname -I | cut -d\  -f1):631)" \
-  "MIDI emulation "	    	"${disabled_enabled[$MIDI_SLOAD]}" \
   "ResilioSync service "	"${disabled_enabled[$RSLSYNC_SLOAD]}" \
   "  Access Key (rw) "		"${RSLSYNC_KEY}" \
   "  Internet access "		"${disabled_enabled[$RSLSYNC_WAN]}" \
-  "  Auto-Import function "	"${disabled_enabled[$IMG2GEOS_SLOAD]}" \
-  "FeedProxy service "      "${disabled_enabled[$FEEDPROXY_SLOAD]} (${FEEDPROXY_IP:-unknown}:8080)" )
+  "  Auto-Import function "	"${disabled_enabled[$IMG2GEOS_SLOAD]}" )
 advanced_serv_activate="activate at system start?"
 advanced_sync_deactivate="WARNING: if you disable the ResilioSync service all local copies of your FILES on drive S: will be REMOVED! Make sure you made a backup eg. on USB drive U:."
 advanced_sync_key_warn="The Resilio-Sync can't be changed while the service is active."
