@@ -110,6 +110,11 @@ file_extract() {
   fi
 }
 
+online() {
+  find /sys/class/net -mindepth 1 \( -name eth0 -o -name wlan0 \) \
+    -exec cat {}/carrier \; 2>/dev/null | grep -q 1
+}
+
 ## Main menu #####################################################
 main_menu() {
   local selection
@@ -479,7 +484,8 @@ imgmgmt_download() {
   fi
   if [[ $url =~ $regex ]]; then
     file_download "$url" /tmp/imgmgmt_new_image.tgz
-	tar xzf /tmp/imgmgmt_new_image.tgz -C ~/hdd_images
+	# raise an error, if the image is allready present
+	tar xkzf /tmp/imgmgmt_new_image.tgz -C ~/hdd_images
 	if [ $? -eq 0 ]; then
 	  #dial_msg "$imgmgmt_unpack_suc"
 	  rm /tmp/imgmgmt_new_image.tgz
@@ -545,7 +551,7 @@ imgmgmt_import() {
 }
 
 config_wizard() {
-  local imgsel_dir=$HOME/hdd_images/
+  local imgsel_dir=$HOME/hdd_images
   
   source $(conf_get); source $MENU_TEXT
   # this wizrad will only be executed, if no disk assigment has been made so far
@@ -557,26 +563,16 @@ config_wizard() {
     gr) LANG=de_DE.UTF-8;;
 	*)	LANG=en_US.UTF-8;;
   esac
-  # switch to new language
+  # switch to the new language
   MENU_TEXT=/usr/local/share/pigeos/pigeos-config.$LANG
   source $MENU_TEXT
-  # check for working internet connection
-  local retry_count=0
-  while [ $retry_count -le 5 ]; do
-   	echo $(($retry_count * 20)) | $DIAL --backtitle "$BTITLE" \
-	  --gauge "$wizard_net_wait" 8 50 0
-	curl "$PIGEOS_RPO" >/dev/null 2>&1 && break
-	sleep 5
-	retry_count=$(($retry_count + 1)) 
-  done
-  if [ $retry_count -gt 5 ]; then
+  # check for a working internet connection and
+  # try to download an image and assign it to drive C:
+  online && imgmgmt_download
+  if [ $? -ne 0 ]; then
     dial_err "$wizard_net_error"
-	file_extract /usr/local/share/pigeos/ensbudle.tgz $imgsel_dir 
-  else
-    # try to download an image and assign it to drive C:
-    imgmgmt_download
+	file_extract /usr/local/share/pigeos/ensbundle.tgz $imgsel_dir 
   fi
-  local imgsel_dir=$HOME/hdd_images
   for f in ${imgsel_dir}/*.img; do 
     # if no files are there f = '*', so it has to be validated
 	if [ -w $f ]; then

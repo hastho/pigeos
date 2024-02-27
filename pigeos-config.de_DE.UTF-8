@@ -98,29 +98,27 @@ advanced_options=(\
 advanced_serv_activate="beim Systemstart aktivieren?"
 advanced_sync_deactivate="WARNUNG: beim Deaktivieren des ResilioSync-Services werden alle lokalen Kopien der auf Laufwerk S: abgelegten DATEN GELÖSCHT! Bitte vorher unbedingt die Daten sichern z.b. auf USB-Laufwerk U:."
 advanced_sync_key_warn="Der ResilioSync Zugriffsschlüssel kann nicht geändert werden solange der Service aktiv ist."
-advanced_sync_key_edit="Bitte einen vorhandenen ResilioSync-Zugriffsschlüssel eingeben, um das System mit einer existieren Freigabe zu verbinden. \nHinweis: Bleibt das Feld leer, wird automatisch ein neuer Schlüssel generiert mit dem sich andere Systeme mit Pi/GEOS verbinden können."
+advanced_sync_key_edit="Bitte einen vorhandenen ResilioSync-Zugriffsschlüssel eingeben, um das System mit einer existieren Freigabe zu verbinden. \nHinweis: Bleibt das Feld leer, wird automatisch ein neuer Schlüssel generiert, mit dem Du andere Systeme mit Pi/GEOS verbinden kannst."
 
 
 ### Printer Selection Menu #########################################################
 prnsel_title="Druckerauswahl"
-prnsel_text="Wähle 'AUTO' um automatisch den ersten erkannten Drucker zu nutzen \noder selektiere ein bestimmtes Modell. Wähle 'PDF' um die Druckausgabe in PDF Dateien auf der Dokumentenfreigabe (S:) umzuleiten. \nHinweis: PDF-Druck erfordert die Aktivierung des ResilioSync Dienstes."
+prnsel_text="Wähle 'AUTO' um automatisch den ersten erkannten Drucker zu nutzen \noder selektiere ein bestimmtes Modell. Wähle 'PDF' um die Druckausgabe in eine PDF Datei auf der Dokumentenfreigabe (S:) umzuleiten. \nHinweis: Dies erfordert die Aktivierung des ResilioSync Dienstes."
 
 ### Duplex Selection Menu
 #########################################################
 dupsel_title="Duplexmodus"
 dupsel_options=(\
   "MANUAL"		"Manuelles Wenden für 2. Druckjob" \
-  "TUMBLE"		"Automatisches Wenden an der lange Seite" \
+  "TUMBLE"		"Automatisches Wenden an der langen Seite" \
   "NOTUMBLE"	"Automatisches Wenden an der kurzen Seite" )
 dupsel_text="Wähle 'TUMBLE' bzw. 'NOTUMBLE', wenn Dein Drucker einen automatischen Duplexdruck d.h. das Bedrucken der Papiervorder- und Rückseite unterstützt. 
-Die Option 'MANUAL' generiert 2 Jobs, die mit Verzögerung gedruckt werden. Nach dem Drucken der Vorderseiten im 1. Job muss das Papier manuell erneut eingelegt werden.
-
-Hinweis: Abhängig von der Druckgeschwindigkeit und der Anzahl max. zu druckender Seiten, ist unter 'Jobverzögerung' eine hinreichend grosse Wartezeit einzustellen."
+Die Option 'MANUAL' generiert 2 Jobs, die mit Verzögerung gedruckt werden. Nach dem Drucken der Vorderseiten im 1. Job muss das Papier manuell gewendet und erneut eingelegt werden.\nHinweis: Abhängig von der Druckgeschwindigkeit und der Anzahl max. zu druckender Seiten, ist unter 'Jobverzögerung' eine hinreichend grosse Wartezeit einzustellen."
 
 ### Duplex Wait Menu
 #########################################################
 dupwait_title="Jobverzögerung"
-dupwait_text="Wähle die Verzögerung in Sekunden zwischen dem Druck der Vorder- und Rückseite."
+dupwait_text="Wähle die Verzögerung in Sekunden zwischen dem Druck der Vorder- und Rückseite(n)."
  
 ### ImageMgmt Menue ################################################################
 imgmgmt_title="FDD/HDD Abbild Verwaltungs"
@@ -136,21 +134,19 @@ imgmgmt_options=(\
 imgmgmt_del_confirm="Gewähltes Abbild wirklich löschen? Alle Daten gehen verloren!"
 imgmgmt_del_mounted="Das Abbild ist aktuell einem Lw zugewiesen, Löschen nicht möglich!"
 imgmgmt_mod_mounted="Das Abbild ist aktuell einem Lw zugewiesen, Bearbeiten nicht möglich!"
-imgmgmt_download="Bitte gib eine URL zum zu installierenden Abbild ein (http(s):// oder file://)"
-imgmgmt_invalid_url="Die angegebene URL ist ungültig."
-imgmgmt_unpack_err="Beim Herunterladen oder Entpacken des Abbildes ist ein Fehler aufgetreten. \nBitte die Wifi/Netzwerkeinstellungen im System-Menü prüfen."
-imgmgmt_unpack_suc="Abbild erfolgreich geladen. Es kann jetzt aktiviert werden."
+imgmgmt_download="Bitte gib eine URL zu dem zu ladenden Abbild ein (http(s):// oder file://)"
+imgmgmt_invalid_url="Die angegebene URL ist ungültig!"
+imgmgmt_unpack_err="Beim Entpacken des Abbildes ist ein Fehler aufgetreten. \nBitte stelle sicher, dass kein gleichnamiges Abbild bereits installiert ist!"
+imgmgmt_unpack_suc="Abbild erfolgreich geladen. Es kann jetzt im Basic-Menü aktiviert werden."
 imgmgmt_exp_err="Das Abbild konnte nicht exportiert werden. Bitte sicherstellen, dass ein vFAT formatiertes USB-Laufwerk angeschlossen wurde."
-imgmgmt_usb_not_present="Es wurde kein USB-Datenträger gefunden. Operation nicht möglich."
-imgmgmt_image_size="Bitte die Größe des zu erstellenden Abbildes in MiB angeben. \n vFAT unterstützt max. 2048 MiB."
+imgmgmt_usb_not_present="Es wurde kein USB-Datenträger gefunden. Operation nicht möglich!"
 imgmgmt_image_file_name="Bitte einen Dateinamen für das neue Abbild eingeben.\nACHTUNG: Bitte nur Buchstaben und Ziffern verwenden, Sonderzeichen sind nicht erlaubt!"
-imgmgmt_image_descrition="Bitte eine kurze Beschreibung eingeben.\nHinweis: eine detaillierte Beschreibung kann über den Menüpunkt Editieren festgelegt werden."
+imgmgmt_image_descrition="Bitte eine kurze Beschreibung eingeben.\nHinweis: eine detaillierte Beschreibung kann über den Menüpunkt 'Editieren' festgelegt werden."
 imgmgmt_not_null="Abbildgröße und Dateiname dürfen nicht leer sein. Eingabe wiederholen?"
 imgmgmt_create_fail="Das Erstellen des Abbildes ist fehlgeschlagen. Wiederholen?"
 imgmgmt_create_ok="Das Abbild wurde erfogreich erstellt unter: "
 
 ### Configuratino Wizard ################################################################
-wizard_intro="Welocome, Willkommen!\nSetup hat festgestellt, dass keine gültige Systemkonfiguration existiert. Möchten Sie diesen Assistenten nutzen, um die Erstkonfiguration durchzuführen?"
-wizard_net_wait="Warte auf den Aufbau der Netzwerkanbindung.."
-wizard_net_error="Der Assistent konnte keine Netzwerkverbindung herstellen, daher wird jetzt das mitgelieferte FreeGEOS für Sie aktiviert."
-wizard_finished="Gratulation! Sie haben die Ersteinrichtung abgeschlossen.\nDas System wird jetzt neu gestartet und dann GEOS laden. Wenn Sie die Pi/GEOS-Umgebung anpassen wollen, drücken Sie Strg+F9 in der DOS/GEOS Umgebung um SETUP aufzurufen."
+wizard_intro="Welocome, Willkommen!\nSetup hat festgestellt, dass keine gültige Systemkonfiguration existiert. Möchtest Du diesen Assistenten nutzen, um die Erstkonfiguration durchzuführen?"
+wizard_net_error="Der Assistent konnte keine Netzwerkverbindung herstellen, daher wird jetzt das Pi/GEOS Ensemble 6.0 Bundle für Dich eingerichtet. Mit dem 'German INI Patch' aus der Programmgruppe 'Utilities' kannst Du Ensemble an deutsche Ländereinstellungen anpassen."
+wizard_finished="Gratulation! Du hast die Ersteinrichtung abgeschlossen.\nDas System wird jetzt neu gestartet. Wenn Du die Pi/GEOS-Umgebung anpassen möchtest, drücke Strg+F9 um in das SETUP zu gelangen."

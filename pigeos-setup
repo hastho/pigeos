@@ -115,8 +115,8 @@ help() {
 }
 
 online() {
-  find /sys/class/net -mindepth 1 ! -name lo -exec cat {}/carrier \; 2>/dev/null \
-  | grep -q 1
+  find /sys/class/net -mindepth 1 \( -name eth0 -o -name wlan0 \) \
+   -exec cat {}/carrier \; 2>/dev/null | grep -q 1
 }
 
 download_file() {
