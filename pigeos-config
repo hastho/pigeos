@@ -485,7 +485,7 @@ imgmgmt_download() {
   if [[ $url =~ $regex ]]; then
     file_download "$url" /tmp/imgmgmt_new_image.tgz
 	# raise an error, if the image is allready present
-	tar xkzf /tmp/imgmgmt_new_image.tgz -C ~/hdd_images
+	tar xkzf /tmp/imgmgmt_new_image.tgz -C ~/hdd_images 2>/dev/null 1>&2
 	if [ $? -eq 0 ]; then
 	  #dial_msg "$imgmgmt_unpack_suc"
 	  rm /tmp/imgmgmt_new_image.tgz

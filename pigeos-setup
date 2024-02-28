@@ -70,7 +70,7 @@ DOSBOX_BIN=$PIGEOS_PREFIX/bin/dosbox
 PKG_LIST="jq pv mtools espeak xinit" # fonts-terminus missing in buster?
 # list of external files need to be installed by this script in net_install mode
 # TODO setup a APT repo for the customized version of DOSBox
-URL_DOSBOX_PKG="https://thobipix.de/download/rpi/pkg/dosbox-pigeos-0.74.4_armhf.deb"
+URL_DOSBOX_PKG="https://thobipix.de/download/rpi/pkg/dosbox-pigeos-0.74.6_armhf.deb"
 # a free for non-commercial use file sync tool
 URL_RSLSYNC_PKG="https://download-cdn.resilio.com/stable/linux-armhf/resilio-sync_armhf.tar.gz"
 # a classic modem style dialing sound
@@ -200,8 +200,8 @@ install_pigeos_config() {
 }
 
 install_dosbox_pkg() {
-  # dosbox-pigeos requires SDL-1.2 and libpacp for Ethernet emulation
-  install_dep_pkg libsdl1.2debian libsdl-sound1.2 libsdl-net1.2 libpcap0.8
+  # dosbox-pigeos requires SDL-1.2
+  install_dep_pkg libsdl1.2debian libsdl-sound1.2 libsdl-net1.2
   # TODO: create a deb repo to retrive it from
   download_file "$URL_DOSBOX_PKG" /tmp/dosbox.deb
   # remove package from blacklist
@@ -234,13 +234,6 @@ config_dosbox_pkg() {
   sed -i 's/pcspeaker=.*/pcspeaker=false/'		$($DOSBOX_BIN -printconf)
   sed -i 's/tmpdir=.*/tmpdir=\/tmp/'			$($DOSBOX_BIN -printconf)
   sed -i 's/LPT1=.*/LPT1=pigeos-print %s/'		$($DOSBOX_BIN -printconf)
-  sed -i 's/ne2000=.*/ne2000=true/'				$($DOSBOX_BIN -printconf)
-  sed -i 's/realnic=.*/realnic=eth0/'			$($DOSBOX_BIN -printconf)
-  # genearate a random MAC address to prevent conflicts when running
-  # more than one instance of Pi/GEOS in a local network
-  macaddr=$(printf 'ac:de:%s:%s:%s:%s' \
-    `hexdump -n 4 -ve '1/1 "%.2x "' /dev/random`)
-  sed -i "s/macaddr=.*/macaddr=${macaddr}/"		$($DOSBOX_BIN -printconf)
   return 0
 }
 
