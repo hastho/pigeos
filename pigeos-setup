@@ -665,12 +665,13 @@ config_boot() {
   
   # write parameter /boot/config.txt
   for option in "disable_overscan=1" \
-    "dtparam=audio=on" "disable_splash=1"
+    "dtparam=audio=on" "disable_splash=1" \
+	"dtoverlay=vc4-fkms-v3d"
   do
     grep -q "${option%=*}" $BOOT_CONFIG
     if [ $? -eq 0 ]; then
       # option present -> alter the key=value pair
-      sudo sed -i "s/.*${option%=*}.*/${option}/" $BOOT_CONFIG
+      sudo sed -i "s/.*${option%=*}.*/${option}/g" $BOOT_CONFIG
     else
       echo append this missing option
       sudo tee -a $BOOT_CONFIG <<<"${option}"
