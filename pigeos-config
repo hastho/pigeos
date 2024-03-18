@@ -574,7 +574,10 @@ config_wizard() {
   online && imgmgmt_download
   if [ $? -ne 0 ]; then
     dial_err "$wizard_net_error"
-	file_extract /usr/local/share/pigeos/ensbundle.tgz $imgsel_dir 
+	file_extract /usr/local/share/pigeos/ensbundle.tgz $imgsel_dir
+  else
+    # assuming that we are on-line we can activate the WebOne proxy
+	sed -i "s#WEB1PROXY_SLOAD=.*#WEB1PROXY_SLOAD=1#" $(conf_get) 
   fi
   for f in ${imgsel_dir}/*.img; do 
     # if no files are there f = '*', so it has to be validated
