@@ -89,7 +89,10 @@ advanced_options=(\
   "ResilioSync service "	"${disabled_enabled[$RSLSYNC_SLOAD]}" \
   "  Access Key (rw) "		"${RSLSYNC_KEY}" \
   "  Internet access "		"${disabled_enabled[$RSLSYNC_WAN]}" \
-  "  Auto-Import function "	"${disabled_enabled[$IMG2GEOS_SLOAD]}" )
+  "  Auto-Import function "	"${disabled_enabled[$IMG2GEOS_SLOAD]}" \
+  "WebOne Proxy Service "   "${disabled_enabled[$WEB1PROXY_SLOAD]}" \
+  "  Proxy Address" 		"$([ $WEB1PROXY_SLOAD -eq 1 ] && echo ${WEB1PROXY_IP}:8080 || echo n/a)" \
+)
 advanced_serv_activate="activate at system start?"
 advanced_sync_deactivate="WARNING: if you disable the ResilioSync service all local copies of your FILES on drive S: will be REMOVED! Make sure you made a backup eg. on USB drive U:."
 advanced_sync_key_warn="The Resilio-Sync can't be changed while the service is active."

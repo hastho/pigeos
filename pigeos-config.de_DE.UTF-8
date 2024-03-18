@@ -94,7 +94,10 @@ advanced_options=(\
   "ResilioSync Service "	"${disabled_enabled[$RSLSYNC_SLOAD]}" \
   "  Acces Key (rw) "		"${RSLSYNC_KEY}" \
   "  Internet Zugriff "		"${disabled_enabled[$RSLSYNC_WAN]}" \
-  "  Auto-Import Funktion "	"${disabled_enabled[$IMG2GEOS_SLOAD]}" )
+  "  Auto-Import Funktion "	"${disabled_enabled[$IMG2GEOS_SLOAD]}" \
+  "WebOne Proxy Service "   "${disabled_enabled[$WEB1PROXY_SLOAD]}" \
+  "  Proxy Adresse" 		"$([ $WEB1PROXY_SLOAD -eq 1 ] && echo ${WEB1PROXY_IP}:8080 || echo n/a)" \
+)
 advanced_serv_activate="beim Systemstart aktivieren?"
 advanced_sync_deactivate="WARNUNG: beim Deaktivieren des ResilioSync-Services werden alle lokalen Kopien der auf Laufwerk S: abgelegten DATEN GELÖSCHT! Bitte vorher unbedingt die Daten sichern z.b. auf USB-Laufwerk U:."
 advanced_sync_key_warn="Der ResilioSync Zugriffsschlüssel kann nicht geändert werden solange der Service aktiv ist."

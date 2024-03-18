@@ -259,6 +259,8 @@ advanced_menu() {
 	  Internet*)	service_activation_menu "RSLSYNC_WAN" "${selection}" ;;
 	  Auto-Import*)	service_activation_menu "IMG2GEOS_SLOAD" "${selection}" ;;
 	  FeedProxy*)   service_activation_menu "FEEDPROXY_SLOAD" "${selection}" ;;
+	  WebOne*)		service_activation_menu "WEB1PROXY_SLOAD" "${selection}" ;;
+	  Proxy*Ad*)	true ;;
       *)		    break
     esac
   done
