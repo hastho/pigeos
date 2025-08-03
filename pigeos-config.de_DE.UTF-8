@@ -150,6 +150,6 @@ imgmgmt_create_fail="Das Erstellen des Abbildes ist fehlgeschlagen. Wiederholen?
 imgmgmt_create_ok="Das Abbild wurde erfogreich erstellt unter: "
 
 ### Configuratino Wizard ################################################################
-wizard_intro="Welocome, Willkommen!\nSetup hat festgestellt, dass keine gültige Systemkonfiguration existiert. Möchtest Du diesen Assistenten nutzen, um die Erstkonfiguration durchzuführen?"
+wizard_intro="Welcome, Willkommen!\nSetup hat festgestellt, dass keine gültige Systemkonfiguration existiert. Möchtest Du diesen Assistenten nutzen, um die Erstkonfiguration durchzuführen?"
 wizard_net_error="Der Assistent konnte keine Netzwerkverbindung herstellen, daher wird jetzt das Pi/GEOS Ensemble 6.0 Bundle für Dich eingerichtet. Mit dem 'German INI Patch' aus der Programmgruppe 'Utilities' kannst Du Ensemble an deutsche Ländereinstellungen anpassen."
 wizard_finished="Gratulation! Du hast die Ersteinrichtung abgeschlossen.\nDas System wird jetzt neu gestartet. Wenn Du die Pi/GEOS-Umgebung anpassen möchtest, drücke Strg+F9 um in das SETUP zu gelangen."
