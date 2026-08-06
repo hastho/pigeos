@@ -72,7 +72,7 @@ PKG_LIST="jq pv mtools espeak xinit" # fonts-terminus missing in buster?
 # TODO setup a APT repo for the customized version of DOSBox
 URL_DOSBOX_PKG="https://thobipix.de/download/rpi/pkg/dosbox-pigeos-0.74.6_armhf.deb"
 # a free for non-commercial use file sync tool
-URL_RSLSYNC_PKG="https://download-cdn.resilio.com/stable/linux-armhf/resilio-sync_armhf.tar.gz"
+URL_RSLSYNC_PKG="https://download-cdn.resilio.com/2.8.1.1390/linux/armhf/0/resilio-sync_armhf.tar.gz"
 # a classic modem style dialing sound
 URL_DIALING_SOUND="https://upload.wikimedia.org/wikipedia/commons/3/33/Dial_up_modem_noises.ogg"
 # a font to be used in the BIOS splash screen and splash screen template
