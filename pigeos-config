@@ -490,8 +490,8 @@ imgmgmt_download() {
 	# as for file based images no user files will be removed
 	tar xzf /tmp/imgmgmt_new_image.tgz -C ~/hdd_images 2>/dev/null 1>&2
 	if [ $? -eq 0 ]; then
-	  #dial_msg "$imgmgmt_unpack_suc"
 	  rm /tmp/imgmgmt_new_image.tgz
+	  dial_msg "$imgmgmt_unpack_suc"
 	else
 	  dial_err "$imgmgmt_unpack_err"
 	fi

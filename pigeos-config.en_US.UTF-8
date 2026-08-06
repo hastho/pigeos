@@ -130,12 +130,12 @@ imgmgmt_options=(\
   "Import image "     "Import/Restore an image archive from an USB drive" \
   "Rename image "     "Rename an image" )
 imgmgmt_del_confirm="Do you really want to delete this image? All data will be lost!"
-imgmgmt_del_mounted="You can't delete a mounted image, please unassign it first!"
-imgmgmt_mod_mounted="You can't modify a mounted image, please unassign it first!"
+imgmgmt_del_mounted="You can't delete a mounted image, please switch to Basic menue and unassign it first!"
+imgmgmt_mod_mounted="You can't modify a mounted image, please switch to Basic menue and unassign it first!"
 imgmgmt_download="Please enter an URL of an image archive stored on the Web (http(s)://)"
 imgmgmt_invalid_url="The given URL isn't valid."
 imgmgmt_unpack_err="An error occurred while extracting the image archive."
-imgmgmt_unpack_suc="The image was installed successfully. It is now ready to be activated."
+imgmgmt_unpack_suc="The image was installed successfully. Switch to Basic menue and assign it to a DOS drive letter."
 imgmgmt_exp_err="An error occurred during image export. Please verify you inserted a vFAT formatted USB drive."
 imgmgmt_usb_not_present="No vFAT formatted USB drive was found. Unable to proceed."
 imgmgmt_image_file_name="Please enter a filename for the image. \nHINT: special characters are not allowed!"
