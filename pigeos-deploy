@@ -99,6 +99,8 @@ img_build() {
 	sudo mkdir -p							/mnt/pigeos/root/usr/local/share/pigeos
 	sudo cp     $bdl_geos_img				/mnt/pigeos/root/usr/local/share/pigeos/ensbundle.tgz
 	sudo cp 	pigeos-setup 				/mnt/pigeos/root/usr/local/bin
+	sudo sed -i 's/raspbian.raspberrypi.org/legacy.raspbian.org/g' \
+	                                        /mnt/pigeos/root/etc/apt/sources.list
 	sudo chroot 							/mnt/pigeos/root/ \
 	  /bin/bash -ic 'cd /tmp; pigeos-setup setup gr'
 	  sync
