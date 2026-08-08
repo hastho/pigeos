@@ -72,7 +72,7 @@ PKG_LIST="jq pv mtools espeak xinit" # fonts-terminus missing in buster?
 # TODO setup a APT repo for the customized version of DOSBox
 URL_DOSBOX_PKG="https://thobipix.de/download/rpi/pkg/dosbox-pigeos-0.74.6_armhf.deb"
 # a free for non-commercial use file sync tool
-URL_RSLSYNC_PKG="https://download-cdn.resilio.com/2.8.1.1390/linux/armhf/0/resilio-sync_armhf.tar.gz"
+URL_RSLSYNC_PKG="https://download-cdn.resilio.com/stable/debian/armhf/0/resilio-sync_2.8.1.1390-1_armhf.deb"
 # a classic modem style dialing sound
 URL_DIALING_SOUND="https://upload.wikimedia.org/wikipedia/commons/3/33/Dial_up_modem_noises.ogg"
 # a font to be used in the BIOS splash screen and splash screen template
@@ -512,11 +512,9 @@ config_midi() {
 
 install_rslsync() {
   download_file $URL_RSLSYNC_PKG /tmp/$(basename $URL_RSLSYNC_PKG)
-  tar xzf /tmp/$(basename $URL_RSLSYNC_PKG) -C /tmp
-  sudo install /tmp/rslsync 		$PIGEOS_PREFIX/bin
-  sudo install /tmp/LICENSE.TXT 	$PIGEOS_PREFIX/share/pigeos/resilio.lic
-  # TODO create systemd service
-    sudo tee /etc/systemd/system/rslsync@.service >/dev/null <<RSLSYNC_SRV
+  dpkg-deb --extract /tmp/$(basename $URL_RSLSYNC_PKG) /tmp/rslsync
+  sudo install /tmp/rslsync/usr/bin/rslsync 		$PIGEOS_PREFIX/bin
+  sudo tee /etc/systemd/system/rslsync@.service >/dev/null <<RSLSYNC_SRV
 [Unit]
 Description=Start Resilio Sync Service
 After=network.target
