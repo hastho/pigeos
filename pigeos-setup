@@ -155,6 +155,8 @@ config_locales() {
     sudo locale-gen >/dev/null
     sudo update-locale --reset LANG=${syslang} >/dev/null
     # only really req. during build time
+	export LANG="${syslang}"
+	export LC_ALL="${syslang}"
     sudo sed -i "s/KEYB=.*/KEYB=${doslang}/" \
       $PIGEOS_PREFIX/etc/$(basename $URL_CONFIG_SYSCFG)
 	# upd keyboard configuration
